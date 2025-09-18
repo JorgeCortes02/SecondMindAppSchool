@@ -37,12 +37,7 @@ struct TaskItemDTO: Codable, Identifiable {
     var event_id: Int?
 }
 
-struct NoteDTO: Codable, Identifiable {
-    let id: Int
-    var title: String
-    var content: String
-    var event_id: Int
-}
+
 
 struct UploadedDocumentDTO: Codable, Identifiable {
     let id: Int

@@ -58,9 +58,7 @@ class Event {
     @Relationship(deleteRule: .cascade, inverse: \UploadedDocument.event)
     var documents: [UploadedDocument] = []
 
-    // 1 Event → * Notes (inversa)
-    @Relationship(deleteRule: .cascade, inverse: \Note.event)
-    var notes: [Note] = []
+   
 
     init(
         name: String,
@@ -134,25 +132,7 @@ class UploadedDocument {
 }
 
 // MARK: - Note
-@Model
-class Note {
-    var title: String
-    var content: String
 
-    // * Note → 1 Event (directa)
-    @Relationship(deleteRule: .nullify)
-    var event: Event
-
-    init(
-        title: String,
-        content: String,
-        event: Event
-    ) {
-        self.title = title
-        self.content = content
-        self.event = event
-    }
-}
 
 // MARK: - LastDeleteTask
 @Model

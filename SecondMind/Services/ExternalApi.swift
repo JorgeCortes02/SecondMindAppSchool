@@ -82,34 +82,35 @@ class APIClient {
     }
     
     /// 🔹 Actualizar perfil (nombre + email opcional)
-    func updateProfile(token: String, name: String, email: String?) async throws -> UserResponse {
+    // 🔹 Versión sin respuesta (solo valida que el servidor responda 200 OK)
+    func updateProfile(token: String, name: String, email: String?) async throws {
         struct Body: Encodable {
             let name: String
             let email: String?
         }
-        let response: UpdateProfileResponse = try await send(
+        let _: EmptyResponse = try await send(
             "update-profile",
             method: "PUT",
             body: Body(name: name, email: email),
             token: token
         )
-        return response.user
     }
-    
-    /// 🔹 Cambiar contraseña
-    func changePassword(token: String, currentPassword: String, newPassword: String) async throws -> String {
+
+    func changePassword(token: String, currentPassword: String, newPassword: String) async throws {
         struct Body: Encodable {
             let currentPassword: String
             let newPassword: String
         }
-        let response: ChangePasswordResponse = try await send(
+        let _: EmptyResponse = try await send(
             "change-password",
             method: "PUT",
             body: Body(currentPassword: currentPassword, newPassword: newPassword),
             token: token
         )
-        return response.message
     }
+
+    /// Modelo vacío para respuestas sin contenido
+    struct EmptyResponse: Decodable {}
     
     // ============================================================
     // MARK: - Projects
@@ -205,15 +206,8 @@ class APIClient {
     // ============================================================
     // MARK: - Notes
     // ============================================================
-    func fetchNotes() async throws -> [NoteDTO] {
-        try await get("notes")
-    }
     
-    func createNote(title: String, content: String, eventId: Int) async throws -> NoteDTO {
-        struct Body: Encodable { let title: String; let content: String; let event_id: Int }
-        return try await send("notes", method: "POST", body: Body(title: title, content: content, event_id: eventId))
-    }
-    
+   
     func deleteNote(id: Int) async throws {
         try await delete("notes/\(id)")
     }

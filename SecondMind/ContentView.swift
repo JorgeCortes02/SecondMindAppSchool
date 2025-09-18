@@ -25,7 +25,7 @@ struct ContentView: View {
             TaskView()
                 .tabItem { Label("Tareas", systemImage: "checkmark.circle.fill") }.tag(1)
             EventsView().tabItem { Label("Eventos", systemImage: "calendar")}.tag(2)
-           
+            NoteMark().tabItem { Label("Notas", systemImage: "square.and.pencil")}.tag(4)
            
         }
         .accentColor(Color.taskButtonColor)

@@ -15,6 +15,7 @@ class LoginViewModel: ObservableObject {
     private let baseURL = "https://secondmind-h6hv.onrender.com/auth"
     
     
+    
     @Published var userSession = UserSession()
     
     init() {
@@ -121,6 +122,7 @@ class LoginViewModel: ObservableObject {
         URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
                 self.setError("No se pudo conectar con el servidor 🌐 (\(error.localizedDescription))")
+                NSLog(error.localizedDescription)
                 return
             }
             self.handleAuthResponse(data: data, response: response)
@@ -133,11 +135,7 @@ class LoginViewModel: ObservableObject {
             setError("Sin datos de respuesta del servidor ⚠️")
             return
         }
-#if DEBUG
-if let raw = String(data: data, encoding: .utf8) {
-    os_log("📦 Respuesta backend: %{public}@", raw)
-}
-#endif
+
         if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode >= 400 {
             if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                let serverError = json["error"] as? String {
@@ -250,6 +248,12 @@ if let raw = String(data: data, encoding: .utf8) {
     
     
     
-  
+    func getToken() -> String? {
+           guard let data = KeychainHelper.standard.read(service: tokenKey,
+                                                         account: "SecondMind") else {
+               return nil
+           }
+           return String(data: data, encoding: .utf8)
+       }
     
 }
