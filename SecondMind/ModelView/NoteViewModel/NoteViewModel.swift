@@ -20,7 +20,7 @@ class NoteViewModel: ObservableObject {
 
             Note(id: 2,
                  title: "Ideas app",
-                 content: "💡 Añadir modo oscuro\n📌 Mejorar login con biometría\n✨ Nueva pantalla de notas rápidas",
+                 content: "💡 Añadir modo oscuiyouiytrtitiutouiytiytityro\n📌 Mejorar login cotiuuiyyuotouyiyirtuyiouyouyiyiyiuouyoin biometría\n✨ Nueva pantalla de notas rápidas",
                  date: Date().addingTimeInterval(-3600*24),
                  event: nil),
 

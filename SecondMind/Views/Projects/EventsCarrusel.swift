@@ -21,6 +21,15 @@ struct EventCarrousel : View {
         
   
         
+        ZStack{
+            
+            
+            
+            
+            
+            
+            
+        }
         
         
     
@@ -39,13 +48,12 @@ struct EventCarrousel : View {
                     
                     Spacer()
 
-                    Button(action: {
-                        
-                    }) {
+                    NavigationLink(destination: ProjectEventsView(project: editableProject)) {
                         HStack(spacing: 4) {
                             Text("Ver más")
                                 .font(.system(size: 16, weight: .semibold))
                                 .foregroundColor(Color.eventButtonColor)
+
                             Image(systemName: "chevron.right")
                                 .font(.system(size: 18, weight: .semibold))
                                 .foregroundColor(Color.eventButtonColor)

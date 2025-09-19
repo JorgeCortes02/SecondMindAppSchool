@@ -69,6 +69,34 @@ struct HomeApi {
     }
     
     
+    static func fetchProjectEvents(context : ModelContext) -> [Event] {
+        
+        let calendar = Calendar.current
+        let startOfToday = calendar.startOfDay(for: Date())
+        let endOfToday = calendar.date(byAdding: .day, value: 1, to: startOfToday)!
+
+        let predicateEvent = #Predicate<Event> {
+            $0.endDate >= startOfToday && $0.endDate < endOfToday
+        }
+        
+        let descriptorEvent = FetchDescriptor<Event>(predicate: predicateEvent)
+        
+        do {
+            let eventos = try context.fetch(descriptorEvent)
+          
+            return eventos.filter{
+                $0.status == .on
+            }
+            
+            
+        } catch {
+            print("❌ Error al hacer fetch de tareas de hoy: \(error)")
+            return []
+        }
+    }
+    
+    
+    
     static func fetchDateTasks(date: Date,  context : ModelContext) -> [TaskItem] {
         
        
@@ -205,6 +233,33 @@ struct HomeApi {
         
     }
     
+    static func downdloadProjectEventsDate(date : Date, context : ModelContext, project: Project) -> [Event] {
+        let calendar = Calendar.current
+        let startOfDay = calendar.startOfDay(for: date)
+        let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
+        
+        let predicate = #Predicate<Event> {
+            $0.endDate >= startOfDay && $0.endDate < endOfDay
+        }
+        
+        
+        
+        let descriptorEvent = FetchDescriptor<Event>(predicate: predicate)
+        
+        do {
+            let events = try context.fetch(descriptorEvent)
+            
+            
+            return events.filter { $0.project == project }
+            
+            
+        } catch {
+            print("❌ Error al hacer fetch de tareas de hoy: \(error)")
+            return []
+        }
+        
+        
+    }
     
     static func loadLastDeleteTaskDate(context : ModelContext) -> lastDeleteTask?{
         

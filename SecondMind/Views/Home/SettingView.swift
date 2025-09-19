@@ -9,6 +9,7 @@ struct SettingView: View {
     @State private var isEditing = false
     @State private var changePass = false
     @State private var showSuccessAlert = false
+    @State private var showErrorAlert = false
     @State var currentPassword: String = ""
     @State var newPassword: String = ""
     @State var newPasswordConfirm: String = ""
@@ -178,6 +179,7 @@ struct SettingView: View {
                                             email: email
                                         )
                                         loginVM.errorMessage = "✅ Perfil actualizado correctamente"
+                                        showSuccessAlert = true
                                     } catch {
                                         loginVM.errorMessage = "❌ Error: \(error.localizedDescription)"
                                     }
@@ -244,7 +246,7 @@ struct SettingView: View {
                                     .foregroundColor(.black)
                                 
                                 // Mostrar error también aquí
-                                if let error = loginVM.errorMessage , showSuccessAlert{
+                                if let error = loginVM.errorMessage , showErrorAlert{
                                     Text(error)
                                         .foregroundColor(.red)
                                         .font(.callout)
@@ -256,17 +258,17 @@ struct SettingView: View {
                                 Button(action: {
                                     if newPassword.count < 8 {
                                         loginVM.errorMessage = "La contraseña debe tener al menos 8 caracteres ❌"
-                                        showSuccessAlert = false
+                                        showErrorAlert = false
                                         return
                                     }
                                     if newPassword != newPasswordConfirm {
                                         loginVM.errorMessage = "Las contraseñas no coinciden ⚠️"
-                                        showSuccessAlert = false
+                                        showErrorAlert = false
                                         return
                                     }
                                     guard let token = loginVM.getToken() else {
                                         loginVM.errorMessage = "❌ No se encontró el token de sesión"
-                                        showSuccessAlert = false
+                                        showErrorAlert = false
                                         return
                                     }
                                     
@@ -288,6 +290,7 @@ struct SettingView: View {
                                                 changePass = false
                                             } catch {
                                                 loginVM.errorMessage = "❌ Error: \(error.localizedDescription)"
+                                                showErrorAlert = false
                                             }
                                         }
                                         
@@ -329,9 +332,11 @@ struct SettingView: View {
                     .foregroundColor(.black.opacity(0.7))
                     .padding(.bottom, 12)
             }.alert("Éxito", isPresented: $showSuccessAlert) {
-                Button("OK", role: .cancel) {}
+                Button("OK", role: .cancel) {
+                    showSuccessAlert = false
+                }
             } message: {
-                Text("✅ La contraseña se cambió correctamente")
+                Text("✅ La información se cambió correctamente")
             }
             .onAppear {
                 viewModel.setContext(context: context)

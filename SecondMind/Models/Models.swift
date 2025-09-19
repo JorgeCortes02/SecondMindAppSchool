@@ -10,6 +10,7 @@ enum ActivityStatus: String, Codable {
 // MARK: - Project
 @Model
 class Project {
+
     var title: String
     var endDate: Date?
     @Attribute var status: ActivityStatus
