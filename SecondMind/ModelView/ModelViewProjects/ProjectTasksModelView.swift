@@ -9,9 +9,9 @@ import Foundation
 import SwiftData
 import SwiftUI
 
-public class EventMarkProjectDetallModelView: ObservableObject {
+public class TaskMarkProjectDetallModelView: ObservableObject {
     
-    @Published var events: [Event] = []
+    @Published var tasks: [TaskItem] = []
     @Published var selectedTab: Int = 0
     private var project : Project? = nil
     private var context: ModelContext?
@@ -27,43 +27,55 @@ public class EventMarkProjectDetallModelView: ObservableObject {
         self.project = project
     }
     
-    func extractDayEvents(date : Date) -> [Event] {
+    func extractDayTasks(date : Date) -> [TaskItem] {
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: date)
         let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
-        var events: [Event] = []
+        var tasks: [TaskItem] = []
         
         if let project = project {
         
-            events =  project.events.filter{
-                   
-               $0.endDate >= startOfDay && $0.endDate < endOfDay
-               && $0.status == .on
-            }
-        
+            return project.tasks.filter { task in
+                   if let endDate = task.endDate {
+                       return Calendar.current.isDate(endDate, inSameDayAs: date) && task.status == .on
+                   } else {
+                       return false
+                   }
+               }
           
         }
         
-        return events
+        return tasks
         
         
     }
     
-    func extractOffEvents() -> [Event] {
+    func extractNoDateTasks() -> [TaskItem] {
+        var tasks: [TaskItem] = []
+        
+        if let project = project {
+            
+            tasks = project.tasks.filter { $0.endDate == nil && $0.status == .on }
+            
+        }
+        return tasks
+    }
+    
+    func extractOffTasks() -> [TaskItem] {
        
-        var events: [Event] = []
+        var tasks: [TaskItem] = []
         
         if let project = project {
         
-            events =  project.events.filter{
+            tasks =  project.tasks.filter{
                    
-               $0.status == .on
+               $0.status == .off
             }
         
           
         }
         
-        return events
+        return tasks
         
         
     }
@@ -71,12 +83,19 @@ public class EventMarkProjectDetallModelView: ObservableObject {
      func loadEvents(selectedData: Date? = nil) {
         switch selectedTab {
         case 0:
-            if let selectedData {
-                events = extractDayEvents(date: selectedData)
-            }
+     
+                tasks = extractNoDateTasks()
             break;
         case 1:
-          events = extractOffEvents()
+            
+            if let selectedData {
+                tasks = extractDayTasks(date: selectedData)
+                
+            }
+         
+            break;
+        case 2:
+            tasks = extractOffTasks()
         default:
             break
         }
@@ -91,3 +110,4 @@ public class EventMarkProjectDetallModelView: ObservableObject {
         
     }
     
+

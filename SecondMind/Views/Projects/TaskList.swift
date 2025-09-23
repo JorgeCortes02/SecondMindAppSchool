@@ -32,12 +32,16 @@ struct TaskList: View {
                     .foregroundColor(Color.taskButtonColor)
                 Text("\(filteredTasks.count)").bold()
                 Spacer()
-                Button(action: {}) {
+                NavigationLink(destination: ProjectTaskView(project: editableProject)) {
                     HStack(spacing: 4) {
                         Text("Ver más")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(Color.taskButtonColor)
+
                         Image(systemName: "chevron.right")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(Color.taskButtonColor)
                     }
-                    .foregroundColor(Color.taskButtonColor)
                 }
             }
 

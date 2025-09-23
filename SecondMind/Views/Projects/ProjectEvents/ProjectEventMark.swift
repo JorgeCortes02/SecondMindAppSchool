@@ -164,7 +164,7 @@ struct ProjectEventMark: View {
                             
                         }}
                 }){
-                    CreateEvent()
+                    CreateEvent(project: project)
                 }
                 
             } else {
@@ -194,7 +194,7 @@ struct ProjectEventMark: View {
                             
                         }}
                 }){
-                    CreateEvent()
+                    CreateEvent(project: project)
                     
                 }
                 

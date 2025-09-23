@@ -341,4 +341,23 @@ struct HomeApi {
         }
         
     }
+    
+    
+
+    static func downloadNotes(context: ModelContext) -> [NoteItem] {
+          do {
+              let notes = try context.fetch(FetchDescriptor<NoteItem>())
+              return  notes.filter { !$0.isArchived }
+          } catch {
+              print("❌ Error cargando notas: \(error)")
+              return []
+          }
+      }
+        
+        
+    
+    
+    
+    
+    
     }

@@ -1,99 +1,156 @@
 import SwiftUI
 import SwiftData
-import AVFoundation
+import Foundation
+
 struct NoteMark: View {
-    @StateObject private var viewModel = NoteViewModel()
     @Environment(\.modelContext) private var context
-    
-    @State private var searchText = ""
-    
-    var filteredNotes: [Note] {
-        if searchText.isEmpty {
-            return viewModel.noteList
-        } else {
-            return viewModel.noteList.filter {
-                $0.title.localizedCaseInsensitiveContains(searchText) ||
-                $0.content.localizedCaseInsensitiveContains(searchText)
-            }
-        }
+    @EnvironmentObject var utilFunctions: generalFunctions
+
+    @StateObject var modelView: NoteViewModel
+
+    init() {
+        _modelView = StateObject(wrappedValue: NoteViewModel())
     }
-    
+
+    @State private var searchText: String = ""
+    @State private var readyToShowNotes: Bool = false
+    @State private var navigateToNewNote = false   // 👈 estado para NavigationLink
+
+    private let accentColor = Color.blue
+
     var body: some View {
-        VStack(spacing: 16) {
-            // Header
-            headerCard(title: "Notas")
-                .padding(.top, 16)
-            
-            // Barra de búsqueda debajo del header
-            HStack {
-                Image(systemName: "magnifyingglass")
-                    .foregroundColor(.gray)
-                
-                TextField("Buscar notas...", text: $searchText)
-                    .textFieldStyle(PlainTextFieldStyle())
-                    .autocorrectionDisabled()
-                
-                if !searchText.isEmpty {
-                    Button {
-                        searchText = ""
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.gray)
-                    }
-                }
-            }
-            .padding(12)
-            .background(Color.white)
-            .overlay(
-                RoundedRectangle(cornerRadius:  25)
-                    .stroke(Color.black.opacity(0.6), lineWidth: 1.2) // 👈 borde oscuro
-            )
-            .cornerRadius(25)
-            .padding(.horizontal)
-            
-            // Lista de notas
-            ScrollView {
+        NavigationStack {
+            ZStack(alignment: .bottomTrailing) {
                 VStack(spacing: 20) {
-                    if filteredNotes.isEmpty {
-                        emptyNoteList
-                    } else {
-                        ForEach(filteredNotes.sorted(by: { $0.date > $1.date })) { note in
-                            noteRow(note: note)
+                    headerCard(title: "Notas")
+                        .padding(.top, 16)
+
+                    pickerBar
+                    searchBar
+
+                    ScrollView {
+                        VStack(spacing: 20) {
+                            if modelView.noteList.isEmpty {
+                                emptyNoteList
+                            } else if readyToShowNotes {
+                                notesList
+                            }
                         }
+                        .padding(.vertical, 16)
                     }
                 }
-                .padding(.vertical, 16)
+                .safeAreaInset(edge: .bottom) {
+                    HStack {
+                        Spacer()
+                        buttonControlMark
+                    }
+                    .padding(.trailing, 16)
+                    .padding(.bottom, 80)
+                }
+                .ignoresSafeArea(.keyboard)
+
+                NavigationLink(
+                    destination: NoteDetailView(note: nil),
+                    isActive: $navigateToNewNote
+                ) { EmptyView() }
+            }
+            .onAppear {
+                modelView.setContext(context)
+                modelView.loadNotes()
+                readyToShowNotes = true
+            }
+            .onChange(of: modelView.selectedTab) { newTab in
+                withAnimation {
+                    modelView.loadNotes()
+                    modelView.applySearch(searchText, tab: newTab)
+                    readyToShowNotes = true
+                }
             }
         }
-        .safeAreaInset(edge: .bottom) {
-            HStack {
-                Spacer()
-                buttonControlMark
-            }
-            .padding(.trailing, 16)
-            .padding(.bottom, 80)
-        }
-        .onAppear {
-            viewModel.setContext(context)
-            viewModel.loadNotes()
-        }
-        .ignoresSafeArea(.keyboard)
     }
-    
-    // MARK: - Botón flotante
+
+    // MARK: – Picker
+    private var pickerBar: some View {
+        HStack(spacing: 10) {
+            segmentButton(title: "Todas", tag: 0)
+            segmentButton(title: "Favoritas", tag: 1)
+            segmentButton(title: "Archivadas", tag: 2)
+        }
+        .padding(15)
+        .background(Color.cardBackground)
+        .cornerRadius(40)
+        .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
+        .padding(.horizontal, 16)
+    }
+
+    private func segmentButton(title: String, tag: Int) -> some View {
+        let isSelected = (modelView.selectedTab == tag)
+        return Button {
+            withAnimation { modelView.selectedTab = tag }
+        } label: {
+            Text(title)
+                .font(.system(size: 15, weight: isSelected ? .semibold : .regular))
+                .foregroundColor(isSelected ? .white : accentColor)
+                .frame(maxHeight: 36)
+                .frame(maxWidth: .infinity)
+                .frame(height: 40)
+                .background(
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(isSelected ? accentColor : Color.clear)
+                )
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: – SearchBar
+    private var searchBar: some View {
+        HStack {
+            Image(systemName: "magnifyingglass")
+                .foregroundColor(.gray)
+
+            TextField("Buscar notas...", text: $searchText)
+                .textFieldStyle(PlainTextFieldStyle())
+                .autocorrectionDisabled()
+                .onChange(of: searchText) { newValue in
+                    modelView.applySearch(newValue, tab: modelView.selectedTab)
+                }
+
+            if !searchText.isEmpty {
+                Button {
+                    searchText = ""
+                    modelView.applySearch("", tab: modelView.selectedTab)
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.gray)
+                }
+            }
+        }
+        .padding(12)
+        .background(Color.cardBackground)
+        .overlay(
+            RoundedRectangle(cornerRadius: 25)
+                .stroke(Color.black.opacity(0.6), lineWidth: 1.2)
+        )
+        .cornerRadius(25)
+        .padding(.horizontal)
+    }
+
+    // MARK: – Floating Button
     private var buttonControlMark: some View {
-        Button(action: {}) {
+        Button {
+            navigateToNewNote = true
+        } label: {
             Image(systemName: "plus")
                 .font(.system(size: 28, weight: .bold))
                 .foregroundColor(.white)
                 .padding(14)
-                .background(Circle().fill(Color.blue))
+                .background(Circle().fill(accentColor))
                 .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 3)
         }
         .padding(10)
     }
-    
-    // MARK: - Lista vacía
+
+    // MARK: – Empty List
     private var emptyNoteList: some View {
         VStack(spacing: 20) {
             Image(systemName: "note.text")
@@ -101,7 +158,7 @@ struct NoteMark: View {
                 .scaledToFit()
                 .frame(width: 60, height: 60)
                 .foregroundColor(.orange.opacity(0.7))
-            
+
             Text("No hay notas disponibles")
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(.primary)
@@ -109,126 +166,130 @@ struct NoteMark: View {
         .frame(maxWidth: .infinity, minHeight: 150)
         .padding(20)
     }
-}
-// 🔹 Función auxiliar para activar cortes con guiones
-func hyphenatedText(_ string: String) -> AttributedString {
-    let paragraphStyle = NSMutableParagraphStyle()
-    paragraphStyle.hyphenationFactor = 1.0 // activa guiones automáticos
-    
-    let attributes: [NSAttributedString.Key: Any] = [
-        .paragraphStyle: paragraphStyle
-    ]
-    
-    return AttributedString(NSAttributedString(string: string, attributes: attributes))
-}
 
-private func noteRow(note: Note) -> some View {
-    HStack(spacing: 0) {
-        // Contenido de la nota
-        VStack(alignment: .leading, spacing: 10) {
-            Text(note.date.formatted(date: .abbreviated, time: .omitted))
-                .font(.caption)
-                .foregroundColor(.gray)
-            
-            Text(note.title)
-                .font(.headline)
-                .foregroundColor(.taskButtonColor)
-                .lineLimit(1)
-                .truncationMode(.tail)
-            
-            Text(note.content)
-                .font(.system(size: 15, weight: .regular))
-                .foregroundColor(.black.opacity(0.85))
-                .lineSpacing(6)
-                .lineLimit(5)
-                .truncationMode(.tail)
-        }
-        .padding()
-        .frame(maxWidth: .infinity, alignment: .leading)
-        
-        // Franja lateral con botones
-        VStack(spacing: 12) {
-            Button(action: {
-                print("✏️ Editar \(note.id)")
-            }) {
-                Label("Editar", systemImage: "square.and.pencil")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white)
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 12)
-                    .background(Color.orange)
-                    .cornerRadius(8)
-            }
-            
-            Button(action: {
-                print("🗑 Borrar \(note.id)")
-            }) {
-                Label("Borrar", systemImage: "trash.fill")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white)
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 12)
-                    .background(Color.red)
-                    .cornerRadius(8)
-            }
-            
-            Button(action: {
-                speakText(note.content)
-            }) {
-                Label("Leer", systemImage: "speaker.wave.2.fill")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white)
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 12)
-                    .background(Color.blue)
-                    .cornerRadius(8)
-            }
-            
-            Button(action: {
-                speakNote(title: note.title, content: note.content)
-            }) {
-                Label("Todo", systemImage: "speaker.wave.3.fill")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white)
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 12)
-                    .background(Color.purple)
-                    .cornerRadius(8)
+    // MARK: – Notes List
+    private var notesList: some View {
+        LazyVStack(spacing: 12) {
+            ForEach(modelView.noteList, id: \.id) { note in
+                NavigationLink(destination: NoteDetailView(note: note)) {
+                    noteRow(note: note)
+                }
             }
         }
-        .padding(.vertical)
-        .frame(width: 110) // ancho fijo para la franja
-        .background(Color.gray.opacity(0.1))
+        .padding(.vertical, 8)
     }
-    .frame(maxWidth: .infinity, minHeight: 160, alignment: .leading)
-    .background(
-        RoundedRectangle(cornerRadius: 16)
-            .fill(Color.white)
-            .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
-    )
-    .overlay(
-        RoundedRectangle(cornerRadius: 16)
-            .stroke(Color.black.opacity(0.2), lineWidth: 1)
-    )
-    .padding(.horizontal)
-}
 
+    // MARK: – Note Row
+    private func noteRow(note: NoteItem) -> some View {
+        HStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Creada: \(note.createdAt.formatted(date: .abbreviated, time: .shortened))")
+                        .font(.caption2)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.gray.opacity(0.15))
+                        .clipShape(Capsule())
+                        .foregroundColor(.secondary)
 
+                    Text("Editada: \(note.updatedAt.formatted(date: .abbreviated, time: .shortened))")
+                        .font(.caption2)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.blue.opacity(0.2))
+                        .clipShape(Capsule())
+                        .foregroundColor(.blue)
+                }
 
+                if let project = note.project {
+                    Label("Proyecto: \(project.title)", systemImage: "folder.fill")
+                        .font(.caption)
+                        .foregroundColor(.blue.opacity(0.8))
+                }
+                if let event = note.event {
+                    Label("Evento: \(event.title)", systemImage: "calendar")
+                        .font(.caption)
+                        .foregroundColor(.purple.opacity(0.8))
+                }
 
-func speakNote(title: String, content: String) {
-    let textToRead = "\(title). \(content)"
-    let utterance = AVSpeechUtterance(string: textToRead)
-    utterance.voice = AVSpeechSynthesisVoice(language: "es-ES") // Español
-    utterance.rate = 0.48 // velocidad natural
-    
-    let synthesizer = AVSpeechSynthesizer()
-    synthesizer.speak(utterance)
-}
+                Text(note.title)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.primary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .padding(.top, 4)
 
-func speakText(_ text: String) {
-    let utterance = AVSpeechUtterance(string: text)
-    utterance.voice = AVSpeechSynthesisVoice(language: "es-ES")
-    utterance.rate = 0.48
-    AVSpeechSynthesizer().speak(utterance)
+                if let content = note.content {
+                    Text(content)
+                        .font(.system(size: 15))
+                        .foregroundColor(.secondary)
+                        .lineSpacing(4)
+                        .lineLimit(4)
+                        .truncationMode(.tail)
+                }
+            }
+            .padding()
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            VStack(spacing: 12) {
+                NavigationLink(destination: NoteDetailView(note: note)) {
+                    Image(systemName: "square.and.pencil")
+                        .foregroundColor(.white)
+                        .padding(8)
+                        .background(Color.orange)
+                        .clipShape(Circle())
+                }
+
+                Button {
+                    modelView.delete(note)
+                } label: {
+                    Image(systemName: "trash.fill")
+                        .foregroundColor(.white)
+                        .padding(8)
+                        .background(Color.red)
+                        .clipShape(Circle())
+                }
+
+                Button {
+                    modelView.toggleArchived(note)
+                } label: {
+                    Image(systemName: "archivebox.fill")
+                        .foregroundColor(.white)
+                        .padding(8)
+                        .background(Color.blue)
+                        .clipShape(Circle())
+                }
+
+                Button {
+                    modelView.toggleFavorite(note)
+                } label: {
+                    Image(systemName: note.isFavorite ? "star.fill" : "star")
+                        .foregroundColor(.white)
+                        .padding(8)
+                        .background(Color.yellow)
+                        .clipShape(Circle())
+                }
+            }
+            .padding(.vertical)
+            .frame(width: 70)
+            .background(Color.gray.opacity(0.08))
+        }
+        .frame(maxWidth: .infinity, minHeight: 160, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(
+                    LinearGradient(
+                        colors: [Color.white.opacity(0.95), Color.gray.opacity(0.15)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(Color.black.opacity(0.08), lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 3)
+        .padding(.horizontal)
+    }
 }

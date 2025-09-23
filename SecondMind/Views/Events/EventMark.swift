@@ -86,35 +86,25 @@ struct EventMark: View {
     }
 
 
-    // MARK: – Botón para cada segmento
     private func segmentButton(title: String, tag: Int) -> some View {
         let isSelected = (modelView.selectedTab == tag)
         return Button(action: {
-            withAnimation(.easeInOut) {
-                modelView.selectedTab = tag
-            }
+            withAnimation(.easeInOut) { modelView.selectedTab = tag }
         }) {
             Text(title)
                 .font(.system(size: 15, weight: isSelected ? .semibold : .regular))
-                .foregroundColor(isSelected ? .white : .taskButtonColor)
-                .frame( maxHeight: 36).frame(maxWidth: .infinity)
+                .foregroundColor(isSelected ? .white : .blue)
+                .frame(maxHeight: 36)
+                .frame(maxWidth: .infinity)
                 .frame(height: 40)
                 .background(
-                    Group {
-                        if isSelected {
-                            RoundedRectangle(cornerRadius: 20)
-                                .fill(Color.taskButtonColor)
-                        } else {
-                            RoundedRectangle(cornerRadius: 20)
-                                .fill(Color.clear)
-                           
-                               
-                        }
-                    }
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(isSelected ? Color.blue : Color.clear)
                 )
         }
         .buttonStyle(.plain)
     }
+    
     
     // MARK: – Tarjeta con el DatePicker
   

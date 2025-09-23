@@ -10,7 +10,6 @@ enum ActivityStatus: String, Codable {
 // MARK: - Project
 @Model
 class Project {
-
     var title: String
     var endDate: Date?
     @Attribute var status: ActivityStatus
@@ -24,6 +23,10 @@ class Project {
     // 1 Project → * TaskItems
     @Relationship(deleteRule: .cascade, inverse: \TaskItem.project)
     var tasks: [TaskItem] = []
+
+    // 🔹 1 Project → * Notes
+    @Relationship(deleteRule: .cascade, inverse: \NoteItem.project)
+    var notes: [NoteItem] = []
 
     init(
         title: String,
@@ -47,19 +50,21 @@ class Event {
     @Attribute var status: ActivityStatus
     var descriptionEvent: String?
 
-    // * Event → 1 Project (directa)
+    // * Event → 1 Project
     @Relationship(deleteRule: .nullify)
     var project: Project?
 
-    // 1 Event → * TaskItems (inversa)
+    // 1 Event → * TaskItems
     @Relationship(deleteRule: .nullify, inverse: \TaskItem.event)
     var tasks: [TaskItem] = []
 
-    // 1 Event → * Documents (inversa)
+    // 1 Event → * Documents
     @Relationship(deleteRule: .cascade, inverse: \UploadedDocument.event)
     var documents: [UploadedDocument] = []
 
-   
+    // 🔹 1 Event → * Notes
+    @Relationship(deleteRule: .cascade, inverse: \NoteItem.event)
+    var notes: [NoteItem] = []
 
     init(
         name: String,
@@ -75,6 +80,48 @@ class Event {
         self.descriptionEvent = descriptionEvent
     }
 }
+
+// MARK: - NoteItem
+@Model
+class NoteItem {
+    var title: String
+    var content: String?
+    var createdAt: Date
+    var updatedAt: Date
+    var isFavorite: Bool
+    var isArchived: Bool
+
+    // 🔹 * Note → 1 Project (opcional)
+    @Relationship(deleteRule: .nullify)
+    var project: Project?
+
+    // 🔹 * Note → 1 Event (opcional)
+    @Relationship(deleteRule: .nullify)
+    var event: Event?
+
+    init(
+        title: String,
+        content: String? = nil,
+        createdAt: Date = Date(),
+        updatedAt: Date = Date(),
+        isFavorite: Bool = false,
+        isArchived: Bool = false,
+        project: Project? = nil,
+        event: Event? = nil
+    ) {
+        self.title = title
+        self.content = content
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+        self.isFavorite = isFavorite
+        self.isArchived = isArchived
+        self.project = project
+        self.event = event
+    }
+}
+
+
+
 
 // MARK: - TaskItem
 @Model
@@ -145,9 +192,5 @@ class lastDeleteTask {
     }
 }
 
-// MARK: - Extensions
-extension Project {
-    var allEventDocuments: [UploadedDocument] {
-        events.flatMap { $0.documents }
-    }
-}
+
+

@@ -13,7 +13,6 @@ import UIKit
 struct ProjectMark: View {
     @EnvironmentObject var utilFunctions: generalFunctions
     @Environment(\.modelContext) private var context
-    @Environment(\.horizontalSizeClass) var sizeClass   // 👈 clave
 
     @State private var readyToShowTasks: Bool = false
     @State private var showAddProjectView: Bool = false
@@ -23,93 +22,55 @@ struct ProjectMark: View {
     private let accentColor = Color(red: 160/255, green: 130/255, blue: 180/255)
 
     var body: some View {
-        VStack(spacing: 20) {
-            headerCard(title: "Proyectos")
-                .padding(.top, 16)
+        ZStack {
+            VStack(spacing: 20) {
+                headerCard(title: "Proyectos")
+                    .padding(.top, 16)
 
-            pickerBard
+                pickerBard
 
-            ScrollView {
-                VStack(spacing: 20) {
-                    if projectList.isEmpty {
-                        emptyProjectList
-                    } else {
-                        showProjectList
+                ScrollView {
+                    VStack(spacing: 20) {
+                        if projectList.isEmpty {
+                            emptyProjectList
+                        } else {
+                            showProjectList
+                        }
                     }
+                    .padding(.vertical, 16)
                 }
-                .padding(.vertical, 16)
-                .frame(maxWidth: sizeClass == .regular ? 800 : .infinity) // 👈 iPad ancho máx. 800
-                .frame(maxWidth: .infinity) // centra
             }
-        }
-        .safeAreaInset(edge: .bottom) {
-            HStack {
-                Spacer()
-                buttonControlMark
+            .safeAreaInset(edge: .bottom) {
+                // 👇 FAB corregido
+                HStack {
+                    Spacer()
+                    buttonControlMark
+                }
+                .padding(.trailing, 16)
+                .padding(.bottom, 80)
             }
-            .padding(.trailing, 16)
-            .padding(.bottom, 80)
+            .onAppear {
+                reloadProjects()
+            }
+            .onChange(of: selectedTab) { _ in
+                reloadProjects()
+            }
+            .ignoresSafeArea(.keyboard)
         }
         .sheet(isPresented: $showAddProjectView, onDismiss: {
-            
-            
             reloadProjects()
-            
-            withAnimation(.easeInOut(duration: 0.2)) {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    withAnimation(.easeOut(duration: 0.3)) {
-                        readyToShowTasks = true
-                    }
-                }
-            }
         }) {
             CreateProject()
         }
-        .onAppear {
-            reloadProjects()
-        }
-        .onChange(of: selectedTab) { _ in
-            reloadProjects()
-        }
-        .ignoresSafeArea(.keyboard)
     }
 
-    // MARK: – Mostrar lista proyectos
-    private var showProjectList: some View {
-        let columns: [GridItem] = {
-            if sizeClass == .regular {
-                // iPad: 3 columnas
-                return Array(repeating: GridItem(.flexible()), count: 3)
-            } else {
-                // iPhone: 2 columnas
-                return Array(repeating: GridItem(.flexible()), count: 2)
-            }
-        }()
-
-        return LazyVGrid(columns: columns, spacing: 30) {
-            ForEach(projectList, id: \.self) { project in
-                NavigationLink(destination: ProjectDetall(editableProject: project)) {
-                    projectElement(project: project)
-                }
-            }
-        }
-        .padding()
-    }
-
-    // MARK: – Recarga proyectos
-    private func reloadProjects() {
-        if selectedTab == 1 {
-            projectList = HomeApi.downloadOffProjects(context: context)
-        } else {
-            projectList = HomeApi.downloadOnProjects(context: context)
-        }
-    }
-
-    // MARK: – Segment Button
+    // MARK: – Botón para cada segmento
     private func segmentButton(title: String, tag: Int) -> some View {
         let isSelected = (selectedTab == tag)
         return Button(action: {
-            withAnimation(.easeInOut) { selectedTab = tag }
+            withAnimation(.easeInOut) {
+                selectedTab = tag
+            }
         }) {
             Text(title)
                 .font(.system(size: 15, weight: isSelected ? .semibold : .regular))
@@ -118,8 +79,15 @@ struct ProjectMark: View {
                 .frame(maxWidth: .infinity)
                 .frame(height: 40)
                 .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(isSelected ? Color.taskButtonColor : Color.clear)
+                    Group {
+                        if isSelected {
+                            RoundedRectangle(cornerRadius: 20)
+                                .fill(Color.taskButtonColor)
+                        } else {
+                            RoundedRectangle(cornerRadius: 20)
+                                .fill(Color.clear)
+                        }
+                    }
                 )
         }
         .buttonStyle(.plain)
@@ -138,16 +106,30 @@ struct ProjectMark: View {
         .padding(.horizontal, 16)
     }
 
-    // MARK: – Botón flotante
+    // MARK: – Botón flotante (versión corregida)
     private var buttonControlMark: some View {
-        Button(action: { showAddProjectView = true }) {
-            Image(systemName: "plus")
-                .font(.system(size: 28, weight: .bold))
-                .foregroundColor(.white)
-                .padding(14)
-                .background(Circle().fill(Color.taskButtonColor))
-                .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 3)
+        HStack(spacing: 10) {
+            Button(action: {
+                showAddProjectView = true
+            }) {
+                Image(systemName: "plus")
+                    .font(.system(size: 28, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(10)
+                    .background(
+                        Circle()
+                            .fill(Color.purple.opacity(0.9))
+                            .shadow(color: .black.opacity(0.1), radius: 6, x: 0, y: 2)
+                    )
+            }
         }
+        .padding(10)
+        .background(
+            Capsule()
+                .fill(.white)
+                .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 4)
+        )
+        .padding(.bottom, 60)
     }
 
     // MARK: – Lista vacía
@@ -165,6 +147,35 @@ struct ProjectMark: View {
         }
         .frame(maxWidth: .infinity, minHeight: 150)
         .padding(20)
+    }
+
+    // MARK: – Grid de proyectos
+    private var showProjectList: some View {
+        let columns = [
+            GridItem(.flexible()),
+            GridItem(.flexible())
+        ]
+
+        return LazyVGrid(columns: columns) {
+            ForEach(projectList, id: \.self) { project in
+                NavigationLink(destination: ProjectDetall(editableProject: project)) {
+                    ZStack(alignment: .topLeading) {
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color.purple)
+                            .frame(width: 90, height: 30)
+                            .offset(x: 10, y: -7)
+                            .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .stroke(Color.primary.opacity(0.05), lineWidth: 0.5)
+                            )
+
+                        projectElement(project: project)
+                    }
+                }
+            }
+        }
+        .padding(.horizontal, 16)
     }
 
     // MARK: – Elemento proyecto
@@ -219,6 +230,16 @@ struct ProjectMark: View {
         )
     }
 
+    // MARK: – Recarga proyectos
+    private func reloadProjects() {
+        if selectedTab == 1 {
+            projectList = HomeApi.downloadOffProjects(context: context)
+        } else {
+            projectList = HomeApi.downloadOnProjects(context: context)
+        }
+    }
+
+    // MARK: – Próximo evento
     private func firtsEvent(events: [Event]) -> String {
         let today = Date()
         let futureEvents = events.filter { $0.endDate > today }

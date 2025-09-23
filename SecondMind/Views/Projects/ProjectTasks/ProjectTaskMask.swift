@@ -1,14 +1,22 @@
+//
+//  ProjectTaskMask.swift
+//  SecondMind
+//
+//  Created by Jorge Cortes on 20/9/25.
+//
+
 import SwiftUI
 import SwiftData
 import Foundation
 
-struct TaskMark: View {
+struct ProjectTaskMark: View {
     
-    @EnvironmentObject var  navModel : SelectedViewList
+    @StateObject var modelView = TaskMarkProjectDetallModelView()
     @EnvironmentObject var  utilFunctions : generalFunctions
     @Environment(\.modelContext) private var context
-    @State var listTask: [TaskItem] = []
-    @State private var readyToShowTasks: Bool = false
+ 
+    
+    @Bindable var project: Project
     @State private var usableSize: CGSize = .zero
     @State private var selectedData: Date = Date()
     private let accentColor = Color.taskButtonColor
@@ -29,14 +37,14 @@ struct TaskMark: View {
                 
                 ScrollView {
                     VStack(spacing: 20) {
-                        if navModel.selectedTab == 1 && showCal {
+                        if modelView.selectedTab == 1 && showCal {
                             calendarCard(selectedDate: $selectedData)
                             
                         }
-                        else if navModel.selectedTab == 1 && !showCal {
+                        else if modelView.selectedTab == 1 && !showCal {
                             TaskCard
                             
-                        }  else if navModel.selectedTab == 2{
+                        }  else if modelView.selectedTab == 2{
                             
                             TaskCard
                         } else {
@@ -58,30 +66,43 @@ struct TaskMark: View {
                 .padding(.bottom, 80)
             }
             .ignoresSafeArea(.keyboard)
+            .onAppear {
+                modelView.setParameters(context: context, project: project)
+            }
         }
     }
     
     
     
+    // MARK: – Botón para cada segmento
     private func segmentButton(title: String, tag: Int) -> some View {
-        let isSelected = (navModel.selectedTab == tag)
+        let isSelected = (modelView.selectedTab == tag)
         return Button(action: {
-            withAnimation(.easeInOut) {navModel.selectedTab = tag }
+            withAnimation(.easeInOut) {
+                modelView.selectedTab = tag
+            }
         }) {
             Text(title)
                 .font(.system(size: 15, weight: isSelected ? .semibold : .regular))
-                .foregroundColor(isSelected ? .white : .blue)
-                .frame(maxHeight: 36)
-                .frame(maxWidth: .infinity)
+                .foregroundColor(isSelected ? .white : .taskButtonColor)
+                .frame( maxHeight: 36).frame(maxWidth: .infinity)
                 .frame(height: 40)
                 .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(isSelected ? Color.blue : Color.clear)
+                    Group {
+                        if isSelected {
+                            RoundedRectangle(cornerRadius: 20)
+                                .fill(Color.taskButtonColor)
+                        } else {
+                            RoundedRectangle(cornerRadius: 20)
+                                .fill(Color.clear)
+                            
+                            
+                        }
+                    }
                 )
         }
         .buttonStyle(.plain)
     }
-    
     
     // MARK: – Tarjeta con el DatePicker
     
@@ -104,11 +125,11 @@ struct TaskMark: View {
     private var buttonControlMark: some View {
         
         HStack(spacing: 10) {
-            if navModel.selectedTab == 1 {
+            if modelView.selectedTab == 1 {
                 if #available(iOS 26.0, *) {
                     Button(action: {
                         withAnimation(.easeInOut) { showCal.toggle() }
-                        print(showCal, navModel.selectedTab)
+                      
                     }) {
                         Image(systemName: "calendar")
                             .font(.system(size: 28, weight: .bold))
@@ -119,11 +140,14 @@ struct TaskMark: View {
                     .glassEffect(.regular.tint(Color.white.opacity(0.1)).interactive(), in: .circle)
                     .shadow(color: .black.opacity(0.4), radius: 5, x: 0, y: 4)
                     
+                    
+                    
+                    
                 } else {
                     
                     Button(action: {
                         withAnimation(.easeInOut) { showCal.toggle() }
-                        print(showCal, navModel.selectedTab)
+                        print(showCal, modelView.selectedTab)
                     }) {
                         Image(systemName: "calendar")
                             .font(.system(size: 28, weight: .bold))
@@ -152,13 +176,23 @@ struct TaskMark: View {
                 .glassEffect(.clear.tint(Color.white.opacity(0.1)).interactive(), in: .circle)
                 .shadow(color: .black.opacity(0.4), radius: 5, x: 0, y: 4)
                 .sheet(isPresented: $showAddTaskView, onDismiss: {
-                    if navModel.selectedTab == 1 {
-                        listTask =  HomeApi.fetchDateTasks(date: selectedData, context: context)
-                    }else{
-                        listTask = HomeApi.fetchNoDateTasks(context: context)
+                    
+                switch modelView.selectedTab
+                    {
+                        
+                        case 0 :
+                            
+                            modelView.loadEvents()
+                            break;
+                        case 1 :
+                            modelView.loadEvents(selectedData: selectedData)
+                            break;
+                        default:
+                            break;
                     }
+                        
                 }){
-                    CreateTask()
+                    CreateTask(project: project)
                 }
             } else {
                 
@@ -176,13 +210,21 @@ struct TaskMark: View {
                                 .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
                         )
                 }.sheet(isPresented: $showAddTaskView, onDismiss: {
-                    if navModel.selectedTab == 1 {
-                        listTask =  HomeApi.fetchDateTasks(date: selectedData, context: context)
-                    }else{
-                        listTask = HomeApi.fetchNoDateTasks(context: context)
-                    }
+                    switch modelView.selectedTab
+                        {
+                            
+                            case 0 :
+                                
+                                modelView.loadEvents()
+                                break;
+                            case 1 :
+                                modelView.loadEvents(selectedData: Date())
+                                break;
+                            default:
+                                break;
+                        }
                 }){
-                    CreateTask()
+                    CreateTask(project: project)
                 }}
         }.padding(10)
         .padding(.bottom, 60)
@@ -203,12 +245,12 @@ struct TaskMark: View {
            VStack(alignment: .leading, spacing: 12) {
                HStack {
                    
-                   if navModel.selectedTab == 0 {
+                   if modelView.selectedTab == 0 {
                        Text("Tareas de hoy")
                            .foregroundColor(.primary)
                            .font(.title2.weight(.bold))
                            .foregroundColor(.primary)
-                   }else if navModel.selectedTab == 1 {
+                   }else if modelView.selectedTab == 1 {
                        Text(utilFunctions.formattedDate(selectedData)).foregroundColor(.primary)
                            .font(.title2.weight(.bold))
                            .foregroundColor(.primary)
@@ -219,7 +261,7 @@ struct TaskMark: View {
                    }
                   
                    Spacer()
-                   Text("\(listTask.count)")
+                   Text("\(modelView.tasks.count)")
                        .font(.subheadline.weight(.medium))
                        .foregroundColor(.secondary)
                }
@@ -228,13 +270,13 @@ struct TaskMark: View {
                Rectangle()
                    .fill(Color.primary.opacity(0.1))
                    .frame(height: 1)
-               if listTask.isEmpty {
+               if modelView.tasks.isEmpty {
                    
                    emptyTaskList
 
-               } else if readyToShowTasks {
+               } else if modelView.readyToShowTasks {
               
-                   if navModel.selectedTab == 2 {
+                   if modelView.selectedTab == 2 {
                        endTaskList
                    }else{
                        
@@ -253,19 +295,17 @@ struct TaskMark: View {
            .padding(.horizontal, 16)
            .onAppear {
                
-               switch navModel.selectedTab {
-                   case 0:
-                       listTask = HomeApi.fetchNoDateTasks(context: context)
-                   case 1:
-                       listTask =  HomeApi.fetchDateTasks(date: selectedData, context: context)
-                   case 2:
-                       listTask = HomeApi.loadTasksEnd(context: context)
-                   default:
-                       listTask = []
+               if modelView.selectedTab == 1 {
+                   
+                   modelView.loadEvents(selectedData: selectedData)
+                   
+               }else{
+                   
+                   modelView.loadEvents()
                }
                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                    withAnimation(.easeOut(duration: 0.3)) {
-                       readyToShowTasks = true
+                       modelView.readyToShowTasks = true
                    }
                }
               
@@ -290,16 +330,16 @@ struct TaskMark: View {
             .padding(.horizontal, 20).onChange(of: selectedData) {
                 withAnimation(.easeInOut(duration: 0.3)) {
                     showCal = false
-                    readyToShowTasks = true
+                    modelView.readyToShowTasks = true
                     print(selectedData)
-                    listTask =  HomeApi.fetchDateTasks(date: selectedData, context: context)
+                    modelView.loadEvents(selectedData: selectedData)
                 }
         
                 
                
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
                     withAnimation(.easeOut(duration: 0.35)) {
-                        readyToShowTasks = true
+                        modelView.readyToShowTasks = true
                     }
                 }
             }
@@ -333,7 +373,7 @@ struct TaskMark: View {
     
     private var taskListToDo: some View {
         LazyVStack(spacing: 12) {
-            ForEach(listTask, id: \.id) { task in
+            ForEach(modelView.tasks, id: \.id) { task in
                 NavigationLink(destination: TaskDetall(editableTask: task)) {
 
                 HStack(spacing: 12) {
@@ -375,7 +415,7 @@ struct TaskMark: View {
                             task.status = .off
                             do {
                                 try context.save()
-                                listTask.removeAll { $0.id == task.id }
+                                modelView.tasks.removeAll { $0.id == task.id }
                             } catch {
                                 print("❌ Error al guardar: \(error)")
                             }
@@ -404,14 +444,16 @@ struct TaskMark: View {
             .padding(.vertical, 8)
         
         // o lo que estimes conveniente
-        .animation(.easeOut(duration: 0.35), value: listTask)
+        .animation(.easeOut(duration: 0.35), value: modelView.tasks)
     }
     
-    private var endTaskList: some View {
+    private var endTaskList : some View {
         
-        let tasksWithDate = listTask.filter { $0.completeDate != nil }
+    
 
-        let groupTaskByDate = Dictionary(grouping: tasksWithDate) { task in
+        let completedTasks = modelView.tasks.filter { $0.completeDate != nil }
+
+        let groupTaskByDate = Dictionary(grouping: completedTasks) { task in
             Calendar.current.startOfDay(for: task.completeDate!)
         }
         
@@ -447,7 +489,7 @@ struct TaskMark: View {
                             Text(task.title)
                                 .font(.system(size: 16, weight: .medium))
                                 .foregroundColor(.primary).lineLimit(1)             // Limita a una línea
-                                .truncationMode(.tail) 
+                                .truncationMode(.tail)
                             if let due = task.endDate {
                                 Text(due.formatted(date: .abbreviated, time: .omitted))
                                     .font(.caption)
@@ -465,7 +507,7 @@ struct TaskMark: View {
                                 do {
                                     try context.delete(task)
                                     withAnimation {
-                                        listTask.removeAll { $0.id == task.id }
+                                        modelView.tasks.removeAll { $0.id == task.id }
                                     }
                                 } catch {
                                     print("❌ Error al guardar: \(error)")
@@ -494,7 +536,9 @@ struct TaskMark: View {
             .padding(.vertical, 8)
         
         // o lo que estimes conveniente
-        .animation(.easeOut(duration: 0.35), value: listTask)
+        .animation(.easeOut(duration: 0.35), value: modelView.tasks
+        
+        )
     }
        
         }
