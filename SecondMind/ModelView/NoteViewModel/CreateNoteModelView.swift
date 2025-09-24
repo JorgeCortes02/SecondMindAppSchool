@@ -75,6 +75,26 @@ final class NoteDetailViewModel: ObservableObject {
         note.content = prefix + current
     }
     
+    
+    func downloadProjectsAndEvents(){
+        
+        if let context {
+            
+            events = HomeApi.downdloadEventsFrom(context: context)
+            projects = HomeApi.downdloadProjectsFrom(context: context)
+        }
+       
+    }
+    func handleProjectChange() {
+        guard let context else { return }
+
+        if let project = note.project {
+  
+            events = HomeApi.downdloadEventsFromProject(project: project, context: context)
+        } else {
+            events = HomeApi.downdloadEventsFrom(context: context)
+        }
+    }
     // Guardado
     func saveNote() {
         guard let context else { return }

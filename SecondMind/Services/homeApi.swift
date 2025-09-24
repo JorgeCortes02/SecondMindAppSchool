@@ -344,7 +344,7 @@ struct HomeApi {
     
     
 
-    static func downloadNotes(context: ModelContext) -> [NoteItem] {
+    static func downloadActiveNotes(context: ModelContext) -> [NoteItem] {
           do {
               let notes = try context.fetch(FetchDescriptor<NoteItem>())
               return  notes.filter { !$0.isArchived }
@@ -356,8 +356,72 @@ struct HomeApi {
         
         
     
+    static func downloadArchivedNotes(context: ModelContext) -> [NoteItem] {
+          do {
+              let notes = try context.fetch(FetchDescriptor<NoteItem>())
+              return  notes.filter { $0.isArchived }
+          } catch {
+              print("❌ Error cargando notas: \(error)")
+              return []
+          }
+      }
+        
+    
+    static func downloadFavoritesNotes(context: ModelContext) -> [NoteItem] {
+          do {
+              let notes = try context.fetch(FetchDescriptor<NoteItem>())
+              return  notes.filter { !$0.isArchived && $0.isFavorite }
+          } catch {
+              print("❌ Error cargando notas: \(error)")
+              return []
+          }
+      }
     
     
-    
-    
+    static func searchActiveNotes(context: ModelContext, query: String) -> [NoteItem] {
+            do {
+                let notes = try context.fetch(FetchDescriptor<NoteItem>())
+                let lowerQuery = query.lowercased()
+                return notes.filter {
+                    !$0.isArchived &&
+                    ( $0.title.lowercased().contains(lowerQuery) ||
+                      ($0.content?.lowercased().contains(lowerQuery) ?? false) )
+                }
+            } catch {
+                print("❌ Error buscando notas activas: \(error)")
+                return []
+            }
+        }
+        
+        /// Buscar en notas archivadas
+        static func searchArchivedNotes(context: ModelContext, query: String) -> [NoteItem] {
+            do {
+                let notes = try context.fetch(FetchDescriptor<NoteItem>())
+                let lowerQuery = query.lowercased()
+                return notes.filter {
+                    $0.isArchived &&
+                    ( $0.title.lowercased().contains(lowerQuery) ||
+                      ($0.content?.lowercased().contains(lowerQuery) ?? false) )
+                }
+            } catch {
+                print("❌ Error buscando notas archivadas: \(error)")
+                return []
+            }
+        }
+        
+        /// Buscar en notas favoritas
+        static func searchFavoritesNotes(context: ModelContext, query: String) -> [NoteItem] {
+            do {
+                let notes = try context.fetch(FetchDescriptor<NoteItem>())
+                let lowerQuery = query.lowercased()
+                return notes.filter {
+                    !$0.isArchived && $0.isFavorite &&
+                    ( $0.title.lowercased().contains(lowerQuery) ||
+                      ($0.content?.lowercased().contains(lowerQuery) ?? false) )
+                }
+            } catch {
+                print("❌ Error buscando notas favoritas: \(error)")
+                return []
+            }
+        }
     }

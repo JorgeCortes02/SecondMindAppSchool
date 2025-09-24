@@ -14,29 +14,45 @@ class NoteViewModel: ObservableObject {
 
     func loadNotes() {
         if let context{
+           
+            switch selectedTab {
+                
+                case 0:
+                
+                noteList = HomeApi.downloadActiveNotes(context: context)
+                    break;
+                case 1:
+                noteList = HomeApi.downloadFavoritesNotes(context: context)
+                    break ;
+            case 2:
+                noteList = HomeApi.downloadArchivedNotes(context: context)
+                break;
             
-            noteList = HomeApi.downloadNotes(context: context)
+            default :
+                break;
+            }
+            
+            
         }
        
     }
 
-    func loadByTab(tab: Int) {
-        switch tab {
-        case 1: // Favoritas
-            filteredList = noteList.filter { $0.isFavorite }
-        case 2: // Archivadas
-            filteredList = noteList.filter { $0.isArchived }
-        default: // Todas
-            filteredList = noteList
-        }
-    }
 
-    func applySearch(_ query: String, tab: Int) {
-        loadByTab(tab: tab)
-        if !query.isEmpty {
-            filteredList = filteredList.filter {
-                $0.title.localizedCaseInsensitiveContains(query) ||
-                ($0.content ?? "").localizedCaseInsensitiveContains(query)
+    func applySearch(_ query: String) {
+        guard let context else { return }
+        
+        if query.isEmpty {
+            loadNotes()
+        } else {
+            switch selectedTab {
+            case 0:
+                noteList = HomeApi.searchActiveNotes(context: context, query: query)
+            case 1:
+                noteList = HomeApi.searchFavoritesNotes(context: context, query: query)
+            case 2:
+                noteList = HomeApi.searchArchivedNotes(context: context, query: query)
+            default:
+                noteList = []
             }
         }
     }

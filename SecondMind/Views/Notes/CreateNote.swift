@@ -23,8 +23,11 @@ struct NoteDetailView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: 16) {
-                headerCard(title: "Tu nota")
-                    .padding(.top, 16)
+                headerCard
+                    .padding(.top, 20)
+                    .shadow(color: Color.black.opacity(0.15), radius: 10, x: 0, y: 8)
+                    .scaleEffect(1.02) // leve zoom para destacar
+               
 
                 // --- Pickers en HStack ---
                 HStack(spacing: 12) {
@@ -160,6 +163,36 @@ struct NoteDetailView: View {
         }
         .onAppear {
             viewModel.setContext(context)
+            viewModel.downloadProjectsAndEvents()
+        }.onChange(of: viewModel.note.project) { newProject in
+           
+            viewModel.handleProjectChange()
         }
+    }
+    
+    // ——— headerCard tal como estaba, sin cambios estructurales ———
+    private var headerCard: some View {
+        VStack(spacing: 10) {
+            ZStack {
+                Text("Detalles de tu nota")
+                    .font(.system(size: 32, weight: .bold))
+                    .foregroundColor(.taskButtonColor)
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+            // Fondo semitransparente con degradado suave
+            .background(
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color(red: 0.95, green: 0.95, blue: 0.97, opacity: 0.8),
+                        Color(red: 0.90, green: 0.90, blue: 0.93, opacity: 0.8)
+                    ]),
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
+            .cornerRadius(20)
+        }
+        .padding(.horizontal, 16)
     }
 }

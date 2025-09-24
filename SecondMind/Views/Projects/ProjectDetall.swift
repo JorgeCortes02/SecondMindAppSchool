@@ -36,11 +36,7 @@ struct ProjectDetall : View {
                     
                 
                 // ——— Header interno (“Detalles de tu tarea”), con sombra y animación ———
-                headerCard
-                    .padding(.top, 10)
-                    .shadow(color: Color.black.opacity(0.15), radius: 10, x: 0, y: 8)
-                    .scaleEffect(1.02) // leve zoom para destacar
-                    .animation(.easeOut(duration: 0.4), value: editableProject.id)
+             
                 
                 Spacer()
                 
@@ -163,7 +159,11 @@ struct ProjectDetall : View {
                                     }
                                     .frame(maxWidth: .infinity, alignment: .center)
                                                                        
-                                                
+                                    NavigationLink(
+                                        destination: NoteDetailView(project: editableProject)
+                                    ) {
+                                        Label("Nueva nota", systemImage: "plus")
+                                    }.buttonStyle(RoundedButtonStyle(backgroundColor: .blue))
                                               }.padding(.top, 10)
 
 
@@ -392,6 +392,7 @@ struct ProjectDetall : View {
                                                     
                             
                             TaskList(editableProject: editableProject)
+                            NotesCarrousel(editableProject: editableProject)
                             EventCarrousel(editableProject: editableProject)
                             
                         }.padding().frame(maxWidth: .infinity, alignment: .leading)

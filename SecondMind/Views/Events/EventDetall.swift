@@ -7,73 +7,63 @@
 
 import SwiftUI
 import SwiftData
+
 struct EventDetall: View {
-  
-    
-   
-    //Variables que vienen de fuera (viewModel, parametros...)
+    // Variables que vienen de fuera
     @Bindable var editableEvent: Event
     @Environment(\.modelContext) var context
     @Environment(\.dismiss) var dismiss
-    @ObservedObject var utilFunctions : generalFunctions = generalFunctions()
+    @ObservedObject var utilFunctions: generalFunctions = generalFunctions()
     
-    @StateObject var viewModel : EventDetallModelView
+    @StateObject var viewModel: EventDetallModelView
     
     init(editableEvent: Event) {
         self._editableEvent = Bindable(editableEvent)
         _viewModel = StateObject(wrappedValue: EventDetallModelView())
     }
     
-    // Variables de color y estilo.
-    
+    // Variables de estilo
     let textFieldBackground = Color(red: 240/255, green: 240/255, blue: 245/255)
     
-   //Variables de la vista
+    // Variables de la vista
     @State var isEditing = false
     @State private var ShowDatePicker: Bool = false
     @State private var isIncompleteTask: Bool = false
     
-    
     var body: some View {
         ZStack {
-            // Fondo general con un ligero color pastel
-           BackgroundColorTemplate()
-            .toolbar {
-                
-                ToolbarItemGroup(placement: .topBarTrailing) {
-                    Button(action: {isEditing = true} ){
-                        Image(systemName: "pencil")
-                    }
-                    
-                    Button(action: {}) {
-                        Image(systemName: "trash")
+            BackgroundColorTemplate()
+                .toolbar {
+                    ToolbarItemGroup(placement: .topBarTrailing) {
+                        Button(action: { isEditing = true }) {
+                            Image(systemName: "pencil")
+                        }
+                        
+                        Button(action: {}) {
+                            Image(systemName: "trash")
+                        }
                     }
                 }
-            }
+            
             VStack(spacing: 10) {
-                // ——— Header externo (sin cambios estructurales, pero con estilo) ———
+                // Header externo
                 Header()
                     .frame(height: 40)
                     .padding(.horizontal)
                     .padding(.top, 10)
                     .padding(.bottom, 5)
                 
-                // ——— Header interno (“Detalles de tu tarea”), con sombra y animación ———
-                headerCard
-                    .padding(.top, 20)
-                    .shadow(color: Color.black.opacity(0.15), radius: 10, x: 0, y: 8)
-                    .scaleEffect(1.02) // leve zoom para destacar
-                    .animation(.easeOut(duration: 0.4), value: editableEvent.id)
+                
                 
                 Spacer()
                 
-                // ——— Contenido principal dentro de un ScrollView ———
+                // Contenido principal
                 ScrollView {
                     VStack(spacing: 32) {
-                        if isEditing{
-                            
+                        
+                        if isEditing {
+                            // 🔹 Campo título editable
                             VStack(alignment: .leading) {
-                                
                                 Text("Titulo")
                                     .font(.headline)
                                     .foregroundColor(.primary)
@@ -91,61 +81,60 @@ struct EventDetall: View {
                                     )
                                     .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 4)
                                     .onChange(of: editableEvent.title) { newValue in
-                                                    // Eliminar todos los saltos de línea
-                                                    if newValue.contains("\n") {
-                                                        editableEvent.title = newValue.replacingOccurrences(of: "\n", with: " ")
-                                                    }
-                                                }
+                                        if newValue.contains("\n") {
+                                            editableEvent.title = newValue.replacingOccurrences(of: "\n", with: " ")
+                                        }
+                                    }
                                 
-                                HStack{
+                                HStack {
                                     Spacer()
-                                    if isIncompleteTask{
-                                        
-                                        Text("Es obligatorio añadir un titulo").font(.caption).foregroundStyle(.red)
+                                    if isIncompleteTask {
+                                        Text("Es obligatorio añadir un titulo")
+                                            .font(.caption)
+                                            .foregroundStyle(.red)
                                     }
                                     Spacer()
                                 }
-                            }.padding(.horizontal, 20).padding(.top, 20)
-                        }else{
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.top, 20)
+                        } else {
+                            // 🔹 Campo título en solo lectura
                             Text(editableEvent.title)
                                 .font(.system(size: 28, weight: .bold))
                                 .foregroundColor(.primary)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(.horizontal, 24)
                                 .padding()
-                                .opacity(0.9).padding(.top, 20)
+                                .opacity(0.9)
+                                .padding(.top, 20)
                         }
                         
-                        
-                        // Sección: Descripción y Proyectos/Evento
+                        // 🔹 Sección: Descripción + Proyecto
                         VStack(alignment: .leading, spacing: 36) {
-                            // – Descripción –
+                            // Descripción
                             VStack(alignment: .leading) {
-                                
                                 Text("Descripción")
                                     .font(.headline)
                                     .foregroundColor(.primary)
                                     .padding(.bottom, 4)
-                                if isEditing{
-                                    
+                                
+                                if isEditing {
                                     TextEditor(text: Binding(
-                                            get: { editableEvent.descriptionEvent ?? "" },
-                                            set: { editableEvent.descriptionEvent = $0 }
-                                        ))
-                                        .font(.body)
-                                        .foregroundColor(.primary)
-                                        .scrollContentBackground(.hidden)
-                                        .padding(12)
-                                        .frame(minHeight: 100)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 12)
-                                                .fill(textFieldBackground)
-                                        )
-                                        .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 4)
-                                    
-                                    
-                                }else{
-                                   
+                                        get: { editableEvent.descriptionEvent ?? "" },
+                                        set: { editableEvent.descriptionEvent = $0 }
+                                    ))
+                                    .font(.body)
+                                    .foregroundColor(.primary)
+                                    .scrollContentBackground(.hidden)
+                                    .padding(12)
+                                    .frame(minHeight: 100)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(textFieldBackground)
+                                    )
+                                    .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 4)
+                                } else {
                                     Text((editableEvent.descriptionEvent?.isEmpty ?? true) ? "No hay descripción disponible." : editableEvent.descriptionEvent!)
                                         .font(.body)
                                         .foregroundColor(.primary)
@@ -156,10 +145,9 @@ struct EventDetall: View {
                                         .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 4)
                                         .fixedSize(horizontal: false, vertical: true)
                                 }
-                               
                             }
                             
-                            // – Proyecto y Evento en dos columnas –
+                            // Proyecto
                             HStack(spacing: 16) {
                                 VStack(alignment: .leading) {
                                     Text("Proyecto")
@@ -167,85 +155,69 @@ struct EventDetall: View {
                                         .foregroundColor(.primary)
                                         .padding(.bottom, 4)
                                     
-                                    if isEditing{
-                                        
-                                        Picker("Selecciona un proyecto", selection: $editableEvent.project){
+                                    if isEditing {
+                                        Picker("Selecciona un proyecto", selection: $editableEvent.project) {
                                             Text("Sin proyecto").tag(nil as Project?)
-                                            ForEach(viewModel.projects, id: \.self){ project in
+                                            ForEach(viewModel.projects, id: \.self) { project in
                                                 Text(project.title).tag(project as Project?)
-                                                
                                             }
-                                        }.pickerStyle(.menu).font(.body)
+                                        }
+                                        .pickerStyle(.menu)
+                                        .font(.body)
+                                        .foregroundColor(.primary)
+                                        .padding(12)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .background(textFieldBackground)
+                                        .cornerRadius(12)
+                                        .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 4)
+                                    } else {
+                                        Text(editableEvent.project?.title ?? "No hay proyecto.")
+                                            .font(.body)
                                             .foregroundColor(.primary)
                                             .padding(12)
                                             .frame(maxWidth: .infinity, alignment: .leading)
                                             .background(textFieldBackground)
                                             .cornerRadius(12)
                                             .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 4)
-                                          
-                                    }else{
-                                        
-                                                   Text(editableEvent.project?.title ?? "No hay proyecto.")
-                                                       .font(.body)
-                                                       .foregroundColor(.primary)
-                                                       .padding(12)
-                                                       .frame(maxWidth: .infinity, alignment: .leading)
-                                                       .background(textFieldBackground)
-                                                       .cornerRadius(12)
-                                                       .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 4)
-                                               }
-                                           
                                     }
-                             
-                                
-                         
+                                }
                             }
                         }
                         .padding(.horizontal, 16)
                         
-                        // Sección: Fecha de vencimiento con sombra y borde semitransparente
+                        // 🔹 Sección: Fecha
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Fecha de vencimiento")
                                 .font(.headline)
                                 .foregroundColor(.primary)
                                 .padding(.bottom, 4)
                             
-                            
-                            if isEditing  {
-                              
-                              
-                                    VStack(spacing: 8) {
-                                        DatePicker(
-                                            "Selecciona una fecha",
-                                            selection: $editableEvent.endDate,
-                                            in: Date()...,
-                                            displayedComponents: [.date]
-                                        )
-                                        .datePickerStyle(.compact)
-                                        DatePicker(
-                                            "Selecciona una hora",
-                                            selection: $editableEvent.endDate,
-                                            displayedComponents: [.hourAndMinute]
-                                        )
-                                        .datePickerStyle(.compact)
-                                       
-                                    }.padding(.bottom, 16)
-                                
-                                
-                                
-                               
-                            }else{
-                                
+                            if isEditing {
+                                VStack(spacing: 8) {
+                                    DatePicker(
+                                        "Selecciona una fecha",
+                                        selection: $editableEvent.endDate,
+                                        in: Date()...,
+                                        displayedComponents: [.date]
+                                    )
+                                    .datePickerStyle(.compact)
+                                    
+                                    DatePicker(
+                                        "Selecciona una hora",
+                                        selection: $editableEvent.endDate,
+                                        displayedComponents: [.hourAndMinute]
+                                    )
+                                    .datePickerStyle(.compact)
+                                }
+                                .padding(.bottom, 16)
+                            } else {
                                 HStack(spacing: 8) {
-                                    
-                                 
-                                    
                                     Image(systemName: "calendar")
                                         .foregroundColor(.orange)
-                                  
+                                    
                                     Text(editableEvent.endDate.formatted(date: .long, time: .shortened))
-                                            .font(.body)
-                                            .foregroundColor(.primary)
+                                        .font(.body)
+                                        .foregroundColor(.primary)
                                     
                                     Spacer()
                                 }
@@ -253,20 +225,31 @@ struct EventDetall: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .background(textFieldBackground)
                                 .cornerRadius(12)
-                                .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 4).padding(.bottom, 16)
+                                .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 4)
+                                .padding(.bottom, 16)
                             }
-
-                            }.padding(.horizontal, 16)
-                            
-                            
-                            
                         }
+                        .padding(.horizontal, 16)
                         
+                        // ✅ 🔹 NUEVA SECCIÓN: Notas del evento
+                        NotesCarrousel(editableEvent: editableEvent)
+                            .padding(.horizontal, 8)
                         
-                        // Botones principales con degradados y animación al presionar
+                        // 🔹 Botones principales
                         VStack(spacing: 16) {
+                            NavigationLink(
+                                destination: NoteDetailView(event: editableEvent)
+                            ) {
+                                Label("Nueva nota", systemImage: "plus")  .font(.headline)
+                                    .foregroundColor(.white)
+                                    .padding()
+                                    .frame(maxWidth: .infinity)
+                                    .background(.blue)
+                                    
+                                    .cornerRadius(12)
+                                    .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
+                            }
                             Button(action: {
-                                
                                 viewModel.deleteEvent(event: editableEvent)
                                 utilFunctions.dismissViewFunc()
                             }) {
@@ -275,7 +258,6 @@ struct EventDetall: View {
                                     .foregroundColor(.white)
                                     .padding()
                                     .frame(maxWidth: .infinity)
-                                    // Fondo degradado azul
                                     .background(
                                         LinearGradient(
                                             gradient: Gradient(colors: [
@@ -289,34 +271,26 @@ struct EventDetall: View {
                                     .cornerRadius(12)
                                     .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
                             }
-                            .buttonStyle(ScaleButtonStyle()) // ligera animación al pulsar
-                            if isEditing
-                            {
+                            .buttonStyle(ScaleButtonStyle())
+                            
+                            if isEditing {
                                 Button(action: {
-                                    
-                                  
                                     viewModel.saveEvent(event: editableEvent)
-                                    
                                     isEditing = false
-                                 
-                                    }) {
-                                        
-                                       
-                                            Text("Guardar Evento")
-                                                .font(.headline)
-                                                .foregroundColor(.white)
-                                                .padding()
-                                                .frame(maxWidth: .infinity)
-                                                .background(
-                                                    RoundedRectangle(cornerRadius: 12)
-                                                        .fill(Color.eventButtonColor)
-                                                )
-                                                .overlay(
-                                                    RoundedRectangle(cornerRadius: 12)
-                                                        .stroke(Color.eventButtonColor, lineWidth: 1.5)
-                                                )
-                                      
-                                   
+                                }) {
+                                    Text("Guardar Evento")
+                                        .font(.headline)
+                                        .foregroundColor(.white)
+                                        .padding()
+                                        .frame(maxWidth: .infinity)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .fill(Color.eventButtonColor)
+                                        )
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .stroke(Color.eventButtonColor, lineWidth: 1.5)
+                                        )
                                 }
                                 .buttonStyle(ScaleButtonStyle())
                             }
@@ -324,7 +298,6 @@ struct EventDetall: View {
                         .padding(.horizontal, 24)
                         .padding(.bottom, 24)
                     }
-                    // Tarjeta blanca con esquinas muy redondeadas
                     .background(Color.white)
                     .cornerRadius(40)
                     .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 6)
@@ -333,18 +306,20 @@ struct EventDetall: View {
                 }
                 
                 Spacer()
-            }.onAppear{
+            }
+            .onAppear {
                 viewModel.setContext(context: context)
                 viewModel.getProjects()
-            }.onChange(of: utilFunctions.dismissView){value in
+            }
+            .onChange(of: utilFunctions.dismissView) { value in
                 if value {
                     dismiss()
                 }
             }
         }
+    }
     
-
-    // ——— headerCard tal como estaba, sin cambios estructurales ———
+    // MARK: – Header interno
     private var headerCard: some View {
         VStack(spacing: 10) {
             ZStack {
@@ -354,7 +329,6 @@ struct EventDetall: View {
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
-            // Fondo semitransparente con degradado suave
             .background(
                 LinearGradient(
                     gradient: Gradient(colors: [
@@ -370,4 +344,3 @@ struct EventDetall: View {
         .padding(.horizontal, 16)
     }
 }
-

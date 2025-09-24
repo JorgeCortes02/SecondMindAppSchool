@@ -2,35 +2,22 @@ import SwiftUI
 import SwiftData
 
 struct CreateTask: View {
-    @State private var newTask: TaskItem
+    @Environment(\.modelContext) private var context
+    @Environment(\.dismiss) private var dismiss
+
+    @StateObject private var modelView: CreateTaskViewModel
 
     init(project: Project? = nil) {
-        self._newTask = State(initialValue: TaskItem(
-            title: "",
-            endDate: nil,
-            project: project,
-            event: nil,
-            status: .on,
-            descriptionTask: ""
-        ))
+        _modelView = StateObject(wrappedValue: CreateTaskViewModel(project: project))
     }
 
     let softRed = Color(red: 220/255, green: 75/255, blue: 75/255)
     let textFieldBackground = Color(red: 248/255, green: 248/255, blue: 250/255)
 
-    @Environment(\.modelContext) var context
-    @Environment(\.dismiss) var dismiss
-
-    @State private var events: [Event] = []
-    @State private var projects: [Project] = []
-    @State private var isIncompleteTask: Bool = false
-    @State private var ShowDatePicker: Bool = false
-
     var body: some View {
         ZStack {
-            // Fondo degradado suave
-          BackgroundColorTemplate()
-            .ignoresSafeArea()
+            BackgroundColorTemplate()
+                .ignoresSafeArea()
 
             VStack(spacing: 20) {
                 headerCard
@@ -45,17 +32,17 @@ struct CreateTask: View {
                                 .font(.headline)
                                 .foregroundColor(.secondary)
                             
-                            TextField("Escribe el título", text: $newTask.title)
+                            TextField("Escribe el título", text: $modelView.newTask.title)
                                 .padding()
                                 .background(RoundedRectangle(cornerRadius: 14).fill(textFieldBackground))
                                 .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
-                                .onChange(of: newTask.title) { newValue in
-                                    newTask.title = newValue.replacingOccurrences(of: "\n", with: " ")
+                                .onChange(of: modelView.newTask.title) { newValue in
+                                    modelView.newTask.title = newValue.replacingOccurrences(of: "\n", with: " ")
                                 }
                         }
                         .padding(.horizontal, 20)
                         
-                        if isIncompleteTask {
+                        if modelView.isIncompleteTask {
                             Text("⚠️ Es obligatorio añadir un título")
                                 .font(.caption)
                                 .foregroundColor(.red)
@@ -68,8 +55,8 @@ struct CreateTask: View {
                                 .foregroundColor(.secondary)
                             
                             TextEditor(text: Binding(
-                                get: { newTask.descriptionTask ?? "" },
-                                set: { newTask.descriptionTask = $0 }
+                                get: { modelView.newTask.descriptionTask ?? "" },
+                                set: { modelView.newTask.descriptionTask = $0 }
                             ))
                             .frame(minHeight: 120)
                             .padding()
@@ -84,9 +71,9 @@ struct CreateTask: View {
                                 Text("Proyecto")
                                     .font(.headline)
                                     .foregroundColor(.secondary)
-                                Picker("Selecciona un proyecto", selection: $newTask.project) {
+                                Picker("Selecciona un proyecto", selection: $modelView.newTask.project) {
                                     Text("Sin proyecto").tag(nil as Project?)
-                                    ForEach(projects, id: \.self) { project in
+                                    ForEach(modelView.projects, id: \.self) { project in
                                         Text(project.title).tag(project as Project?)
                                     }
                                 }
@@ -95,11 +82,8 @@ struct CreateTask: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .background(RoundedRectangle(cornerRadius: 14).fill(textFieldBackground))
                                 .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
-                                .onChange(of: newTask.project) { newProject in
-                                    if newTask.event == nil {
-                                        newTask.endDate = newProject?.endDate
-                                    }
-                                    events = newProject.map { HomeApi.downdloadEventsFromProject(project: $0, context: context) } ?? []
+                                .onChange(of: modelView.newTask.project) { newProject in
+                                    modelView.updateProjectSelection(newProject)
                                 }
                             }
                             
@@ -107,9 +91,9 @@ struct CreateTask: View {
                                 Text("Evento")
                                     .font(.headline)
                                     .foregroundColor(.secondary)
-                                Picker("Selecciona un evento", selection: $newTask.event) {
+                                Picker("Selecciona un evento", selection: $modelView.newTask.event) {
                                     Text("Sin evento").tag(nil as Event?)
-                                    ForEach(events, id: \.self) { event in
+                                    ForEach(modelView.events, id: \.self) { event in
                                         Text(event.title).tag(event as Event?)
                                     }
                                 }
@@ -118,9 +102,8 @@ struct CreateTask: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .background(RoundedRectangle(cornerRadius: 14).fill(textFieldBackground))
                                 .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
-                                .onChange(of: newTask.event) { newEvent in
-                                    newTask.project = newEvent?.project
-                                    newTask.endDate = newEvent?.endDate
+                                .onChange(of: modelView.newTask.event) { newEvent in
+                                    modelView.updateEventSelection(newEvent)
                                 }
                             }
                         }
@@ -132,11 +115,11 @@ struct CreateTask: View {
                                 .font(.headline)
                                 .foregroundColor(.secondary)
                             
-                            if newTask.event == nil {
-                                if !ShowDatePicker {
+                            if modelView.newTask.event == nil {
+                                if !modelView.showDatePicker {
                                     Button {
-                                        ShowDatePicker = true
-                                        newTask.endDate = Date()
+                                        modelView.showDatePicker = true
+                                        modelView.newTask.endDate = Date()
                                     } label: {
                                         HStack {
                                             Image(systemName: "calendar")
@@ -151,8 +134,8 @@ struct CreateTask: View {
                                         DatePicker(
                                             "Selecciona una fecha",
                                             selection: Binding(
-                                                get: { newTask.endDate ?? Date() },
-                                                set: { newTask.endDate = $0 }
+                                                get: { modelView.newTask.endDate ?? Date() },
+                                                set: { modelView.newTask.endDate = $0 }
                                             ),
                                             in: Date()...,
                                             displayedComponents: [.date]
@@ -160,8 +143,8 @@ struct CreateTask: View {
                                         .datePickerStyle(.compact)
                                         
                                         Button("Eliminar fecha") {
-                                            newTask.endDate = nil
-                                            ShowDatePicker = false
+                                            modelView.newTask.endDate = nil
+                                            modelView.showDatePicker = false
                                         }
                                         .foregroundColor(.red)
                                         .font(.caption)
@@ -170,7 +153,7 @@ struct CreateTask: View {
                             } else {
                                 HStack {
                                     Image(systemName: "calendar")
-                                    if let date = newTask.endDate {
+                                    if let date = modelView.newTask.endDate {
                                         Text(date.formatted(date: .long, time: .shortened))
                                     } else {
                                         Text("Sin fecha")
@@ -185,7 +168,9 @@ struct CreateTask: View {
 
                         // Botones
                         VStack(spacing: 14) {
-                            Button(action: saveTask) {
+                            Button {
+                                modelView.saveTask(dismiss: dismiss)
+                            } label: {
                                 Text("Guardar Tarea")
                                     .font(.headline)
                                     .foregroundColor(.white)
@@ -215,8 +200,7 @@ struct CreateTask: View {
             }
         }
         .onAppear {
-            events = HomeApi.downdloadEventsFrom(context: context)
-            projects = HomeApi.downdloadProjectsFrom(context: context)
+            modelView.configure(context: context)
         }
     }
 
@@ -234,23 +218,5 @@ struct CreateTask: View {
                     .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 6)
             )
             .padding(.horizontal, 20)
-    }
-
-    private func saveTask() {
-        if newTask.title.isEmpty {
-            isIncompleteTask = true
-        } else {
-            isIncompleteTask = false
-            context.insert(newTask)
-            if let project = newTask.project {
-                project.tasks.append(newTask)
-            }
-            do {
-                try context.save()
-            } catch {
-                print("❌ Error al guardar tarea: \(error)")
-            }
-            dismiss()
-        }
     }
 }

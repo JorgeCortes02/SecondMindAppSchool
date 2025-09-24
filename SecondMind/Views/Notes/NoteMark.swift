@@ -14,7 +14,7 @@ struct NoteMark: View {
 
     @State private var searchText: String = ""
     @State private var readyToShowNotes: Bool = false
-    @State private var navigateToNewNote = false   // 👈 estado para NavigationLink
+    @State private var navigateToNewNote = false
 
     private let accentColor = Color.blue
 
@@ -62,7 +62,7 @@ struct NoteMark: View {
             .onChange(of: modelView.selectedTab) { newTab in
                 withAnimation {
                     modelView.loadNotes()
-                    modelView.applySearch(searchText, tab: newTab)
+                    modelView.applySearch(searchText)
                     readyToShowNotes = true
                 }
             }
@@ -112,13 +112,13 @@ struct NoteMark: View {
                 .textFieldStyle(PlainTextFieldStyle())
                 .autocorrectionDisabled()
                 .onChange(of: searchText) { newValue in
-                    modelView.applySearch(newValue, tab: modelView.selectedTab)
+                    modelView.applySearch(newValue)
                 }
 
             if !searchText.isEmpty {
                 Button {
                     searchText = ""
-                    modelView.applySearch("", tab: modelView.selectedTab)
+                    modelView.applySearch("")
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundColor(.gray)
@@ -135,20 +135,43 @@ struct NoteMark: View {
         .padding(.horizontal)
     }
 
-    // MARK: – Floating Button
     private var buttonControlMark: some View {
-        Button {
-            navigateToNewNote = true
-        } label: {
-            Image(systemName: "plus")
-                .font(.system(size: 28, weight: .bold))
-                .foregroundColor(.white)
-                .padding(14)
-                .background(Circle().fill(accentColor))
-                .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 3)
+        HStack(spacing: 10) {
+        
+            // ✅ BOTÓN +
+            if #available(iOS 26.0, *) {
+                Button(action: {
+                    navigateToNewNote = true
+                }) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundColor(.blue)
+                        .padding(16)
+                }
+                .glassEffect(.clear.tint(Color.white.opacity(0.1)).interactive(), in: .circle)
+                .shadow(color: .black.opacity(0.4), radius: 5, x: 0, y: 4)
+               
+            } else {
+                Button(action: {
+                    navigateToNewNote = true
+                }) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(10)
+                        .background(
+                            Circle()
+                                .fill(Color.blue.opacity(0.9))
+                                .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                        )
+                }
+               
+            }
         }
         .padding(10)
+        .padding(.bottom, 60)
     }
+    
 
     // MARK: – Empty List
     private var emptyNoteList: some View {
@@ -181,115 +204,132 @@ struct NoteMark: View {
 
     // MARK: – Note Row
     private func noteRow(note: NoteItem) -> some View {
-        HStack(spacing: 0) {
-            VStack(alignment: .leading, spacing: 8) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Creada: \(note.createdAt.formatted(date: .abbreviated, time: .shortened))")
-                        .font(.caption2)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.gray.opacity(0.15))
-                        .clipShape(Capsule())
-                        .foregroundColor(.secondary)
-
-                    Text("Editada: \(note.updatedAt.formatted(date: .abbreviated, time: .shortened))")
-                        .font(.caption2)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.blue.opacity(0.2))
-                        .clipShape(Capsule())
-                        .foregroundColor(.blue)
+        VStack(alignment: .leading, spacing: 10) {
+            // 🔹 Fechas arriba
+            HStack(spacing: 8) {
+                Label {
+                    Text(note.createdAt, format: .dateTime.day().month().year())
+                } icon: {
+                    Image(systemName: "calendar.badge.plus")
                 }
+                .font(.footnote)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(Color.gray.opacity(0.15))
+                .clipShape(Capsule())
+                .foregroundColor(.secondary)
 
+                Label {
+                    Text(note.updatedAt, format: .dateTime.day().month().year().hour().minute())
+                } icon: {
+                    Image(systemName: "pencil")
+                }
+                .font(.footnote)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(Color.blue.opacity(0.15))
+                .clipShape(Capsule())
+                .foregroundColor(.blue)
+            }
+
+            // 🔹 Proyecto y Evento en paralelo
+            HStack(spacing: 16) {
                 if let project = note.project {
-                    Label("Proyecto: \(project.title)", systemImage: "folder.fill")
-                        .font(.caption)
-                        .foregroundColor(.blue.opacity(0.8))
+                    HStack(spacing: 6) {
+                        Image(systemName: "folder.fill")
+                            .font(.callout)
+                            .foregroundColor(.purple.opacity(0.9))
+                        Text(project.title)
+                            .font(.callout)
+                            .foregroundColor(.purple.opacity(0.9))
+                            .lineLimit(1)
+                    }
                 }
+
                 if let event = note.event {
-                    Label("Evento: \(event.title)", systemImage: "calendar")
-                        .font(.caption)
-                        .foregroundColor(.purple.opacity(0.8))
-                }
-
-                Text(note.title)
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.primary)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                    .padding(.top, 4)
-
-                if let content = note.content {
-                    Text(content)
-                        .font(.system(size: 15))
-                        .foregroundColor(.secondary)
-                        .lineSpacing(4)
-                        .lineLimit(4)
-                        .truncationMode(.tail)
+                    HStack(spacing: 6) {
+                        Image(systemName: "calendar")
+                            .font(.callout)
+                            .foregroundColor(.eventButtonColor)
+                        Text(event.title)
+                            .font(.callout)
+                            .foregroundColor(.eventButtonColor)
+                            .lineLimit(1)
+                    }
                 }
             }
-            .padding()
-            .frame(maxWidth: .infinity, alignment: .leading)
 
-            VStack(spacing: 12) {
+            // 🔹 Título
+            Text(note.title.isEmpty ? "Sin título" : note.title)
+                .font(.title3.weight(.semibold))
+                .foregroundColor(.primary)
+                .lineLimit(1)
+
+            // 🔹 Contenido (hasta 5 líneas)
+            if let content = note.content, !content.isEmpty {
+                Text(content)
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .lineLimit(5)
+                    .truncationMode(.tail)
+            }
+
+            Spacer(minLength: 0)
+
+            // 🔹 Botonera inferior con marco
+            HStack(spacing: 20) {
                 NavigationLink(destination: NoteDetailView(note: note)) {
                     Image(systemName: "square.and.pencil")
+                        .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(.white)
-                        .padding(8)
-                        .background(Color.orange)
-                        .clipShape(Circle())
+                        .padding(10)
+                        .background(Circle().fill(Color.orange))
                 }
 
-                Button {
-                    modelView.delete(note)
-                } label: {
+                Button { modelView.delete(note) } label: {
                     Image(systemName: "trash.fill")
+                        .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(.white)
-                        .padding(8)
-                        .background(Color.red)
-                        .clipShape(Circle())
+                        .padding(10)
+                        .background(Circle().fill(Color.red))
                 }
 
-                Button {
-                    modelView.toggleArchived(note)
-                } label: {
+                Button { modelView.toggleArchived(note) } label: {
                     Image(systemName: "archivebox.fill")
+                        .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(.white)
-                        .padding(8)
-                        .background(Color.blue)
-                        .clipShape(Circle())
+                        .padding(10)
+                        .background(Circle().fill(Color.blue))
                 }
 
-                Button {
-                    modelView.toggleFavorite(note)
-                } label: {
+                Button { modelView.toggleFavorite(note) } label: {
                     Image(systemName: note.isFavorite ? "star.fill" : "star")
+                        .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(.white)
-                        .padding(8)
-                        .background(Color.yellow)
-                        .clipShape(Circle())
+                        .padding(10)
+                        .background(Circle().fill(note.isFavorite ? Color.yellow : Color.gray))
                 }
             }
-            .padding(.vertical)
-            .frame(width: 70)
-            .background(Color.gray.opacity(0.08))
+            .frame(maxWidth: .infinity, alignment: .center)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.gray.opacity(0.08))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(Color.black.opacity(0.08), lineWidth: 1)
+                    )
+                    .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 2)
+            )
+            .padding(.top, 4)
         }
-        .frame(maxWidth: .infinity, minHeight: 160, alignment: .leading)
+        .frame(maxWidth: .infinity, minHeight: 200, alignment: .topLeading)
+        .padding()
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(
-                    LinearGradient(
-                        colors: [Color.white.opacity(0.95), Color.gray.opacity(0.15)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+                .fill(Color.white)
+                .shadow(color: .black.opacity(0.08), radius: 6, x: 0, y: 3)
         )
-        .overlay(
-            RoundedRectangle(cornerRadius: 20)
-                .stroke(Color.black.opacity(0.08), lineWidth: 1)
-        )
-        .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 3)
         .padding(.horizontal)
     }
 }

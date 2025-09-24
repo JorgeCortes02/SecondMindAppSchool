@@ -74,7 +74,7 @@ struct ProjectMark: View {
         }) {
             Text(title)
                 .font(.system(size: 15, weight: isSelected ? .semibold : .regular))
-                .foregroundColor(isSelected ? .white : .taskButtonColor)
+                .foregroundColor(isSelected ? .white : .blue)
                 .frame(maxHeight: 36)
                 .frame(maxWidth: .infinity)
                 .frame(height: 40)
@@ -82,7 +82,7 @@ struct ProjectMark: View {
                     Group {
                         if isSelected {
                             RoundedRectangle(cornerRadius: 20)
-                                .fill(Color.taskButtonColor)
+                                .fill(.blue)
                         } else {
                             RoundedRectangle(cornerRadius: 20)
                                 .fill(Color.clear)
@@ -106,32 +106,42 @@ struct ProjectMark: View {
         .padding(.horizontal, 16)
     }
 
-    // MARK: – Botón flotante (versión corregida)
     private var buttonControlMark: some View {
         HStack(spacing: 10) {
-            Button(action: {
-                showAddProjectView = true
-            }) {
-                Image(systemName: "plus")
-                    .font(.system(size: 28, weight: .bold))
-                    .foregroundColor(.white)
-                    .padding(10)
-                    .background(
-                        Circle()
-                            .fill(Color.purple.opacity(0.9))
-                            .shadow(color: .black.opacity(0.1), radius: 6, x: 0, y: 2)
-                    )
+        
+            // ✅ BOTÓN +
+            if #available(iOS 26.0, *) {
+                Button(action: {
+                    showAddProjectView = true
+                }) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundColor(.purple)
+                        .padding(16)
+                }
+                .glassEffect(.clear.tint(Color.white.opacity(0.1)).interactive(), in: .circle)
+                .shadow(color: .black.opacity(0.4), radius: 5, x: 0, y: 4)
+               
+            } else {
+                Button(action: {
+                    showAddProjectView = true
+                }) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(10)
+                        .background(
+                            Circle()
+                                .fill(Color.purple.opacity(0.9))
+                                .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                        )
+                }
+               
             }
         }
         .padding(10)
-        .background(
-            Capsule()
-                .fill(.white)
-                .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 4)
-        )
         .padding(.bottom, 60)
     }
-
     // MARK: – Lista vacía
     private var emptyProjectList: some View {
         VStack(alignment: .center, spacing: 20) {
