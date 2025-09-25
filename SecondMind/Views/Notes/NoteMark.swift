@@ -8,12 +8,17 @@ struct NoteMark: View {
 
     @StateObject var modelView: NoteViewModel
 
-    init() {
+    // Contexto de entrada
+    private var project: Project?
+    private var event: Event?
+
+    init(project: Project? = nil, event: Event? = nil) {
         _modelView = StateObject(wrappedValue: NoteViewModel())
+        self.project = project
+        self.event = event
     }
 
     @State private var searchText: String = ""
-    @State private var readyToShowNotes: Bool = false
     @State private var navigateToNewNote = false
 
     private let accentColor = Color.blue
@@ -22,20 +27,30 @@ struct NoteMark: View {
         NavigationStack {
             ZStack(alignment: .bottomTrailing) {
                 VStack(spacing: 20) {
-                    headerCard(title: "Notas")
+                    headerCard(title: project?.title ?? event?.title ?? "Notas")
                         .padding(.top, 16)
 
+                    // ✅ Siempre mostramos el picker (filtra dentro del contexto)
                     pickerBar
+
                     searchBar
 
                     ScrollView {
-                        VStack(spacing: 20) {
+                        LazyVStack(spacing: 12) {
                             if modelView.noteList.isEmpty {
                                 emptyNoteList
-                            } else if readyToShowNotes {
-                                notesList
+                                    .padding(.top, 12)
+                            } else {
+                                ForEach(modelView.noteList, id: \.id) { note in
+                                    noteRow(note: note)
+                                        .transition(.asymmetric(
+                                            insertion: .opacity.combined(with: .move(edge: .bottom)),
+                                            removal: .opacity.combined(with: .move(edge: .trailing))
+                                        ))
+                                }
                             }
                         }
+                        .animation(.easeInOut, value: modelView.noteList)
                         .padding(.vertical, 16)
                     }
                 }
@@ -50,26 +65,22 @@ struct NoteMark: View {
                 .ignoresSafeArea(.keyboard)
 
                 NavigationLink(
-                    destination: NoteDetailView(note: nil),
+                    destination: destinationView,
                     isActive: $navigateToNewNote
                 ) { EmptyView() }
             }
             .onAppear {
                 modelView.setContext(context)
+                modelView.setScope(project: project, event: event)
                 modelView.loadNotes()
-                readyToShowNotes = true
             }
-            .onChange(of: modelView.selectedTab) { newTab in
-                withAnimation {
-                    modelView.loadNotes()
-                    modelView.applySearch(searchText)
-                    readyToShowNotes = true
-                }
+            .onChange(of: modelView.selectedTab) { _ in
+                withAnimation { modelView.loadNotes() }
             }
         }
     }
 
-    // MARK: – Picker
+    // MARK: – Picker (siempre visible)
     private var pickerBar: some View {
         HStack(spacing: 10) {
             segmentButton(title: "Todas", tag: 0)
@@ -136,43 +147,42 @@ struct NoteMark: View {
     }
 
     private var buttonControlMark: some View {
-        HStack(spacing: 10) {
-        
-            // ✅ BOTÓN +
-            if #available(iOS 26.0, *) {
-                Button(action: {
-                    navigateToNewNote = true
-                }) {
-                    Image(systemName: "plus")
-                        .font(.system(size: 28, weight: .bold))
-                        .foregroundColor(.blue)
-                        .padding(16)
-                }
-                .glassEffect(.clear.tint(Color.white.opacity(0.1)).interactive(), in: .circle)
-                .shadow(color: .black.opacity(0.4), radius: 5, x: 0, y: 4)
-               
-            } else {
-                Button(action: {
-                    navigateToNewNote = true
-                }) {
-                    Image(systemName: "plus")
-                        .font(.system(size: 28, weight: .bold))
-                        .foregroundColor(.white)
-                        .padding(10)
-                        .background(
-                            Circle()
-                                .fill(Color.blue.opacity(0.9))
-                                .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-                        )
-                }
-               
-            }
-        }
-        .padding(10)
-        .padding(.bottom, 60)
-    }
-    
-
+         HStack(spacing: 10) {
+         
+             // ✅ BOTÓN +
+             if #available(iOS 26.0, *) {
+                 Button(action: {
+                     navigateToNewNote = true
+                 }) {
+                     Image(systemName: "plus")
+                         .font(.system(size: 28, weight: .bold))
+                         .foregroundColor(.blue)
+                         .padding(16)
+                 }
+                 .glassEffect(.clear.tint(Color.white.opacity(0.1)).interactive(), in: .circle)
+                 .shadow(color: .black.opacity(0.4), radius: 5, x: 0, y: 4)
+                
+             } else {
+                 Button(action: {
+                     navigateToNewNote = true
+                 }) {
+                     Image(systemName: "plus")
+                         .font(.system(size: 28, weight: .bold))
+                         .foregroundColor(.white)
+                         .padding(10)
+                         .background(
+                             Circle()
+                                 .fill(Color.blue.opacity(0.9))
+                                 .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                         )
+                 }
+                
+             }
+         }
+         .padding(10)
+         .padding(.bottom, 60)
+     }
+     
     // MARK: – Empty List
     private var emptyNoteList: some View {
         VStack(spacing: 20) {
@@ -190,49 +200,29 @@ struct NoteMark: View {
         .padding(20)
     }
 
-    // MARK: – Notes List
-    private var notesList: some View {
-        LazyVStack(spacing: 12) {
-            ForEach(modelView.noteList, id: \.id) { note in
-                NavigationLink(destination: NoteDetailView(note: note)) {
-                    noteRow(note: note)
-                }
-            }
-        }
-        .padding(.vertical, 8)
-    }
-
-    // MARK: – Note Row
+    // MARK: – Fila de Nota (con botonera original)
     private func noteRow(note: NoteItem) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            // 🔹 Fechas arriba
+            // Fechas
             HStack(spacing: 8) {
-                Label {
-                    Text(note.createdAt, format: .dateTime.day().month().year())
-                } icon: {
+                HStack(spacing: 4) {
                     Image(systemName: "calendar.badge.plus")
+                    Text(note.createdAt, format: .dateTime.day().month().year())
                 }
                 .font(.footnote)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(Color.gray.opacity(0.15))
-                .clipShape(Capsule())
                 .foregroundColor(.secondary)
 
-                Label {
-                    Text(note.updatedAt, format: .dateTime.day().month().year().hour().minute())
-                } icon: {
+                Spacer()
+
+                HStack(spacing: 4) {
                     Image(systemName: "pencil")
+                    Text(note.updatedAt, format: .dateTime.day().month().year().hour().minute())
                 }
                 .font(.footnote)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(Color.blue.opacity(0.15))
-                .clipShape(Capsule())
                 .foregroundColor(.blue)
             }
 
-            // 🔹 Proyecto y Evento en paralelo
+            // Proyecto y evento
             HStack(spacing: 16) {
                 if let project = note.project {
                     HStack(spacing: 6) {
@@ -259,13 +249,13 @@ struct NoteMark: View {
                 }
             }
 
-            // 🔹 Título
+            // Título
             Text(note.title.isEmpty ? "Sin título" : note.title)
                 .font(.title3.weight(.semibold))
                 .foregroundColor(.primary)
                 .lineLimit(1)
 
-            // 🔹 Contenido (hasta 5 líneas)
+            // Contenido
             if let content = note.content, !content.isEmpty {
                 Text(content)
                     .font(.body)
@@ -274,9 +264,7 @@ struct NoteMark: View {
                     .truncationMode(.tail)
             }
 
-            Spacer(minLength: 0)
-
-            // 🔹 Botonera inferior con marco
+            // Botonera original
             HStack(spacing: 20) {
                 NavigationLink(destination: NoteDetailView(note: note)) {
                     Image(systemName: "square.and.pencil")
@@ -286,7 +274,9 @@ struct NoteMark: View {
                         .background(Circle().fill(Color.orange))
                 }
 
-                Button { modelView.delete(note) } label: {
+                Button {
+                    withAnimation { modelView.delete(note) }
+                } label: {
                     Image(systemName: "trash.fill")
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(.white)
@@ -294,7 +284,9 @@ struct NoteMark: View {
                         .background(Circle().fill(Color.red))
                 }
 
-                Button { modelView.toggleArchived(note) } label: {
+                Button {
+                    withAnimation { modelView.toggleArchived(note) }
+                } label: {
                     Image(systemName: "archivebox.fill")
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(.white)
@@ -302,7 +294,9 @@ struct NoteMark: View {
                         .background(Circle().fill(Color.blue))
                 }
 
-                Button { modelView.toggleFavorite(note) } label: {
+                Button {
+                    withAnimation { modelView.toggleFavorite(note) }
+                } label: {
                     Image(systemName: note.isFavorite ? "star.fill" : "star")
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(.white)
@@ -323,7 +317,7 @@ struct NoteMark: View {
             )
             .padding(.top, 4)
         }
-        .frame(maxWidth: .infinity, minHeight: 200, alignment: .topLeading)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 20)
@@ -331,5 +325,15 @@ struct NoteMark: View {
                 .shadow(color: .black.opacity(0.08), radius: 6, x: 0, y: 3)
         )
         .padding(.horizontal)
+    }
+    @ViewBuilder
+    private var destinationView: some View {
+        if let project {
+            NoteDetailView(note: nil, project: project)
+        } else if let event {
+            NoteDetailView(note: nil, event: event)
+        } else {
+            NoteDetailView(note: nil)
+        }
     }
 }

@@ -19,180 +19,123 @@ struct NoteDetailView: View {
     
     var body: some View {
         ZStack {
-            BackgroundColorTemplate()
-                .ignoresSafeArea()
+            BackgroundColorTemplate().ignoresSafeArea()
             
             VStack(spacing: 16) {
                 headerCard
                     .padding(.top, 20)
                     .shadow(color: Color.black.opacity(0.15), radius: 10, x: 0, y: 8)
-                    .scaleEffect(1.02) // leve zoom para destacar
-               
-
-                // --- Pickers en HStack ---
+                
+                // MARK: - Pickers
                 HStack(spacing: 12) {
+                    
+                    // --- Proyecto ---
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Proyecto")
                             .font(.headline)
                             .foregroundColor(.secondary)
                         
-                        Picker("Proyecto", selection: Binding(
-                            get: { viewModel.note.project },
-                            set: { viewModel.note.project = $0 }
-                        )) {
+                        Picker("Proyecto", selection: $viewModel.draftProject) {
                             Text("Sin proyecto").tag(nil as Project?)
                             ForEach(viewModel.projects, id: \.self) { project in
                                 Text(project.title).tag(project as Project?)
                             }
                         }
                         .pickerStyle(.menu)
-                        .padding(10)
-                        .frame(maxWidth: .infinity)
-                        .background(RoundedRectangle(cornerRadius: 14).fill(Color.white))
-                        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
+                        .disabled(viewModel.lockProject)
                     }
                     
+                    // --- Evento ---
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Evento")
                             .font(.headline)
                             .foregroundColor(.secondary)
                         
-                        Picker("Evento", selection: Binding(
-                            get: { viewModel.note.event },
-                            set: { viewModel.note.event = $0 }
-                        )) {
+                        Picker("Evento", selection: $viewModel.draftEvent) {
                             Text("Sin evento").tag(nil as Event?)
                             ForEach(viewModel.events, id: \.self) { event in
                                 Text(event.title).tag(event as Event?)
                             }
                         }
                         .pickerStyle(.menu)
-                        .padding(10)
-                        .frame(maxWidth: .infinity)
-                        .background(RoundedRectangle(cornerRadius: 14).fill(Color.white))
-                        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
+                        .disabled(viewModel.lockEvent)
                     }
                 }
                 .padding(.horizontal, 20)
                 
-             
-                
+                // MARK: - Título
                 if viewModel.isEditing {
-                    TextField("Escribe un título", text: Binding(
-                        get: { viewModel.note.title.isEmpty ? "" : viewModel.note.title },
-                        set: { newValue in
-                            viewModel.note.title = newValue.isEmpty ? "Sin título" : newValue
-                        }
-                    ))
-                    .font(.system(size: 28, weight: .bold))
-                    .padding(.horizontal)
-                    .padding(.vertical, 8)
-                } else {
-                    Text(viewModel.note.title.isEmpty ? "Sin título" : viewModel.note.title)
+                    TextField("Escribe un título", text: $viewModel.draftTitle)
                         .font(.system(size: 28, weight: .bold))
-                        .foregroundColor(viewModel.note.title.isEmpty ? .gray : .primary)
                         .padding(.horizontal)
-                        .padding(.vertical, 8)
+                } else {
+                    Text(viewModel.draftTitle.isEmpty ? "Sin título" : viewModel.draftTitle)
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundColor(.primary)
+                        .padding(.horizontal)
                         .onTapGesture { viewModel.isEditing = true }
                 }
                 
                 Divider()
                 
-                // --- Cuerpo de la nota ---
-                Group {
-                    if viewModel.isEditing {
-                        TextEditor(text: Binding(
-                            get: { viewModel.note.content ?? "" },
-                            set: { newValue in
-                                if viewModel.isListMode,
-                                   let lastChar = newValue.last,
-                                   lastChar == "\n" {
-                                    viewModel.note.content = newValue + "• "
-                                } else {
-                                    viewModel.note.content = newValue
-                                }
-                            }
-                        ))
-                        .font(.system(size: 17))
-                        .foregroundColor(.primary)
+                // MARK: - Contenido
+                if viewModel.isEditing {
+                    TextEditor(text: $viewModel.draftContent)
                         .scrollContentBackground(.hidden)
-                        .background(Color.clear)
-                        .padding(.horizontal, 12)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    } else {
-                        ScrollView {
-                            if let content = viewModel.note.content, !content.isEmpty {
-                                Text(content) // 👈 ahora es texto plano
-                                    .font(.system(size: 17))
-                                    .foregroundColor(.primary)
-                                    .lineSpacing(6)
-                                    .padding(.horizontal)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .fixedSize(horizontal: false, vertical: true) // respeta saltos
-                            } else {
-                                Text("Escribe algo...")
-                                    .foregroundColor(.gray)
-                                    .padding(.horizontal)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                            }
+                        .padding(.horizontal)
+                } else {
+                    ScrollView {
+                        if !viewModel.draftContent.isEmpty {
+                            Text(viewModel.draftContent)
+                                .font(.body)
+                                .foregroundColor(.primary)
+                                .padding(.horizontal)
+                        } else {
+                            Text("Escribe algo...")
+                                .foregroundColor(.gray)
+                                .padding(.horizontal)
                         }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .onTapGesture { viewModel.isEditing = true }
                     }
+                    .onTapGesture { viewModel.isEditing = true }
                 }
             }
         }
         .toolbar {
+            // Botón OK
             ToolbarItem(placement: .navigationBarTrailing) {
                 if viewModel.isEditing {
                     Button("OK") {
-                        if viewModel.note.title.isEmpty {
-                            viewModel.note.title = "Sin título"
-                        }
                         viewModel.saveNote()
                         viewModel.isEditing = false
                     }
                 }
             }
+            
+            // Botón Lista
             ToolbarItemGroup(placement: .navigationBarLeading) {
                 if viewModel.isEditing {
                     Button("• Lista") { viewModel.insertListMarker() }
-
                 }
             }
         }
         .onAppear {
             viewModel.setContext(context)
             viewModel.downloadProjectsAndEvents()
-        }.onChange(of: viewModel.note.project) { newProject in
-           
+            
+            // ✅ Si la nota se creó desde un proyecto, limitamos eventos a ese proyecto
+            if viewModel.draftProject != nil {
+                viewModel.handleProjectChange()
+            }
+        }
+        .onChange(of: viewModel.draftProject) { _ in
             viewModel.handleProjectChange()
         }
     }
     
-    // ——— headerCard tal como estaba, sin cambios estructurales ———
     private var headerCard: some View {
-        VStack(spacing: 10) {
-            ZStack {
-                Text("Detalles de tu nota")
-                    .font(.system(size: 32, weight: .bold))
-                    .foregroundColor(.taskButtonColor)
-            }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 12)
-            // Fondo semitransparente con degradado suave
-            .background(
-                LinearGradient(
-                    gradient: Gradient(colors: [
-                        Color(red: 0.95, green: 0.95, blue: 0.97, opacity: 0.8),
-                        Color(red: 0.90, green: 0.90, blue: 0.93, opacity: 0.8)
-                    ]),
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            )
-            .cornerRadius(20)
-        }
-        .padding(.horizontal, 16)
+        Text("Detalles de tu nota")
+            .font(.system(size: 32, weight: .bold))
+            .foregroundColor(.taskButtonColor)
+            .padding()
     }
 }

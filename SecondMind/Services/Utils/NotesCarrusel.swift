@@ -21,13 +21,29 @@ struct NotesCarrousel: View {
 
                 Spacer()
 
-                HStack(spacing: 4) {
-                    Text("Ver más")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.blue)
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.blue)
+                // 🔹 NavigationLink dinámico según si hay project o event
+                if let project = editableProject {
+                    NavigationLink(destination: NotesView(project: editableProject)) {
+                        HStack(spacing: 4) {
+                            Text("Ver más")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.blue)
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundColor(.blue)
+                        }
+                    }
+                } else if let event = editableEvent {
+                    NavigationLink(destination: NotesView(event: editableEvent)) {
+                        HStack(spacing: 4) {
+                            Text("Ver más")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.blue)
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundColor(.blue)
+                        }
+                    }
                 }
             }
 
@@ -59,34 +75,73 @@ struct NotesCarrousel: View {
                         HStack(spacing: 16) {
                             ForEach(modelView.notes.prefix(5), id: \.id) { note in
                                 NavigationLink(destination: NoteDetailView(note: note)) {
-                                    VStack(alignment: .leading, spacing: 8) {
+                                    VStack(alignment: .leading, spacing: 10) {
+                                        
+                                        // 🔹 Título
                                         Text(note.title.isEmpty ? "Sin título" : note.title)
                                             .font(.system(size: 18, weight: .semibold))
                                             .foregroundColor(.primary)
-                                            .lineLimit(1)
-
-                                        if let content = note.content, !content.isEmpty {
-                                            Text(content)
-                                                .font(.system(size: 14))
-                                                .foregroundColor(.secondary)
-                                                .lineLimit(2)
+                                            .lineLimit(2)
+                                            .multilineTextAlignment(.leading)
+                                        
+                                        // 🔹 Proyecto / Evento
+                                        if let project = note.project {
+                                            HStack(spacing: 6) {
+                                                Image(systemName: "folder.fill")
+                                                    .font(.system(size: 12))
+                                                    .foregroundColor(.orange)
+                                                Text(project.title)
+                                                    .font(.system(size: 13, weight: .medium))
+                                                    .foregroundColor(.orange)
+                                                    .lineLimit(1)
+                                            }
                                         }
-
-                                        Label {
-                                            Text(utilFunctions.formattedDateAndHour(note.updatedAt))
-                                        } icon: {
-                                            Image(systemName: "pencil")
+                                        
+                                        if let event = note.event {
+                                            HStack(spacing: 6) {
+                                                Image(systemName: "calendar")
+                                                    .font(.system(size: 12))
+                                                    .foregroundColor(.purple)
+                                                Text(event.title)
+                                                    .font(.system(size: 13, weight: .medium))
+                                                    .foregroundColor(.purple)
+                                                    .lineLimit(1)
+                                            }
                                         }
-                                        .font(.system(size: 12, weight: .semibold))
-                                        .foregroundColor(.blue)
+                                        
+                                        Spacer()
+                                        
+                                        // 🔹 Fechas
+                                        HStack {
+                                            HStack(spacing: 4) {
+                                                Image(systemName: "clock.badge")
+                                                    .font(.system(size: 11))
+                                                    .foregroundColor(.gray)
+                                                Text(utilFunctions.formattedDateAndHour(note.createdAt))
+                                                    .font(.system(size: 12))
+                                                    .foregroundColor(.gray)
+                                            }
+                                            
+                                            Spacer()
+                                            
+                                            HStack(spacing: 4) {
+                                                Image(systemName: "pencil")
+                                                    .font(.system(size: 11))
+                                                    .foregroundColor(.blue.opacity(0.7))
+                                                Text(utilFunctions.formattedDateAndHour(note.updatedAt))
+                                                    .font(.system(size: 12))
+                                                    .foregroundColor(.blue.opacity(0.7))
+                                            }
+                                        }
                                     }
-                                    .frame(width: cardWidth, height: 95)
-                                    .padding()
+                                    .padding(16)
+                                    .frame(width: cardWidth, height: 120, alignment: .topLeading)
                                     .background(Color.white)
-                                    .cornerRadius(18)
+                                    .cornerRadius(16)
+                                    .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 3)
                                     .overlay(
-                                        RoundedRectangle(cornerRadius: 18)
-                                            .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+                                        RoundedRectangle(cornerRadius: 16)
+                                            .stroke(Color.primary.opacity(0.06), lineWidth: 1)
                                     )
                                 }
                             }

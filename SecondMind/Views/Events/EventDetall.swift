@@ -7,68 +7,88 @@
 
 import SwiftUI
 import SwiftData
+import MapKit
 
 struct EventDetall: View {
-    // Variables que vienen de fuera
+    // Entrada
     @Bindable var editableEvent: Event
+
+    // Entorno
     @Environment(\.modelContext) var context
     @Environment(\.dismiss) var dismiss
     @ObservedObject var utilFunctions: generalFunctions = generalFunctions()
-    
+
+    // VMs (externos: EventDetallModelView y LocationSearchViewModel los tienes aparte)
     @StateObject var viewModel: EventDetallModelView
+    @StateObject private var viewModelLocation = LocationSearchViewModel()
+    
+    
     
     init(editableEvent: Event) {
         self._editableEvent = Bindable(editableEvent)
         _viewModel = StateObject(wrappedValue: EventDetallModelView())
     }
-    
-    // Variables de estilo
+
+    // Estilo
     let textFieldBackground = Color(red: 240/255, green: 240/255, blue: 245/255)
-    
-    // Variables de la vista
+
+    // Estado UI
     @State var isEditing = false
     @State private var ShowDatePicker: Bool = false
     @State private var isIncompleteTask: Bool = false
-    
+    @State private var showReminderModal: Bool = false
+    @FocusState private var locationFieldFocused: Bool
+
     var body: some View {
         ZStack {
             BackgroundColorTemplate()
                 .toolbar {
                     ToolbarItemGroup(placement: .topBarTrailing) {
-                        Button(action: { isEditing = true }) {
+                        Button(action: {
+                            showReminderModal = true;
+                        }) {
+                            Image(systemName: "tray.and.arrow.up")
+                        }
+                        Button(action: {
+                            isEditing = true
+                            // Prefill del buscador con la dirección actual
+                            viewModelLocation.queryFragment = editableEvent.address ?? ""
+                            // Enfocamos el buscador para escribir rápido
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                                locationFieldFocused = true
+                            }
+                        }) {
                             Image(systemName: "pencil")
                         }
-                        
-                        Button(action: {}) {
+                        Button(action: {
+                            viewModel.deleteEvent(event: editableEvent)
+                        }) {
                             Image(systemName: "trash")
                         }
+                        
                     }
                 }
-            
+
             VStack(spacing: 10) {
-                // Header externo
                 Header()
                     .frame(height: 40)
                     .padding(.horizontal)
                     .padding(.top, 10)
                     .padding(.bottom, 5)
-                
-                
-                
+
                 Spacer()
-                
-                // Contenido principal
+
                 ScrollView {
                     VStack(spacing: 32) {
-                        
+
+                        // MARK: Título
                         if isEditing {
-                            // 🔹 Campo título editable
                             VStack(alignment: .leading) {
                                 Text("Titulo")
                                     .font(.headline)
                                     .foregroundColor(.primary)
                                     .padding(.bottom, 4)
-                                
+
                                 TextEditor(text: $editableEvent.title)
                                     .font(.body)
                                     .foregroundColor(.primary)
@@ -85,7 +105,7 @@ struct EventDetall: View {
                                             editableEvent.title = newValue.replacingOccurrences(of: "\n", with: " ")
                                         }
                                     }
-                                
+
                                 HStack {
                                     Spacer()
                                     if isIncompleteTask {
@@ -99,7 +119,6 @@ struct EventDetall: View {
                             .padding(.horizontal, 20)
                             .padding(.top, 20)
                         } else {
-                            // 🔹 Campo título en solo lectura
                             Text(editableEvent.title)
                                 .font(.system(size: 28, weight: .bold))
                                 .foregroundColor(.primary)
@@ -109,8 +128,8 @@ struct EventDetall: View {
                                 .opacity(0.9)
                                 .padding(.top, 20)
                         }
-                        
-                        // 🔹 Sección: Descripción + Proyecto
+
+                        // MARK: Descripción + Proyecto
                         VStack(alignment: .leading, spacing: 36) {
                             // Descripción
                             VStack(alignment: .leading) {
@@ -118,7 +137,7 @@ struct EventDetall: View {
                                     .font(.headline)
                                     .foregroundColor(.primary)
                                     .padding(.bottom, 4)
-                                
+
                                 if isEditing {
                                     TextEditor(text: Binding(
                                         get: { editableEvent.descriptionEvent ?? "" },
@@ -146,7 +165,7 @@ struct EventDetall: View {
                                         .fixedSize(horizontal: false, vertical: true)
                                 }
                             }
-                            
+
                             // Proyecto
                             HStack(spacing: 16) {
                                 VStack(alignment: .leading) {
@@ -154,7 +173,7 @@ struct EventDetall: View {
                                         .font(.headline)
                                         .foregroundColor(.primary)
                                         .padding(.bottom, 4)
-                                    
+
                                     if isEditing {
                                         Picker("Selecciona un proyecto", selection: $editableEvent.project) {
                                             Text("Sin proyecto").tag(nil as Project?)
@@ -184,14 +203,14 @@ struct EventDetall: View {
                             }
                         }
                         .padding(.horizontal, 16)
-                        
-                        // 🔹 Sección: Fecha
+
+                        // MARK: Fecha
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Fecha de vencimiento")
                                 .font(.headline)
                                 .foregroundColor(.primary)
                                 .padding(.bottom, 4)
-                            
+
                             if isEditing {
                                 VStack(spacing: 8) {
                                     DatePicker(
@@ -201,7 +220,7 @@ struct EventDetall: View {
                                         displayedComponents: [.date]
                                     )
                                     .datePickerStyle(.compact)
-                                    
+
                                     DatePicker(
                                         "Selecciona una hora",
                                         selection: $editableEvent.endDate,
@@ -214,11 +233,11 @@ struct EventDetall: View {
                                 HStack(spacing: 8) {
                                     Image(systemName: "calendar")
                                         .foregroundColor(.orange)
-                                    
+
                                     Text(editableEvent.endDate.formatted(date: .long, time: .shortened))
                                         .font(.body)
                                         .foregroundColor(.primary)
-                                    
+
                                     Spacer()
                                 }
                                 .padding(12)
@@ -230,22 +249,132 @@ struct EventDetall: View {
                             }
                         }
                         .padding(.horizontal, 16)
-                        
-                        // ✅ 🔹 NUEVA SECCIÓN: Notas del evento
+
+                        // MARK: Ubicación con autocompletado
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Ubicación")
+                                .font(.headline)
+                                .foregroundColor(.primary)
+                                .padding(.bottom, 4)
+
+                            if isEditing {
+                                VStack(spacing: 10) {
+                                    // Buscador
+                                    TextField("Buscar dirección", text: $viewModelLocation.queryFragment)
+                                        .textFieldStyle(.roundedBorder)
+                                        .padding(.horizontal, 8)
+                                        .focused($locationFieldFocused)
+
+                                    // Sugerencias (evitamos List en ScrollView)
+                                    if !viewModelLocation.searchResults.isEmpty {
+                                        ScrollView {
+                                            LazyVStack(alignment: .leading, spacing: 0) {
+                                                ForEach(viewModelLocation.searchResults, id: \.self) { result in
+                                                    Button {
+                                                        selectSuggestion(result)
+                                                    } label: {
+                                                        VStack(alignment: .leading, spacing: 2) {
+                                                            Text(result.title)
+                                                                .font(.body)
+                                                            if !result.subtitle.isEmpty {
+                                                                Text(result.subtitle)
+                                                                    .font(.caption)
+                                                                    .foregroundColor(.secondary)
+                                                            }
+                                                        }
+                                                        .padding(.vertical, 10)
+                                                        .padding(.horizontal, 12)
+                                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                                    }
+                                                    .background(Color.white.opacity(0.001)) // para captar taps
+                                                    Divider()
+                                                }
+                                            }
+                                        }
+                                        .frame(maxHeight: 180)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 10)
+                                                .fill(Color.white)
+                                                .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 3)
+                                        )
+                                    }
+
+                                    // Mini-mapa en edición (feedback inmediato)
+                                    if let lat = editableEvent.latitude,
+                                       let lon = editableEvent.longitude {
+                                        let coord = CLLocationCoordinate2D(latitude: lat, longitude: lon)
+                                        let region = MKCoordinateRegion(
+                                            center: coord,
+                                            span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+                                        )
+                                        let annotations = [EventAnnotation(coordinate: coord)]
+
+                                        Map(
+                                            coordinateRegion: .constant(region),
+                                            annotationItems: annotations
+                                        ) { item in
+                                            MapMarker(coordinate: item.coordinate, tint: .red)
+                                        }
+                                        .frame(height: 200)
+                                        .cornerRadius(12)
+                                    }
+                                }
+                                .padding(12)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(textFieldBackground)
+                                .cornerRadius(12)
+                                .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 4)
+
+                            } else {
+                                // Solo lectura
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text(editableEvent.address ?? "No hay dirección.")
+                                        .font(.body)
+                                        .foregroundColor(.primary)
+
+                                    if let lat = editableEvent.latitude,
+                                       let lon = editableEvent.longitude {
+                                        let coord = CLLocationCoordinate2D(latitude: lat, longitude: lon)
+                                        let region = MKCoordinateRegion(
+                                            center: coord,
+                                            span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+                                        )
+                                        let annotations = [EventAnnotation(coordinate: coord)]
+
+                                        Map(
+                                            coordinateRegion: .constant(region),
+                                            annotationItems: annotations
+                                        ) { item in
+                                            MapMarker(coordinate: item.coordinate, tint: .red)
+                                        }
+                                        .frame(height: 200)
+                                        .cornerRadius(12)
+                                    }
+                                }
+                                .padding(12)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(textFieldBackground)
+                                .cornerRadius(12)
+                                .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 4)
+                            }
+                        }
+                        .padding(.horizontal, 16)
+
+                        // MARK: Notas
                         NotesCarrousel(editableEvent: editableEvent)
                             .padding(.horizontal, 8)
-                        
-                        // 🔹 Botones principales
+
+                        // MARK: Botones
                         VStack(spacing: 16) {
                             NavigationLink(
                                 destination: NoteDetailView(event: editableEvent)
                             ) {
-                                Label("Nueva nota", systemImage: "plus")  .font(.headline)
+                                Label("Nueva nota", systemImage: "plus")
+                                    .font(.headline)
                                     .foregroundColor(.white)
                                     .padding()
                                     .frame(maxWidth: .infinity)
                                     .background(.blue)
-                                    
                                     .cornerRadius(12)
                                     .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
                             }
@@ -272,11 +401,14 @@ struct EventDetall: View {
                                     .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
                             }
                             .buttonStyle(ScaleButtonStyle())
-                            
+
                             if isEditing {
                                 Button(action: {
+                                    // Extra: por si hay cambios pendientes
+                                    do { try context.save() } catch { print("❌ Error guardando: \(error)") }
                                     viewModel.saveEvent(event: editableEvent)
                                     isEditing = false
+                                    dismiss()
                                 }) {
                                     Text("Guardar Evento")
                                         .font(.headline)
@@ -304,43 +436,45 @@ struct EventDetall: View {
                     .padding(.horizontal, 16)
                     .padding(.bottom, 24)
                 }
-                
+
                 Spacer()
+            }.sheet(isPresented: $showReminderModal) {
+                SendReminderModal(event: editableEvent)
             }
             .onAppear {
                 viewModel.setContext(context: context)
                 viewModel.getProjects()
             }
             .onChange(of: utilFunctions.dismissView) { value in
-                if value {
-                    dismiss()
-                }
+                if value { dismiss() }
             }
         }
     }
-    
-    // MARK: – Header interno
-    private var headerCard: some View {
-        VStack(spacing: 10) {
-            ZStack {
-                Text("Detalles de tu evento")
-                    .font(.system(size: 32, weight: .bold))
-                    .foregroundColor(.eventButtonColor)
+
+    // MARK: - Actions
+    @MainActor
+    private func selectSuggestion(_ result: MKLocalSearchCompletion) {
+        viewModelLocation.search(for: result) { item in
+            guard let placemark = item?.placemark else { return }
+
+            let direccion = placemark.title ?? result.title
+
+            // Actualiza modelo
+            editableEvent.address = direccion
+            editableEvent.latitude = placemark.coordinate.latitude
+            editableEvent.longitude = placemark.coordinate.longitude
+
+            // Refresca buscador y oculta sugerencias
+            viewModelLocation.queryFragment = direccion
+            viewModelLocation.clearResults()
+            locationFieldFocused = false
+
+            // Guarda inmediatamente en SwiftData
+            do {
+                try context.save()
+            } catch {
+                print("❌ Error guardando ubicación: \(error)")
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 12)
-            .background(
-                LinearGradient(
-                    gradient: Gradient(colors: [
-                        Color(red: 0.95, green: 0.95, blue: 0.97, opacity: 0.8),
-                        Color(red: 0.90, green: 0.90, blue: 0.93, opacity: 0.8)
-                    ]),
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            )
-            .cornerRadius(20)
         }
-        .padding(.horizontal, 16)
     }
 }

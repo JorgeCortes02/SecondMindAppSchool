@@ -239,4 +239,43 @@ class APIClient {
         struct Body: Encodable { let date: Date }
         return try await send("tasks/lastdelete", method: "POST", body: Body(date: date))
     }
+    
+    
+    func sendReminder(email: String, event: Event, token: String) {
+        guard let url = URL(string: "https://secondmind-h6hv.onrender.com/reminder/send") else { return }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        let payload: [String: Any] = [
+            "email": email,
+            "event": [
+                "title": event.title,
+                "endDate": event.endDate.ISO8601Format(),
+                "address": event.address ?? "",
+                "descriptionEvent": event.descriptionEvent ?? ""
+            ]
+        ]
+
+        request.httpBody = try? JSONSerialization.data(withJSONObject: payload)
+
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                print("❌ Error en red:", error.localizedDescription)
+                return
+            }
+
+            if let httpResponse = response as? HTTPURLResponse {
+                print("📡 Status code:", httpResponse.statusCode)
+            }
+
+            if let data = data,
+               let body = String(data: data, encoding: .utf8) {
+                print("📩 Respuesta del servidor:", body)
+            }
+        }.resume()
+    }
+    
 }

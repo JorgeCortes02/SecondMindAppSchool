@@ -20,7 +20,7 @@ struct RoundedButtonStyle: ButtonStyle {
             .foregroundColor(.white)
             .padding(.vertical, 12)
             .padding(.horizontal, 8)
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity) // ocupa todo el ancho
             .background(backgroundColor)
             .cornerRadius(18)
             .shadow(color: backgroundColor.opacity(0.25), radius: 6, x: 0, y: 3)
@@ -29,14 +29,13 @@ struct RoundedButtonStyle: ButtonStyle {
 }
 
 struct TodayElementsView: View {
-    
-
-    
     @Binding var todayTask: [TaskItem]
     @Binding var todayEvent: [Event]
     
     @State private var showAddTaskView: Bool = false
     @State private var showAddEventView: Bool = false
+    @State private var showAddProjectView: Bool = false
+    
     @Environment(\.modelContext) private var context
     
     private var todayTaskCount: Int  { todayTask.count }
@@ -44,8 +43,6 @@ struct TodayElementsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-            
-         
             
             Text("Veamos tu día:")
                 .font(.system(size: 20, weight: .semibold))
@@ -75,16 +72,16 @@ struct TodayElementsView: View {
             }
             .frame(maxWidth: .infinity, alignment: .center)
             
-            // Botones de nueva tarea y nuevo evento usando RoundedButtonStyle
+            // Botones de nueva tarea y nuevo evento
             HStack(spacing: 16) {
                 Button(action: {
                     showAddTaskView = true
                 }) {
                     Label("Nueva Tarea", systemImage: "checkmark.circle")
-                }.sheet(isPresented: $showAddTaskView, onDismiss: {
+                }
+                .sheet(isPresented: $showAddTaskView, onDismiss: {
                     todayTask = HomeApi.fetchTodayTasks(context: context)
-                    showAddTaskView = false
-                }){
+                }) {
                     CreateTask()
                 }
                 .buttonStyle(RoundedButtonStyle(backgroundColor: .taskButtonColor))
@@ -93,29 +90,36 @@ struct TodayElementsView: View {
                     showAddEventView = true
                 }) {
                     Label("Nuevo Evento", systemImage: "calendar.badge.plus")
-                }.sheet(isPresented: $showAddEventView, onDismiss: {
+                }
+                .sheet(isPresented: $showAddEventView, onDismiss: {
                     todayEvent = HomeApi.fetchTodayEvents(context: context)
-                    showAddEventView = false
-                }){
+                }) {
                     CreateEvent()
                 }
                 .buttonStyle(RoundedButtonStyle(backgroundColor: .eventButtonColor))
             }
             .frame(maxWidth: .infinity, alignment: .center)
             
-            Button(action: {
-                showAddTaskView = true
-            }) {
-                Label("Nuevo Proyecto", systemImage: "checkmark.circle")
-            }.sheet(isPresented: $showAddTaskView, onDismiss: {
+            // Botones de nuevo proyecto y nueva nota (uno debajo del otro)
+            VStack(spacing: 12) {
+                Button(action: {
+                    showAddProjectView = true
+                }) {
+                    Label("Nuevo Proyecto", systemImage: "folder.fill")
+                }
+                .sheet(isPresented: $showAddProjectView) {
+                    CreateProject()
+                }
+                .buttonStyle(RoundedButtonStyle(backgroundColor: .purple))
                 
-            }){
-                CreateProject()
+                NavigationLink(destination: NoteDetailView()) {
+                    Label("Nueva Nota", systemImage: "note.text")
+                }
+                .buttonStyle(RoundedButtonStyle(backgroundColor: .blue))
             }
-            .buttonStyle(RoundedButtonStyle(backgroundColor: Color.purple))
+            .frame(maxWidth: .infinity, alignment: .center)
         }
         .padding(20)
-        
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.cardBG)
         .cornerRadius(40)

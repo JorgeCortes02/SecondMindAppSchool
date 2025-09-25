@@ -310,33 +310,36 @@ struct TaskMark: View {
             ForEach(listTask, id: \.id) { task in
                 NavigationLink(destination: TaskDetall(editableTask: task)) {
                     HStack(spacing: 12) {
+                        // Icono inicial
                         Image(systemName: "checklist")
                             .font(.system(size: 20))
                             .foregroundColor(accentColor)
                         
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack {
-                                Text(task.title)
-                                    .font(.system(size: 16, weight: .medium))
-                                    .foregroundColor(.primary)
-                                if let due = task.endDate {
-                                    Label {
-                                        Text(utilFunctions.extractHour(due))
-                                    } icon: {
-                                        Image(systemName: "clock")
-                                    }
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .foregroundColor(accentColor)
-                                    .padding(.vertical, 4)
-                                    .padding(.horizontal, 10)
-                                    .background(accentColor.opacity(0.1))
-                                    .clipShape(Capsule())
-                                }
+                        // Texto principal (título)
+                        Text(task.title)
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.primary)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                        
+                        Spacer() // 🔹 empuja hora + botón al final
+                        
+                        // Hora pegada al botón
+                        if let due = task.endDate {
+                            Label {
+                                Text(utilFunctions.extractHour(due))
+                            } icon: {
+                                Image(systemName: "clock")
                             }
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(accentColor)
+                            .padding(.vertical, 2)
+                            .padding(.horizontal, 8)
+                            .background(accentColor.opacity(0.1))
+                            .clipShape(Capsule())
                         }
                         
-                        Spacer()
-                        
+                        // Botón de completar
                         Button(action: {
                             task.completeDate = Date()
                             task.status = .off
@@ -349,16 +352,16 @@ struct TaskMark: View {
                         }) {
                             Image(systemName: "circle")
                                 .font(.system(size: 21))
-                                .foregroundColor(Color.gray)
+                                .foregroundColor(.gray)
                         }
                     }
                     .padding(12)
+                    .background(Color.white)
                     .cornerRadius(12)
-                    .shadow(color: Color.black.opacity(0.02), radius: 4, x: 0, y: 2)
+                    .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
                     .padding(.horizontal, 20)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
-                }
-            }
+                }            }
         }
         .padding(.vertical, 8)
         .animation(.easeOut(duration: 0.35), value: listTask)

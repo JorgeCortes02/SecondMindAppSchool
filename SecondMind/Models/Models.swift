@@ -1,6 +1,6 @@
 import Foundation
 import SwiftData
-
+import CoreLocation
 // MARK: - Enums
 enum ActivityStatus: String, Codable {
     case on
@@ -43,6 +43,7 @@ class Project {
 }
 
 // MARK: - Event
+
 @Model
 class Event {
     var title: String
@@ -62,25 +63,41 @@ class Event {
     @Relationship(deleteRule: .cascade, inverse: \UploadedDocument.event)
     var documents: [UploadedDocument] = []
 
-    // 🔹 1 Event → * Notes
+    // 1 Event → * Notes
     @Relationship(deleteRule: .cascade, inverse: \NoteItem.event)
     var notes: [NoteItem] = []
+    
+    // 🔹 Ubicación
+    var address: String?         // Nombre/dirección
+    var latitude: Double?        // Coordenada latitud
+    var longitude: Double?       // Coordenada longitud
+    
+    // Propiedad calculada para trabajar fácil con CLLocationCoordinate2D
+    var coordinate: CLLocationCoordinate2D? {
+        guard let lat = latitude, let lon = longitude else { return nil }
+        return CLLocationCoordinate2D(latitude: lat, longitude: lon)
+    }
 
     init(
         name: String,
         endDate: Date,
         status: ActivityStatus = .on,
         project: Project? = nil,
-        descriptionEvent: String? = nil
+        descriptionEvent: String? = nil,
+        address: String? = nil,
+        latitude: Double? = nil,
+        longitude: Double? = nil
     ) {
         self.title = name
         self.endDate = endDate
         self.status = status
         self.project = project
         self.descriptionEvent = descriptionEvent
+        self.address = address
+        self.latitude = latitude
+        self.longitude = longitude
     }
 }
-
 // MARK: - NoteItem
 @Model
 class NoteItem {
