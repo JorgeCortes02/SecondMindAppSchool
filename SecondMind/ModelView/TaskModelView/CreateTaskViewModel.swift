@@ -61,7 +61,15 @@ class CreateTaskViewModel: ObservableObject {
                 project.tasks.append(newTask)
             }
             do {
+                NSLog("🟢 Creando nota con token: %@", CurrentUser.token())
+                print("🟢 Nota.token guardado: \(newTask.token)")
                 try context.save()
+                Task{
+                    
+                    await SyncManagerUpload.shared.uploadTask(task: newTask)
+                    
+                }
+               
             } catch {
                 print("❌ Error al guardar tarea: \(error)")
             }

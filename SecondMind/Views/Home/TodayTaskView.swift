@@ -104,6 +104,12 @@ extension Color {
                                 do {
                                     try context.save()
                                     
+                                    Task{
+                                        
+                                        await SyncManagerUpload.shared.uploadTask(task: todayTask[0])
+                                        
+                                    }
+                                    
                                     withAnimation {
                                         todayTask.removeAll { $0.id == todayTask[0].id }
                                     }
@@ -142,7 +148,11 @@ extension Color {
                                     todayTask[index].status = .off
                                     do {
                                         try context.save()
-                                        
+                                        Task{
+                                            
+                                            await SyncManagerUpload.shared.uploadTask(task: todayTask[index])
+                                            
+                                        }
                                         withAnimation {
                                             todayTask.removeAll { $0.id == todayTask[index].id }
                                         }

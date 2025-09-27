@@ -154,6 +154,11 @@ struct CreateProject: View {
         } else {
             context.insert(newProject)
             do {
+                Task{
+                    
+                    await SyncManagerUpload.shared.uploadProject(project: newProject)
+                    
+                }
                 try context.save()
             } catch {
                 print("❌ Error al guardar proyecto: \(error)")

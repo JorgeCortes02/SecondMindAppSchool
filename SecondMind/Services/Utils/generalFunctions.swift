@@ -34,6 +34,11 @@ class generalFunctions : ObservableObject {
                 event.status = .off
                
                 isModified = true
+                Task{
+                    
+                    await SyncManagerUpload.shared.uploadEvent(event: event)
+                    
+                }
             }
         }
         

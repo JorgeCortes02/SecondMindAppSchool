@@ -128,7 +128,12 @@ final class NoteDetailViewModel: ObservableObject {
     
     // ✅ Guardado solo aplica drafts a la nota real
     func saveNote() {
-        guard let context else { return }
+        guard let context else {
+            print("❌ context es nil")
+            return
+        }
+        
+        print("➡️ Entrando en saveNote")
         
         note.title = draftTitle.isEmpty ? "Sin título" : draftTitle
         note.content = draftContent
@@ -137,6 +142,7 @@ final class NoteDetailViewModel: ObservableObject {
         note.updatedAt = Date()
         
         if isNew {
+            print("🆕 Nota nueva, insertando en contexto")
             context.insert(note)
             if let p = note.project { p.notes.append(note) }
             if let e = note.event   { e.notes.append(note) }
@@ -144,7 +150,11 @@ final class NoteDetailViewModel: ObservableObject {
         }
         
         do {
+            NSLog("polo") // debería aparecer aquí
             try context.save()
+            Task {
+                await SyncManagerUpload.shared.uploadNote(note: note)
+            }
         } catch {
             print("❌ Error al guardar la nota: \(error)")
         }

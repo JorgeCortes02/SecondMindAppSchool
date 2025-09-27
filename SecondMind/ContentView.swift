@@ -44,9 +44,9 @@ struct ContentView: View {
                               if deletedTaskToday {
                                  deleteOldTask()
                               }
-                              DataSeeder.seed(in: context)
+                             
                               context.delete(lastUpdate)
-                              context.insert(lastDeleteTask(date:Date()))
+                              context.insert(LastDeleteTask(date:Date()))
                           }
                     }
                 

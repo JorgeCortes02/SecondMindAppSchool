@@ -49,6 +49,11 @@ class TaskViewModel: ObservableObject {
         task.status = .off
         do {
             try context.save()
+            Task{
+                
+                await SyncManagerUpload.shared.uploadTask(task: task)
+                
+            }
             listTask.removeAll { $0.id == task.id }
         } catch {
             print("❌ Error al guardar: \(error)")
@@ -60,6 +65,9 @@ class TaskViewModel: ObservableObject {
         do {
             try context.delete(task)
             try context.save()
+            Task{
+               await SyncManagerUpload.shared.deleteTask(task: task)
+            }
             listTask.removeAll { $0.id == task.id }
         } catch {
             print("❌ Error al borrar: \(error)")

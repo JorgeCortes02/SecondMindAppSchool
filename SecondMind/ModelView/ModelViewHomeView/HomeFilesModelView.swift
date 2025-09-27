@@ -2,8 +2,9 @@
 //  HomeFilesModelView.swift
 //  SecondMind
 //
-//  Created by Jorge Cortés on 5/9/25.
+//  Created by Jorge Cortés on 27/9/25.
 //
+
 import Foundation
 import SwiftUI
 import SwiftData
@@ -12,9 +13,11 @@ public class HomeFilesModelView: ObservableObject {
     
     @Published var todayEvents: [Event] = []
     @Published var todayTask: [TaskItem] = []
-    @Published var projectNotes: [NoteItem] = []   // 👈 añadimos notas del proyecto
+    @Published var projectNotes: [NoteItem] = []
     
-    @EnvironmentObject var utilFunctions: generalFunctions
+    // 👇 Nuevo: mensaje de actualización
+    @Published var updateMessage: String? = nil
+    @Published var isLoading: Bool = false
     
     private var context: ModelContext?
     
@@ -24,6 +27,35 @@ public class HomeFilesModelView: ObservableObject {
     
     func setContext(context: ModelContext) {
         self.context = context
+        Task {
+            await refreshAll()
+        }
+    }
+    
+    // 🔹 Refresca todos los datos desde la API y actualiza CoreData
+    @MainActor
+    func refreshAll() async {
+        guard let context else { return }
+        isLoading = true
+        updateMessage = nil
+        
+        await SyncManagerDownload.shared.syncAll(context: context)
+        
+        downdloadTodayTasks()
+        downdloadTodayEvents()
+        
+        isLoading = false
+        
+        withAnimation {
+            updateMessage = "✅ Datos actualizados correctamente"
+        }
+        
+        // Ocultar mensaje tras 2.5s
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+            withAnimation {
+                self.updateMessage = nil
+            }
+        }
     }
     
     // MARK: – Tasks
@@ -40,7 +72,7 @@ public class HomeFilesModelView: ObservableObject {
         }
     }
     
-    func deletepastEvents() {
+    func deletepastEvents(utilFunctions: generalFunctions) {
         if let context = self.context {
             utilFunctions.pastEvent(eventList: &todayEvents, context: context)
         }
@@ -48,7 +80,6 @@ public class HomeFilesModelView: ObservableObject {
     
     // MARK: – Notes
     func loadNotesForProject(_ project: Project) {
-        // directamente desde la relación del modelo
         projectNotes = project.notes.sorted { $0.updatedAt > $1.updatedAt }
     }
     

@@ -285,6 +285,11 @@ struct ProjectDetall : View {
                                                             editableProject.status = .off
                                                             do {
                                                                 try context.save()
+                                                                Task{
+                                                                    
+                                                                    await SyncManagerUpload.shared.uploadProject(project: editableProject)
+                                                                    
+                                                                }
                                                                 dismiss()
                                                             } catch {
                                                                 print("❌ Error al guardar: \(error)")
@@ -348,7 +353,11 @@ struct ProjectDetall : View {
                                                                                // Guardar los cambios en la base de datos
                                                                                try context.save()
 
-
+                                                                               Task{
+                                                                                   
+                                                                                   await SyncManagerUpload.shared.uploadProject(project: realTask)
+                                                                                   
+                                                                               }
 
                                                                            }
 

@@ -1,53 +1,74 @@
-//
-//  JSONConversionModels.swift
-//  SecondMind
-//
-//  Created by Jorge Cortés on 10/9/25.
-//
-
 import Foundation
 
-// MARK: - DTOs (Modelos para la API)
-struct ProjectDTO: Codable, Identifiable {
-    let id: Int
-    var title: String
-    var description_project: String?
-    var status: String
-    var end_date: Date?
-    var last_opened_date: Date?
+// ============================================================
+// MARK: - Project DTO
+// ============================================================
+struct ProjectDTO: Codable {
+    let external_id: String
+    let title: String
+    let description_project: String?
+    let status: String
+    let last_opened_date: Date?
 }
 
-struct EventDTO: Codable, Identifiable {
-    let id: Int
-    var title: String
-    var description_event: String?
-    var status: String
-    var end_date: Date
-    var project_id: Int?
+// ============================================================
+// MARK: - Event DTO
+// ============================================================
+struct EventDTO: Codable {
+    let external_id: String
+    let title: String
+    let end_date: Date
+    let status: String
+    let description_event: String?
+    let project_external_id: String?
+    let address: String?
+    let latitude: Double?
+    let longitude: Double?
 }
 
-struct TaskItemDTO: Codable, Identifiable {
-    let id: Int
-    var title: String
-    var description_task: String?
-    var status: String
-    var end_date: Date?
-    var complete_date: Date?
-    var project_id: Int?
-    var event_id: Int?
+// ============================================================
+// MARK: - Task DTO
+// ============================================================
+struct TaskItemDTO: Codable {
+    let external_id: String
+    let title: String
+    let end_date: Date?
+    let complete_date: Date?
+    let status: String
+    let description_task: String?
+    let project_external_id: String?
+    let event_external_id: String?
 }
 
-
-
-struct UploadedDocumentDTO: Codable, Identifiable {
-    let id: Int
-    var title: String
-    var local_url: String
-    var upload_date: Date
-    var event_id: Int?
+// ============================================================
+// MARK: - Note DTO
+// ============================================================
+struct NoteItemDTO: Codable {
+    let external_id: String
+    let title: String
+    let content: String?
+    let project_external_id: String?
+    let event_external_id: String?
+    let created_at: Date
+    let updated_at: Date
+    let is_favorite: Bool
+    let is_archived: Bool
 }
 
-struct LastDeleteTaskDTO: Codable, Identifiable {
-    let id: Int
-    var date: Date?
+// ============================================================
+// MARK: - Document DTO
+// ============================================================
+struct UploadedDocumentDTO: Codable {
+    let external_id: String
+    let title: String
+    let local_url: String
+    let event_external_id: String?
+    let upload_date: Date?
+}
+
+// ============================================================
+// MARK: - LastDeleteTask DTO
+// ============================================================
+struct LastDeleteTaskDTO: Codable {
+    let date: Date
 }

@@ -22,7 +22,7 @@ struct CreateEvent: View {
 
     init(project: Project? = nil) {
         self._newEvent = State(initialValue: Event(
-            name: "",
+            title: "",
             endDate: Date(),
             status: .on,
             project: project,
@@ -276,6 +276,11 @@ struct CreateEvent: View {
             }
             do {
                 try context.save()
+                Task{
+                    
+                    await SyncManagerUpload.shared.uploadEvent(event: newEvent)
+                    
+                }
             } catch {
                 print("❌ Error al guardar evento: \(error)")
             }

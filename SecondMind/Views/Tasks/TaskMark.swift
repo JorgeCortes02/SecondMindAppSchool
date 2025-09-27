@@ -344,6 +344,11 @@ struct TaskMark: View {
                             task.completeDate = Date()
                             task.status = .off
                             do {
+                                Task{
+                                    
+                                    await SyncManagerUpload.shared.uploadTask(task: task)
+                                    
+                                }
                                 try context.save()
                                 listTask.removeAll { $0.id == task.id }
                             } catch {
@@ -422,6 +427,9 @@ struct TaskMark: View {
                             Button(action: {
                                 do {
                                     try context.delete(task)
+                                    Task{
+                                       await SyncManagerUpload.shared.deleteTask(task: task)
+                                    }
                                     withAnimation {
                                         listTask.removeAll { $0.id == task.id }
                                     }

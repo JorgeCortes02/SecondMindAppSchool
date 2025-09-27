@@ -410,6 +410,11 @@ struct ProjectTaskMark: View {
                             task.completeDate = Date()
                             task.status = .off
                             do {
+                                Task{
+                                    
+                                    await SyncManagerUpload.shared.uploadTask(task: task)
+                                    
+                                }
                                 try context.save()
                                 modelView.tasks.removeAll { $0.id == task.id }
                             } catch {

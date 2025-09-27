@@ -1,30 +1,52 @@
 import Foundation
 import SwiftData
 import CoreLocation
+
+// ============================================================
+// MARK: - Helper para recuperar el token actual
+// ============================================================
+struct CurrentUser {
+    static func token() -> String {
+        guard let data = KeychainHelper.standard.read(
+            service: "SecondMindAuthToken",
+            account: "SecondMind"
+        ),
+        let token = String(data: data, encoding: .utf8) else {
+            return "unknown"
+        }
+        return token
+    }
+}
+
+// ============================================================
 // MARK: - Enums
+// ============================================================
 enum ActivityStatus: String, Codable {
     case on
     case off
 }
 
+// ============================================================
 // MARK: - Project
+// ============================================================
 @Model
 class Project {
+    var externalId: UUID?
+    var token: String   // 👈 Asociado al usuario
+
     var title: String
     var endDate: Date?
     @Attribute var status: ActivityStatus
     var lastOpenedDate: Date
     var descriptionProject: String?
 
-    // 1 Project → * Events
+    // Relaciones
     @Relationship(deleteRule: .cascade, inverse: \Event.project)
     var events: [Event] = []
 
-    // 1 Project → * TaskItems
     @Relationship(deleteRule: .cascade, inverse: \TaskItem.project)
     var tasks: [TaskItem] = []
 
-    // 🔹 1 Project → * Notes
     @Relationship(deleteRule: .cascade, inverse: \NoteItem.project)
     var notes: [NoteItem] = []
 
@@ -32,63 +54,69 @@ class Project {
         title: String,
         endDate: Date? = nil,
         status: ActivityStatus = .on,
-        description: String? = nil
+        description: String? = nil,
+        externalId: UUID? = nil,
+        token: String = CurrentUser.token()
     ) {
         self.title = title
         self.endDate = endDate
         self.status = status
         self.descriptionProject = description
         self.lastOpenedDate = Date()
+        self.externalId = externalId ?? UUID()
+        self.token = token
     }
 }
 
+// ============================================================
 // MARK: - Event
-
+// ============================================================
 @Model
 class Event {
+    var externalId: UUID?
+    var token: String   // 👈 Asociado al usuario
+
     var title: String
     var endDate: Date
     @Attribute var status: ActivityStatus
     var descriptionEvent: String?
 
-    // * Event → 1 Project
+    // Relaciones
     @Relationship(deleteRule: .nullify)
     var project: Project?
 
-    // 1 Event → * TaskItems
     @Relationship(deleteRule: .nullify, inverse: \TaskItem.event)
     var tasks: [TaskItem] = []
 
-    // 1 Event → * Documents
     @Relationship(deleteRule: .cascade, inverse: \UploadedDocument.event)
     var documents: [UploadedDocument] = []
 
-    // 1 Event → * Notes
     @Relationship(deleteRule: .cascade, inverse: \NoteItem.event)
     var notes: [NoteItem] = []
-    
-    // 🔹 Ubicación
-    var address: String?         // Nombre/dirección
-    var latitude: Double?        // Coordenada latitud
-    var longitude: Double?       // Coordenada longitud
-    
-    // Propiedad calculada para trabajar fácil con CLLocationCoordinate2D
+
+    // Localización
+    var address: String?
+    var latitude: Double?
+    var longitude: Double?
+
     var coordinate: CLLocationCoordinate2D? {
         guard let lat = latitude, let lon = longitude else { return nil }
         return CLLocationCoordinate2D(latitude: lat, longitude: lon)
     }
 
     init(
-        name: String,
+        title: String,
         endDate: Date,
         status: ActivityStatus = .on,
         project: Project? = nil,
         descriptionEvent: String? = nil,
         address: String? = nil,
         latitude: Double? = nil,
-        longitude: Double? = nil
+        longitude: Double? = nil,
+        externalId: UUID? = nil,
+        token: String = CurrentUser.token()
     ) {
-        self.title = name
+        self.title = title
         self.endDate = endDate
         self.status = status
         self.project = project
@@ -96,11 +124,19 @@ class Event {
         self.address = address
         self.latitude = latitude
         self.longitude = longitude
+        self.externalId = externalId ?? UUID()
+        self.token = token
     }
 }
+
+// ============================================================
 // MARK: - NoteItem
+// ============================================================
 @Model
 class NoteItem {
+    var externalId: UUID?
+    var token: String   // 👈 Asociado al usuario
+
     var title: String
     var content: String?
     var createdAt: Date
@@ -108,11 +144,9 @@ class NoteItem {
     var isFavorite: Bool
     var isArchived: Bool
 
-    // 🔹 * Note → 1 Project (opcional)
     @Relationship(deleteRule: .nullify)
     var project: Project?
 
-    // 🔹 * Note → 1 Event (opcional)
     @Relationship(deleteRule: .nullify)
     var event: Event?
 
@@ -124,7 +158,9 @@ class NoteItem {
         isFavorite: Bool = false,
         isArchived: Bool = false,
         project: Project? = nil,
-        event: Event? = nil
+        event: Event? = nil,
+        externalId: UUID? = nil,
+        token: String = CurrentUser.token()
     ) {
         self.title = title
         self.content = content
@@ -134,15 +170,19 @@ class NoteItem {
         self.isArchived = isArchived
         self.project = project
         self.event = event
+        self.externalId = externalId ?? UUID()
+        self.token = token
     }
 }
 
-
-
-
+// ============================================================
 // MARK: - TaskItem
+// ============================================================
 @Model
 class TaskItem {
+    var externalId: UUID?
+    var token: String   // 👈 Asociado al usuario
+
     var title: String
     var endDate: Date?
     var completeDate: Date?
@@ -150,11 +190,9 @@ class TaskItem {
     @Attribute var status: ActivityStatus
     var descriptionTask: String?
 
-    // * TaskItem → 1 Project (directa)
     @Relationship(deleteRule: .nullify)
     var project: Project?
 
-    // * TaskItem → 1 Event (directa)
     @Relationship(deleteRule: .nullify)
     var event: Event?
 
@@ -165,7 +203,9 @@ class TaskItem {
         event: Event? = nil,
         status: ActivityStatus = .on,
         descriptionTask: String? = nil,
-        completeDate: Date? = nil
+        completeDate: Date? = nil,
+        externalId: UUID? = nil,
+        token: String = CurrentUser.token()
     ) {
         self.title = title
         self.endDate = endDate
@@ -174,40 +214,55 @@ class TaskItem {
         self.status = status
         self.descriptionTask = descriptionTask
         self.completeDate = completeDate
+        self.externalId = externalId ?? UUID()
+        self.token = token
     }
 }
 
+// ============================================================
 // MARK: - UploadedDocument
+// ============================================================
 @Model
 class UploadedDocument {
+    var externalId: UUID?
+    var token: String   // 👈 Asociado al usuario
+
     var title: String
     var localURL: URL
     var uploadDate: Date
 
-    // * Document → 1 Event (directa)
     @Relationship(deleteRule: .nullify)
     var event: Event?
 
-    init(title: String, localURL: URL, event: Event? = nil) {
+    init(
+        title: String,
+        localURL: URL,
+        event: Event? = nil,
+        externalId: UUID? = nil,
+        token: String = CurrentUser.token()
+    ) {
         self.title = title
         self.localURL = localURL
         self.uploadDate = Date()
         self.event = event
+        self.externalId = externalId ?? UUID()
+        self.token = token
     }
 }
 
-// MARK: - Note
-
-
+// ============================================================
 // MARK: - LastDeleteTask
+// ============================================================
 @Model
-class lastDeleteTask {
+class LastDeleteTask {
     var date: Date?
+    var token: String   // 👈 Asociado al usuario
 
-    init(date: Date?) {
+    init(
+        date: Date?,
+        token: String = CurrentUser.token()
+    ) {
         self.date = date
+        self.token = token
     }
 }
-
-
-

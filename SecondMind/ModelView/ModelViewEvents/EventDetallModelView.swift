@@ -44,7 +44,11 @@ public class EventDetallModelView: ObservableObject {
 
                              // Guardar los cambios en la base de datos
                              try context.save()
-                         
+                      Task{
+                          
+                          await SyncManagerUpload.shared.uploadEvent(event: event)
+                          
+                      }
 
                      } catch {
                          print("❌ Error al guardar: \(error)")
@@ -60,6 +64,10 @@ public class EventDetallModelView: ObservableObject {
                 context.delete(event)
                 try context.save()
                 
+                Task{
+                   await SyncManagerUpload.shared.deleteEvent(event: event)
+                }
+               
             }catch {
                 
                 print("❌ Error al guardar cambios después de eliminar: \(error)")

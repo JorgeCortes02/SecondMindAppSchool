@@ -20,7 +20,7 @@ struct SecondMindApp: App {
             Project.self,
             Event.self,
             TaskItem.self,
-            lastDeleteTask.self,
+            LastDeleteTask.self,
         ])
         let modelConfig = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -31,7 +31,7 @@ struct SecondMindApp: App {
             )
 
             // Ejecutar seeder justo después de crear el container
-            DataSeeder.seed(in: container.mainContext)
+        
 
             return container
         } catch {

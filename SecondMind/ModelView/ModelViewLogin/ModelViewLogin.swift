@@ -169,6 +169,9 @@ class LoginViewModel: ObservableObject {
                         enteremail: email,
                         service: service
                     )
+                    
+                    
+                    
                 }
             } else if let message = json["message"] as? String {
                 // ✅ Caso de registro: cuenta creada pero pendiente de verificar

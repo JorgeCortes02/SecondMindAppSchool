@@ -404,8 +404,7 @@ struct EventDetall: View {
 
                             if isEditing {
                                 Button(action: {
-                                    // Extra: por si hay cambios pendientes
-                                    do { try context.save() } catch { print("❌ Error guardando: \(error)") }
+                                    
                                     viewModel.saveEvent(event: editableEvent)
                                     isEditing = false
                                     dismiss()
@@ -472,6 +471,11 @@ struct EventDetall: View {
             // Guarda inmediatamente en SwiftData
             do {
                 try context.save()
+                Task{
+                    
+                    await SyncManagerUpload.shared.uploadEvent(event: editableEvent)
+                    
+                }
             } catch {
                 print("❌ Error guardando ubicación: \(error)")
             }

@@ -40,6 +40,11 @@ class TaskDetailViewModel: ObservableObject {
         editableTask.status = .off
         do {
             try context.save()
+            Task{
+                
+                await SyncManagerUpload.shared.uploadTask(task: editableTask)
+                
+            }
             dismiss()
         } catch {
             print("❌ Error al marcar completada: \(error)")
@@ -61,6 +66,12 @@ class TaskDetailViewModel: ObservableObject {
                 realTask.completeDate = editableTask.completeDate
 
                 try context.save()
+                
+                Task{
+                    
+                    await SyncManagerUpload.shared.uploadTask(task: realTask)
+                    
+                }
             }
             isEditing = false
         } catch {
@@ -72,6 +83,9 @@ class TaskDetailViewModel: ObservableObject {
         do {
             try context.delete(editableTask)
             try context.save()
+            Task{
+               await SyncManagerUpload.shared.deleteTask(task: editableTask)
+            }
             dismiss()
         } catch {
             print("❌ Error al borrar: \(error)")
