@@ -9,11 +9,22 @@ import SwiftData
 
 struct HomeApi {
     
-    // 🔑 Token actual del usuario
+   
+    
+    // MARK: - Recuperar token
+    private func getToken() -> String? {
+        guard let data = KeychainHelper.standard.read(service: "SecondMindUserId", account: "SecondMind") else {
+            return nil
+        }
+        return String(data: data, encoding: .utf8)
+    }
+    
     private static var token: String { CurrentUser.token() }
     
     // MARK: - Today Tasks
     static func fetchTodayTasks(context: ModelContext) -> [TaskItem] {
+        
+       
         let calendar = Calendar.current
         let startOfToday = calendar.startOfDay(for: Date())
         let endOfToday = calendar.date(byAdding: .day, value: 1, to: startOfToday)!
@@ -157,7 +168,7 @@ struct HomeApi {
 
         do {
             let tasks = try context.fetch(descriptor)
-            return tasks.filter { $0.status == .on }
+            return tasks.filter { $0.status == .off }
         } catch {
             print("Error al cargar tareas:", error)
             return []

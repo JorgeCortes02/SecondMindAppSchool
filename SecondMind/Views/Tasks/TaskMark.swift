@@ -40,6 +40,25 @@ struct TaskMark: View {
                         }
                     }
                     .padding(.vertical, 16)
+                }.refreshable {
+                    Task{
+                        await SyncManagerDownload.shared.syncTasks(context: context)
+                        switch navModel.selectedTab {
+                        case 0:
+                            listTask = HomeApi.fetchNoDateTasks(context: context)
+                        case 1:
+                            listTask = HomeApi.fetchDateTasks(date: selectedData, context: context)
+                        case 2:
+                            listTask = HomeApi.loadTasksEnd(context: context)
+                        default:
+                            listTask = []
+                        }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            withAnimation(.easeOut(duration: 0.3)) {
+                                readyToShowTasks = true
+                            }
+                        }
+                    }
                 }
             }
             .safeAreaInset(edge: .bottom) {

@@ -53,6 +53,11 @@ struct NoteMark: View {
                         .animation(.easeInOut, value: modelView.noteList)
                         .padding(.vertical, 16)
                     }
+                }.refreshable {
+                Task{
+                        await SyncManagerDownload.shared.syncNotes(context: context)
+                        modelView.loadNotes()
+                    }
                 }
                 .safeAreaInset(edge: .bottom) {
                     HStack {

@@ -2,7 +2,7 @@
 //  ProjectMark.swift
 //  SecondMind
 //
-//  Created by Jorge Cortés on 20/6/25.
+//  Created by Jorge Cortés on 20/9/25.
 //
 
 import SwiftUI
@@ -38,6 +38,11 @@ struct ProjectMark: View {
                         }
                     }
                     .padding(.vertical, 16)
+                }.refreshable {
+                    Task{
+                        await SyncManagerDownload.shared.syncProjects(context: context)
+                        reloadProjects()
+                    }
                 }
             }
             .safeAreaInset(edge: .bottom) {
@@ -166,7 +171,7 @@ struct ProjectMark: View {
             GridItem(.flexible())
         ]
 
-        return LazyVGrid(columns: columns) {
+        return LazyVGrid(columns: columns, spacing: 30) {
             ForEach(projectList, id: \.self) { project in
                 NavigationLink(destination: ProjectDetall(editableProject: project)) {
                     ZStack(alignment: .topLeading) {

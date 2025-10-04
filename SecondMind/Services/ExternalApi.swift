@@ -30,17 +30,23 @@ class APIClient {
         // MARK: - Helpers genéricos
         // ============================================================
         
-        // MARK: - Generic GET
-        private func get<T: Decodable>(_ path: String, token: String? = nil) async throws -> T {
-            let url = baseURL.appendingPathComponent(path)
-            var req = URLRequest(url: url)
-            req.httpMethod = "GET"
-            if let token = token {
-                req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-            }
-            let (data, _) = try await URLSession.shared.data(for: req)
-            return try decoder.decode(T.self, from: data)
+    private func get<T: Decodable>(_ path: String, token: String? = nil) async throws -> T {
+        let url = baseURL.appendingPathComponent(path)
+        var req = URLRequest(url: url)
+        req.httpMethod = "GET"
+        if let token = token {
+            req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
+
+        let (data, _) = try await URLSession.shared.data(for: req)
+
+        // 👇 Depuración: imprime la respuesta cruda
+        if let raw = String(data: data, encoding: .utf8) {
+            print("📩 GET \(path) →", raw)
+        }
+
+        return try decoder.decode(T.self, from: data)
+    }
         
         // MARK: - Generic POST/PUT
         private func send<T: Decodable, B: Encodable>(

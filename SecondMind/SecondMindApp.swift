@@ -10,11 +10,14 @@ import SwiftData
 
 @main
 struct SecondMindApp: App {
-    
+    @Environment(\.scenePhase) private var scenePhase
     @StateObject var navModel = SelectedViewList()
     @StateObject var utilFunctions = generalFunctions()
     @StateObject private var loginViewModel = LoginViewModel()
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+
+
+    
     private var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Project.self,

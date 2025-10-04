@@ -56,7 +56,31 @@ struct EventMark: View {
                         .padding(.vertical, 16)
                         
                         
-                        } // Espacio para la TabBar
+                        } .refreshable {
+                            Task{
+                                await SyncManagerDownload.shared.syncEvents(context: context)
+                                switch modelView.selectedTab {
+                                case 0:
+                                    modelView.loadEvents(date: selectedData)
+                                    break;
+                                case 1:
+                                    modelView.loadEvents()
+                                    
+                                    break;
+                                        
+                                default:
+                                    break;
+                                }
+                               
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                    withAnimation(.easeOut(duration: 0.3)) {
+                                        readyToShowTasks = true
+                                    }
+                                    
+                                }
+                            }
+                           
+                        }
                         .onChange(of: modelView.selectedTab) {
                             withAnimation(.easeInOut(duration: 0.2)) {
                                 showCal = false
@@ -139,7 +163,7 @@ struct EventMark: View {
                                    .foregroundColor(.eventButtonColor)
                                    .padding(16)
                            }
-                           .glassEffect(.regular.tint(Color.white.opacity(0.1)).interactive(), in: .circle)
+                           .glassEffect(.clear.tint(Color.white.opacity(0.1)).interactive(), in: .circle)
                            .shadow(color: .black.opacity(0.4), radius: 5, x: 0, y: 4)
                        } else {
                            // Fallback para versiones anteriores
@@ -163,7 +187,7 @@ struct EventMark: View {
                         .foregroundColor(.eventButtonColor)
                         .padding(16)
                 }
-                .glassEffect(.regular.tint(Color.white.opacity(0.1)).interactive(), in: .circle)
+                .glassEffect(.clear.tint(Color.white.opacity(0.1)).interactive(), in: .circle)
                 .shadow(color: .black.opacity(0.4), radius: 5, x: 0, y: 4) .sheet(isPresented: $showAddTaskView, onDismiss: {
                     withAnimation(.easeInOut(duration: 0.2)) {
                         

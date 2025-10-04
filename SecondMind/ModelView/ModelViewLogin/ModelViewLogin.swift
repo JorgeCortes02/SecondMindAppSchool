@@ -10,7 +10,7 @@ class LoginViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var showSuccessModal = false
     @Published var successMessage: String? = nil   // 👈 aquí está la que faltaba
-  
+    
     private let tokenKey = "SecondMindAuthToken"
     private let baseURL = "https://secondmind-h6hv.onrender.com/auth"
     
@@ -26,7 +26,7 @@ class LoginViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Google
+    @MainActor
     func signInWithGoogle() async {
         guard let rootVC = UIApplication.shared.connectedScenes
             .compactMap({ ($0 as? UIWindowScene)?.keyWindow })
@@ -35,13 +35,29 @@ class LoginViewModel: ObservableObject {
             return
         }
 
+        isLoading = true
+
         do {
             let result = try await GIDSignIn.sharedInstance.signIn(withPresenting: rootVC)
+
             if let token = result.user.idToken?.tokenString {
+                // 👇 Sacamos el `sub` estable del token
+                if let sub = extractSub(from: token) {
+                    print("🔑 Google sub:", sub)
+                    // ⚠️ Aquí podrías guardar el sub en tu userSession o enviarlo al backend
+                }
                 sendGoogleTokenToServer(idToken: token)
+            } else {
+                await MainActor.run { self.isLoading = false }
             }
+
         } catch {
-            NSLog("❌ Error en login con Google: %@", error.localizedDescription)
+            await MainActor.run { isLoading = false }
+            if (error as NSError).code == GIDSignInError.canceled.rawValue {
+                NSLog("⚠️ Login con Google cancelado por el usuario")
+            } else {
+                NSLog("❌ Error en login con Google: %@", error.localizedDescription)
+            }
         }
     }
     
@@ -59,6 +75,27 @@ class LoginViewModel: ObservableObject {
             }
             self.handleAuthResponse(data: data, response: response)
         }.resume()
+    }
+    
+    // ============================================================
+    // MARK: - Extraer `sub` de un JWT
+    // ============================================================
+    private func extractSub(from idToken: String) -> String? {
+        let parts = idToken.split(separator: ".")
+        guard parts.count > 1 else { return nil }
+
+        var base64 = parts[1]
+            .replacingOccurrences(of: "-", with: "+")
+            .replacingOccurrences(of: "_", with: "/")
+        while base64.count % 4 != 0 { base64 += "=" }
+
+        guard let data = Data(base64Encoded: base64),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        else {
+            return nil
+        }
+
+        return json["sub"] as? String
     }
     
     // MARK: - Validaciones rápidas
@@ -162,7 +199,11 @@ class LoginViewModel: ObservableObject {
                    let name = userDict["name"] as? String,
                    let email = userDict["email"] as? String,
                    let service = userDict["service"] as? String {
-
+                    
+                    if let idData = id.data(using: .utf8) {
+                          KeychainHelper.standard.save(idData, service: "SecondMindUserId", account: "SecondMind")
+                      }
+                    
                     self.userSession.setData(
                         id: Int(id) ?? 0, // lo conviertes a Int si quieres, si falla usa 0
                         name: name,
@@ -170,7 +211,7 @@ class LoginViewModel: ObservableObject {
                         service: service
                     )
                     
-                    
+                   
                     
                 }
             } else if let message = json["message"] as? String {

@@ -19,7 +19,7 @@ public class HomeFilesModelView: ObservableObject {
     @Published var updateMessage: String? = nil
     @Published var isLoading: Bool = false
     
-    private var context: ModelContext?
+     var context: ModelContext?
     
     init(context: ModelContext? = nil) {
         self.context = context
@@ -27,34 +27,27 @@ public class HomeFilesModelView: ObservableObject {
     
     func setContext(context: ModelContext) {
         self.context = context
-        Task {
-            await refreshAll()
-        }
+        
     }
     
-    // 🔹 Refresca todos los datos desde la API y actualiza CoreData
     @MainActor
     func refreshAll() async {
+        print("🔄 refreshAll llamado")
         guard let context else { return }
         isLoading = true
         updateMessage = nil
-        
+
         await SyncManagerDownload.shared.syncAll(context: context)
-        
+
         downdloadTodayTasks()
         downdloadTodayEvents()
-        
+
+        print("📌 after sync → tasks: \(todayTask.count), events: \(todayEvents.count)")
+
         isLoading = false
-        
+
         withAnimation {
             updateMessage = "✅ Datos actualizados correctamente"
-        }
-        
-        // Ocultar mensaje tras 2.5s
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-            withAnimation {
-                self.updateMessage = nil
-            }
         }
     }
     

@@ -203,7 +203,7 @@ struct LoginView: View {
                         Button(action: {
                             Task {
                                 await loginVM.signInWithGoogle()
-                                loginVM.isLoading = true
+                               
                             }
                         }) {
                             HStack {

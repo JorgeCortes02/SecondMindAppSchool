@@ -56,6 +56,7 @@ struct HomeView: View {
                     ScrollView {
                         if hSizeClass == .regular {
                             VStack(spacing: 24) {
+                               
                                 TodayElementsView(todayTask: $homeVM.todayTask, todayEvent: $homeVM.todayEvents)
                                     .frame(maxWidth: 800)
                                 
@@ -73,7 +74,7 @@ struct HomeView: View {
                         } else {
                             VStack(alignment: .leading, spacing: 10) {
                                 headerCard
-                                
+                           
                                 TodayElementsView(todayTask: $homeVM.todayTask, todayEvent: $homeVM.todayEvents)
                                 
                                 TodayTaskView(todayTask: $homeVM.todayTask)
@@ -84,7 +85,10 @@ struct HomeView: View {
                     }
                     // 👇 Pull-to-refresh
                     .refreshable {
-                        await homeVM.refreshAll()
+                      
+                        Task{
+                            await homeVM.refreshAll()
+                        }
                     }
                 }
                 // 👇 Mensaje overlay de éxito

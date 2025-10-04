@@ -8,16 +8,16 @@ import CoreLocation
 struct CurrentUser {
     static func token() -> String {
         guard let data = KeychainHelper.standard.read(
-            service: "SecondMindAuthToken",
+            service: "SecondMindUserId",
             account: "SecondMind"
         ),
         let token = String(data: data, encoding: .utf8) else {
             return "unknown"
         }
+        print(token)
         return token
     }
 }
-
 // ============================================================
 // MARK: - Enums
 // ============================================================
@@ -58,6 +58,7 @@ class Project {
         externalId: UUID? = nil,
         token: String = CurrentUser.token()
     ) {
+        print("El token: " + token)
         self.title = title
         self.endDate = endDate
         self.status = status
