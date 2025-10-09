@@ -3,10 +3,15 @@ import SwiftData
 
 struct TaskMark: View {
     
-    @EnvironmentObject var navModel: SelectedViewList
+
     @EnvironmentObject var utilFunctions: generalFunctions
     @Environment(\.modelContext) private var context
-    
+    @StateObject private var modelView: TaskViewModel
+
+    init() {
+        _modelView = StateObject(wrappedValue: TaskViewModel())
+    }
+
     @State var listTask: [TaskItem] = []
     @State private var readyToShowTasks: Bool = false
     @State private var usableSize: CGSize = .zero
@@ -15,6 +20,8 @@ struct TaskMark: View {
     
     @State private var showCal: Bool = false
     @State private var showAddTaskView: Bool = false
+    
+    
     
     var body: some View {
         ZStack {
@@ -27,13 +34,13 @@ struct TaskMark: View {
                 
                 ScrollView {
                     VStack(spacing: 20) {
-                        if navModel.selectedTab == 1 && showCal {
+                        if modelView.selectedTab == 1 && showCal {
                             calendarCard(selectedDate: $selectedData)
                         }
-                        else if navModel.selectedTab == 1 && !showCal {
+                        else if modelView.selectedTab == 1 && !showCal {
                             TaskCard
                         }
-                        else if navModel.selectedTab == 2 {
+                        else if modelView.selectedTab == 2 {
                             TaskCard
                         } else {
                             TaskCard
@@ -43,7 +50,7 @@ struct TaskMark: View {
                 }.refreshable {
                     Task{
                         await SyncManagerDownload.shared.syncTasks(context: context)
-                        switch navModel.selectedTab {
+                        switch modelView.selectedTab {
                         case 0:
                             listTask = HomeApi.fetchNoDateTasks(context: context)
                         case 1:
@@ -71,6 +78,9 @@ struct TaskMark: View {
                 .padding(.bottom, 80)
             }
             .ignoresSafeArea(.keyboard)
+            .onAppear{
+                modelView.setContext(context)
+            }
         }
     }
     
@@ -78,9 +88,9 @@ struct TaskMark: View {
     // MARK: – Segment Button
     
     private func segmentButton(title: String, tag: Int) -> some View {
-        let isSelected = (navModel.selectedTab == tag)
+        let isSelected = (modelView.selectedTab == tag)
         return Button(action: {
-            withAnimation(.easeInOut) { navModel.selectedTab = tag }
+            withAnimation(.easeInOut) { modelView.selectedTab = tag }
         }) {
             Text(title)
                 .font(.system(size: 15, weight: isSelected ? .semibold : .regular))
@@ -117,11 +127,11 @@ struct TaskMark: View {
     
     private var buttonControlMark: some View {
         HStack(spacing: 10) {
-            if navModel.selectedTab == 1 {
+            if modelView.selectedTab == 1 {
                 if #available(iOS 26.0, *) {
                     Button(action: {
                         withAnimation(.easeInOut) { showCal.toggle() }
-                        print(showCal, navModel.selectedTab)
+                        print(showCal, modelView.selectedTab)
                     }) {
                         Image(systemName: "calendar")
                             .font(.system(size: 28, weight: .bold))
@@ -133,7 +143,7 @@ struct TaskMark: View {
                 } else {
                     Button(action: {
                         withAnimation(.easeInOut) { showCal.toggle() }
-                        print(showCal, navModel.selectedTab)
+                        print(showCal, modelView.selectedTab)
                     }) {
                         Image(systemName: "calendar")
                             .font(.system(size: 28, weight: .bold))
@@ -161,7 +171,7 @@ struct TaskMark: View {
                 .glassEffect(.clear.tint(Color.white.opacity(0.1)).interactive(), in: .circle)
                 .shadow(color: .black.opacity(0.4), radius: 5, x: 0, y: 4)
                 .sheet(isPresented: $showAddTaskView, onDismiss: {
-                    if navModel.selectedTab == 1 {
+                    if modelView.selectedTab == 1 {
                         listTask = HomeApi.fetchDateTasks(date: selectedData, context: context)
                     } else {
                         listTask = HomeApi.fetchNoDateTasks(context: context)
@@ -184,7 +194,7 @@ struct TaskMark: View {
                         )
                 }
                 .sheet(isPresented: $showAddTaskView, onDismiss: {
-                    if navModel.selectedTab == 1 {
+                    if modelView.selectedTab == 1 {
                         listTask = HomeApi.fetchDateTasks(date: selectedData, context: context)
                     } else {
                         listTask = HomeApi.fetchNoDateTasks(context: context)
@@ -204,11 +214,11 @@ struct TaskMark: View {
     private var TaskCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                if navModel.selectedTab == 0 {
+                if modelView.selectedTab == 0 {
                     Text("Tareas de hoy")
                         .foregroundColor(.primary)
                         .font(.title2.weight(.bold))
-                } else if navModel.selectedTab == 1 {
+                } else if modelView.selectedTab == 1 {
                     Text(utilFunctions.formattedDate(selectedData))
                         .foregroundColor(.primary)
                         .font(.title2.weight(.bold))
@@ -233,7 +243,7 @@ struct TaskMark: View {
             if listTask.isEmpty {
                 emptyTaskList
             } else if readyToShowTasks {
-                if navModel.selectedTab == 2 {
+                if modelView.selectedTab == 2 {
                     endTaskList
                 } else {
                     taskListToDo
@@ -245,7 +255,7 @@ struct TaskMark: View {
         .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
         .padding(.horizontal, 16)
         .onAppear {
-            switch navModel.selectedTab {
+            switch modelView.selectedTab {
             case 0:
                 listTask = HomeApi.fetchNoDateTasks(context: context)
             case 1:

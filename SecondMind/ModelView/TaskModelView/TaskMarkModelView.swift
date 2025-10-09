@@ -14,7 +14,7 @@ class TaskViewModel: ObservableObject {
     @Published var listTask: [TaskItem] = []
     @Published var readyToShowTasks: Bool = false
     @Published var selectedDate: Date = Date()
-
+    @Published var selectedTab: Int = 0   
     private var context: ModelContext?
 
     // Configurar contexto desde la vista

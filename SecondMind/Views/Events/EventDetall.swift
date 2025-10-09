@@ -17,7 +17,7 @@ struct EventDetall: View {
     @Environment(\.modelContext) var context
     @Environment(\.dismiss) var dismiss
     @ObservedObject var utilFunctions: generalFunctions = generalFunctions()
-
+   
     // VMs (externos: EventDetallModelView y LocationSearchViewModel los tienes aparte)
     @StateObject var viewModel: EventDetallModelView
     @StateObject private var viewModelLocation = LocationSearchViewModel()
@@ -62,6 +62,7 @@ struct EventDetall: View {
                         }
                         Button(action: {
                             viewModel.deleteEvent(event: editableEvent)
+                            utilFunctions.dismissViewFunc()
                         }) {
                             Image(systemName: "trash")
                         }
@@ -234,7 +235,7 @@ struct EventDetall: View {
                                     Image(systemName: "calendar")
                                         .foregroundColor(.orange)
 
-                                    Text(editableEvent.endDate.formatted(date: .long, time: .shortened))
+                                    Text(utilFunctions.formattedDateAndHour(editableEvent.endDate))
                                         .font(.body)
                                         .foregroundColor(.primary)
 

@@ -66,19 +66,29 @@ class generalFunctions : ObservableObject {
         
 
     }
-    
+    func formattedDateShort(_ date: Date) -> String {
+        
+            let formatter = DateFormatter()
+            formatter.locale = Locale(identifier: "es_ES")
+        formatter.dateStyle = .medium
+            
+            return formatter.string(from: date)
+        
+
+    }
     func formattedDateAndHour(_ date: Date) -> String {
         
             let formatter = DateFormatter()
             formatter.locale = Locale(identifier: "es_ES")
-        formatter.dateStyle = .short
+        formatter.dateStyle = .long
             formatter.timeStyle = .short
             
             return formatter.string(from: date)
         
 
     }
-     func extractHour(_ date: Date) -> String {
+    
+    func extractHour(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "HH:mm"
         return formatter.string(from: date)

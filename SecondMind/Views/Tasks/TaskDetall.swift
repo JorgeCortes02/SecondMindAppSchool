@@ -4,7 +4,7 @@ import SwiftData
 struct TaskDetall: View {
     @Environment(\.dismiss) var dismiss
     @Environment(\.modelContext) var context
-
+    @EnvironmentObject var utilFunctions: generalFunctions
     @StateObject private var modelView: TaskDetailViewModel
 
     init(editableTask: TaskItem) {
@@ -209,7 +209,7 @@ struct TaskDetall: View {
                     Image(systemName: "calendar")
                         .foregroundColor(.orange)
                     if let date = modelView.editableTask.endDate {
-                        Text(date.formatted(date: .long, time: .shortened))
+                        Text(utilFunctions.formattedDateAndHour(date))
                     } else {
                         Text("Esta tarea no tiene fecha")
                             .foregroundColor(.secondary)

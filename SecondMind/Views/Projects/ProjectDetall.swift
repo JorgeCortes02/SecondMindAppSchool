@@ -14,7 +14,7 @@ struct ProjectDetall : View {
     let textFieldBackground = Color(red: 240/255, green: 240/255, blue: 245/255)
     @Environment(\.modelContext) var context
     @Environment(\.dismiss) var dismiss
-
+    @EnvironmentObject var utilFunctions: generalFunctions
     @State private var ShowDatePicker: Bool = false
     @State var isEditing = false
     @State private var showAddTaskView: Bool = false
@@ -180,7 +180,7 @@ struct ProjectDetall : View {
                                             .foregroundColor(.primary)
                                             .padding(.bottom, 4)
                                         if let date = editableProject.endDate {
-                                            Text(date.formatted(date: .abbreviated, time: .omitted))
+                                            Text(utilFunctions.formattedDateShort(date))
                                                 .font(.headline).padding(.bottom, 4)
                                                 .foregroundColor(Color.eventButtonColor)
                                         } else {
@@ -297,7 +297,7 @@ struct ProjectDetall : View {
                                                         }) {
                                                                 if editableProject.status == .on
                                                             {
-                                                                    Text("Marcar como completada")
+                                                                    Text("Marcar como completado")
                                                                         .font(.headline)
                                                                         .foregroundColor(.white)
                                                                         .padding()
@@ -317,7 +317,7 @@ struct ProjectDetall : View {
                                                                         .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
                                                                     
                                                                 }else{
-                                                                    Text("Tarea completada")
+                                                                    Text("Evento completado")
                                                                         .font(.headline)
                                                                         .foregroundColor(.white)
                                                                         .padding()
@@ -371,7 +371,7 @@ struct ProjectDetall : View {
                                                                 }) {
                                                                     
                                                                     
-                                                                        Text("Guardar Tarea")
+                                                                        Text("Guardar Proyecto")
                                                                             .font(.headline)
                                                                             .foregroundColor(.white)
                                                                             .padding()
