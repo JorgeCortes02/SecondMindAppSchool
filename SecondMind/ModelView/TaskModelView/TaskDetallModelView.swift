@@ -1,10 +1,3 @@
-//
-//  TaskDetallModelView.swift
-//  SecondMind
-//
-//  Created by Jorge Cortes on 24/9/25.
-//
-
 import Foundation
 import SwiftData
 import SwiftUI
@@ -17,6 +10,10 @@ class TaskDetailViewModel: ObservableObject {
     @Published var isEditing: Bool = false
     @Published var showDatePicker: Bool = false
     @Published var isIncompleteTask: Bool = false
+
+    // 🔹 Control de bloqueo de pickers
+    @Published var lockProject: Bool = false
+    @Published var lockEvent: Bool = false
 
     private var context: ModelContext
 
@@ -40,10 +37,8 @@ class TaskDetailViewModel: ObservableObject {
         editableTask.status = .off
         do {
             try context.save()
-            Task{
-                
+            Task {
                 await SyncManagerUpload.shared.uploadTask(task: editableTask)
-                
             }
             dismiss()
         } catch {
@@ -66,11 +61,9 @@ class TaskDetailViewModel: ObservableObject {
                 realTask.completeDate = editableTask.completeDate
 
                 try context.save()
-                
-                Task{
-                    
+
+                Task {
                     await SyncManagerUpload.shared.uploadTask(task: realTask)
-                    
                 }
             }
             isEditing = false
@@ -83,8 +76,8 @@ class TaskDetailViewModel: ObservableObject {
         do {
             try context.delete(editableTask)
             try context.save()
-            Task{
-               await SyncManagerUpload.shared.deleteTask(task: editableTask)
+            Task {
+                await SyncManagerUpload.shared.deleteTask(task: editableTask)
             }
             dismiss()
         } catch {
@@ -92,19 +85,47 @@ class TaskDetailViewModel: ObservableObject {
         }
     }
 
+    // MARK: - 🔹 Manejo de selección de proyecto
     func updateProjectSelection(_ newProject: Project?) {
-        if editableTask.event == nil {
-            editableTask.endDate = newProject?.endDate ?? nil
-        }
+        guard !lockProject else { return } // Evita cambios si está bloqueado
+
+        editableTask.project = newProject
+
         if let safeProject = newProject {
             events = HomeApi.downdloadEventsFromProject(project: safeProject, context: context)
         } else {
-            events = []
+            // Si se quita el proyecto, mostramos todos los eventos
+            events = HomeApi.downdloadEventsFrom(context: context)
+        }
+
+        // Si el evento actual no pertenece al nuevo proyecto → eliminarlo
+        if let currentEvent = editableTask.event,
+           let project = newProject,
+           currentEvent.project?.id != project.id {
+            editableTask.event = nil
         }
     }
 
+    // MARK: - 🔹 Manejo de selección de evento
     func updateEventSelection(_ newEvent: Event?) {
-        editableTask.project = newEvent?.project
-        editableTask.endDate = newEvent?.endDate
+        guard let event = newEvent else {
+            // Si se quita el evento, desbloqueamos el picker de proyecto
+            editableTask.event = nil
+            editableTask.endDate = nil
+            lockProject = false
+            return
+        }
+
+        // Asignamos el evento
+        editableTask.event = event
+        editableTask.endDate = event.endDate
+
+        if let eventProject = event.project {
+            // Si el evento tiene proyecto, lo asignamos
+            editableTask.project = eventProject
+        }
+
+        // 🔒 Siempre que haya evento, bloqueamos el picker de proyecto
+        lockProject = true
     }
 }

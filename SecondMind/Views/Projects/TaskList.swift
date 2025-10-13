@@ -1,43 +1,35 @@
-//
-//List.swift
-//  SecondMind
-//
-//  Created by Jorge Cortés on 28/7/25.
-//
 import SwiftUI
+import SwiftData
+
 struct TaskList: View {
     @Environment(\.modelContext) private var context
-    @Bindable var editableProject: Project
     @EnvironmentObject var utilFunctions: generalFunctions
 
-    // computed property en lugar de @State
-    private var filteredTasks: [TaskItem] {
-        editableProject.tasks
-            .filter { $0.status == .on }
-            .sorted {
-                switch ($0.endDate, $1.endDate) {
-                case let (fechaA?, fechaB?): return fechaA < fechaB
-                case (_?, nil): return true
-                case (nil, _?): return false
-                case (nil, nil): return false
-                }
-            }
+    // Se mantiene el parámetro como lo usas en ProjectDetall
+    @Bindable var editableProject: Project
+
+    @StateObject private var viewModel: TaskListViewModel
+
+    // ✅ init compatible: NO creamos ModelContext() aquí
+    init(editableProject: Project) {
+        self._editableProject = Bindable(wrappedValue: editableProject)
+        _viewModel = StateObject(wrappedValue: TaskListViewModel(project: editableProject))
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
+            // Header
             HStack {
                 Text("Tareas del proyecto")
                     .font(.headline)
                     .foregroundColor(Color.taskButtonColor)
-                Text("\(filteredTasks.count)").bold()
+                Text("\(viewModel.filteredTasks.count)").bold()
                 Spacer()
-                NavigationLink(destination: ProjectTaskView(project: editableProject)) {
+                NavigationLink(destination: ProjectTaskView(project: viewModel.editableProject)) {
                     HStack(spacing: 4) {
                         Text("Ver más")
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundColor(Color.taskButtonColor)
-
                         Image(systemName: "chevron.right")
                             .font(.system(size: 18, weight: .semibold))
                             .foregroundColor(Color.taskButtonColor)
@@ -49,7 +41,8 @@ struct TaskList: View {
                 .fill(Color.primary.opacity(0.1))
                 .frame(height: 1)
 
-            if filteredTasks.isEmpty {
+            // Contenido
+            if viewModel.filteredTasks.isEmpty {
                 VStack(spacing: 20) {
                     Image(systemName: "checkmark.seal.text.page")
                         .resizable()
@@ -63,15 +56,14 @@ struct TaskList: View {
                 }
                 .frame(maxWidth: .infinity, minHeight: 150)
                 .padding(20)
-            } else if filteredTasks.count == 1 {
-                ForEach(filteredTasks.prefix(1)) { task in
+            } else if viewModel.filteredTasks.count == 1 {
+                ForEach(viewModel.filteredTasks.prefix(1)) { task in
                     NavigationLink(destination: TaskDetall(editableTask: task)) {
                         taskRow(task: task)
                     }
-                
                 }
             } else {
-                ForEach(filteredTasks.prefix(2)) { task in
+                ForEach(viewModel.filteredTasks.prefix(2)) { task in
                     NavigationLink(destination: TaskDetall(editableTask: task)) {
                         taskRow(task: task)
                     }
@@ -80,8 +72,14 @@ struct TaskList: View {
         }
         .padding(20)
         .background(Color.cardBackground)
+        .cornerRadius(20)
+        .onAppear {
+            // ✅ Inyectamos dependencias reales aquí (sin reasignar el StateObject)
+            viewModel.updateDependencies(context: context, utilFunctions: utilFunctions)
+        }
     }
 
+    // MARK: - Fila
     private func taskRow(task: TaskItem) -> some View {
         HStack(spacing: 12) {
             Image(systemName: "checklist")
@@ -89,13 +87,13 @@ struct TaskList: View {
                 .foregroundColor(Color.taskButtonColor)
 
             Text(task.title)
-                .font(.system(size: 17, weight: .regular))
+                .font(.system(size: 17))
                 .foregroundColor(.primary)
 
             Spacer()
 
             Button {
-                deleteTask(task)
+                viewModel.deleteTask(task)
             } label: {
                 Image(systemName: "circle")
                     .font(.system(size: 21))
@@ -104,15 +102,5 @@ struct TaskList: View {
         }
         .padding(12)
         .modifier(TaskCardModifier())
-    }
-
-    private func deleteTask(_ task: TaskItem) {
-        task.status = .off
-        task.completeDate = Date()
-        do {
-            try context.save()
-        } catch {
-            print("Error al guardar cambios: \(error)")
-        }
     }
 }

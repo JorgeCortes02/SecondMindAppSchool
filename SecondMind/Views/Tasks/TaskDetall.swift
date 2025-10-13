@@ -5,6 +5,7 @@ struct TaskDetall: View {
     @Environment(\.dismiss) var dismiss
     @Environment(\.modelContext) var context
     @EnvironmentObject var utilFunctions: generalFunctions
+    @Environment(\.horizontalSizeClass) private var sizeClass
     @StateObject private var modelView: TaskDetailViewModel
 
     init(editableTask: TaskItem) {
@@ -54,6 +55,9 @@ struct TaskDetall: View {
                     .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 6)
                     .padding(.horizontal, 16)
                     .padding(.bottom, 24)
+                    // ✅ iPad centrado, iPhone igual
+                    .frame(maxWidth: sizeClass == .regular ? 900 : .infinity)
+                    .padding(.horizontal, sizeClass == .regular ? 50 : 0)
                 }
 
                 Spacer()

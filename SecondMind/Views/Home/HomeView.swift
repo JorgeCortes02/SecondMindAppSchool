@@ -9,7 +9,7 @@ struct HomeView: View {
     @EnvironmentObject var loginVM: LoginViewModel
     
     @StateObject private var homeVM = HomeFilesModelView()
-    
+    @State private var didInitialLoad = false
     var body: some View {
         NavigationStack {
             ZStack(alignment: .topTrailing) {
@@ -56,7 +56,7 @@ struct HomeView: View {
                     ScrollView {
                         if hSizeClass == .regular {
                             VStack(spacing: 24) {
-                               
+                                
                                 TodayElementsView(todayTask: $homeVM.todayTask, todayEvent: $homeVM.todayEvents)
                                     .frame(maxWidth: 800)
                                 
@@ -74,7 +74,7 @@ struct HomeView: View {
                         } else {
                             VStack(alignment: .leading, spacing: 10) {
                                 headerCard
-                           
+                                
                                 TodayElementsView(todayTask: $homeVM.todayTask, todayEvent: $homeVM.todayEvents)
                                 
                                 TodayTaskView(todayTask: $homeVM.todayTask)
@@ -85,7 +85,7 @@ struct HomeView: View {
                     }
                     // 👇 Pull-to-refresh
                     .refreshable {
-                      
+                        
                         Task{
                             await homeVM.refreshAll()
                         }
@@ -108,6 +108,15 @@ struct HomeView: View {
                 .onAppear {
                     homeVM.setContext(context: context)
                     loginVM.isLoading = false
+                    if !didInitialLoad {
+                        didInitialLoad = true  // 👈 evita que se repita
+                        Task {
+                            print("🚀 Primera carga del Home: ejecutando refreshAll()")
+                            await homeVM.refreshAll()
+                            print("✅ Datos sincronizados correctamente")
+                        }
+                    }
+                    print("ELTOKEEEEN" + loginVM.getToken()!)
                 }
             }
         }

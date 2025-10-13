@@ -26,14 +26,11 @@ struct ProjectEventsView: View {
                         .padding(.top, 10)    // 📌 Igual que en EventsView
                         .padding(.bottom, 5)
 
-                    if hSizeClass == .regular {
-                        Text("Vista para iPad pendiente")
-                            .padding()
-                    } else {
+               
                         // ——— Cuerpo: ProjectEventMark ocupa todo el espacio ———
                         ProjectEventMark(project: project)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    }
+                    
                 }
                 .ignoresSafeArea(edges: .bottom)
             }

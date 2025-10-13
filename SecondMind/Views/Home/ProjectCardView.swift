@@ -7,13 +7,14 @@
 import SwiftUI
 
 struct ProjectCardView: View {
+    @EnvironmentObject var utilFunctions: generalFunctions
     let project: Project
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(project.title)
                 .font(.headline)
             if let date = project.endDate {
-                Text("Próximo: \(date.formatted(.dateTime.day().month().year()))")
+                Text("Próximo: \(utilFunctions.formattedDateShort(date))")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }

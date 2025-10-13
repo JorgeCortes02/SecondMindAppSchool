@@ -24,15 +24,11 @@ struct EventsView: View {
                             .padding(.top, 10)    // 📌 Mismo padding top que en EventsView
                             .padding(.bottom, 5)
 
-                        if hSizeClass == .regular {
-                            Text("Vista para iPad pendiente")
-                                .padding()
-                        } else {
                             // ——— Cuerpo: TaskMark ocupa todo el espacio que queda ———
                             EventMark()
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                                 
-                        }
+                        
                     }
                    
                     .ignoresSafeArea(edges: .bottom)  // si necesitas cubrir hasta el fondo

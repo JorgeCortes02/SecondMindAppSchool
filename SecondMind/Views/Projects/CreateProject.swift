@@ -1,55 +1,43 @@
-//
-//  ProjectDetall.swift
-//  SecondMind
-//
-//  Created by Jorge Cortés on 25/7/25.
-//
-
 import SwiftUI
+import SwiftData
 
 struct CreateProject: View {
-    let softRed = Color(red: 220/255, green: 75/255, blue: 75/255)
-    let textFieldBackground = Color(red: 248/255, green: 248/255, blue: 250/255)
-    
-    @State private var newProject = Project(title: "", endDate: nil, description: "")
-    @Environment(\.modelContext) var context
-    @Environment(\.dismiss) var dismiss
-    @ObservedObject var utilFunctions: generalFunctions = generalFunctions()
-    @State private var ShowDatePicker: Bool = false
-    @State private var isIncompleteTitle: Bool = false
-    
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var context
+    @EnvironmentObject var utilFunctions: generalFunctions
+
+    @StateObject private var viewModel = CreateProjectViewModel()  // ✅ sin argumentos
+
+    private let softRed = Color(red: 220/255, green: 75/255, blue: 75/255)
+    private let textFieldBackground = Color(red: 248/255, green: 248/255, blue: 250/255)
+
     var body: some View {
         ZStack {
-            // Fondo suave con gradiente vertical
-           BackgroundColorTemplate()
-            .ignoresSafeArea()
-            
+            BackgroundColorTemplate().ignoresSafeArea()
+
             VStack(spacing: 20) {
-                
-                headerCard
-                    .padding(.top, 40)
-                
+                headerCard.padding(.top, 40)
+
                 ScrollView {
                     VStack(spacing: 24) {
-                        
                         // Campo Título
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Título")
                                 .font(.headline)
                                 .foregroundColor(.secondary)
-                            TextField("Escribe el título", text: $newProject.title)
+                            TextField("Escribe el título", text: $viewModel.newProject.title)
                                 .padding()
                                 .background(RoundedRectangle(cornerRadius: 14).fill(textFieldBackground))
                                 .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
                         }
                         .padding(.horizontal, 20)
-                        
-                        if isIncompleteTitle {
+
+                        if viewModel.isIncompleteTitle {
                             Text("⚠️ Es obligatorio añadir un título")
                                 .font(.caption)
                                 .foregroundColor(.red)
                         }
-                        
+
                         // Fecha
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Fecha fin")
@@ -58,18 +46,17 @@ struct CreateProject: View {
                             DatePicker(
                                 "Selecciona una fecha",
                                 selection: Binding(
-                                    get: { newProject.endDate ?? Date() },
-                                    set: { newProject.endDate = $0 }
+                                    get: { viewModel.newProject.endDate ?? Date() },
+                                    set: { viewModel.newProject.endDate = $0 }
                                 ),
                                 in: Date()...,
                                 displayedComponents: [.date]
                             )
                             .datePickerStyle(.compact)
-                            
-                            if newProject.endDate != nil {
+
+                            if viewModel.newProject.endDate != nil {
                                 Button("Eliminar fecha") {
-                                    newProject.endDate = nil
-                                    ShowDatePicker = false
+                                    viewModel.clearDate()
                                 }
                                 .foregroundColor(.red)
                                 .font(.caption)
@@ -79,7 +66,7 @@ struct CreateProject: View {
                         .background(RoundedRectangle(cornerRadius: 14).fill(textFieldBackground))
                         .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
                         .padding(.horizontal, 20)
-                        
+
                         // Descripción
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Descripción")
@@ -87,8 +74,8 @@ struct CreateProject: View {
                                 .foregroundColor(.secondary)
                             TextEditor(
                                 text: Binding(
-                                    get: { newProject.descriptionProject ?? "" },
-                                    set: { newProject.descriptionProject = $0 }
+                                    get: { viewModel.newProject.descriptionProject ?? "" },
+                                    set: { viewModel.newProject.descriptionProject = $0 }
                                 )
                             )
                             .frame(minHeight: 120)
@@ -97,10 +84,10 @@ struct CreateProject: View {
                             .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
                         }
                         .padding(.horizontal, 20)
-                        
+
                         // Botones
                         VStack(spacing: 14) {
-                            Button(action: saveProject) {
+                            Button(action: { viewModel.saveProject(dismiss: dismiss) }) {
                                 Text("Guardar Proyecto")
                                     .font(.headline)
                                     .foregroundColor(.white)
@@ -113,7 +100,7 @@ struct CreateProject: View {
                                         .cornerRadius(14)
                                     )
                             }
-                            
+
                             Button(action: { dismiss() }) {
                                 Text("Cerrar")
                                     .font(.headline)
@@ -125,13 +112,16 @@ struct CreateProject: View {
                         }
                         .padding(.horizontal, 20)
                         .padding(.bottom, 30)
-                        
                     }
                 }
             }
         }
+        .onAppear {
+            // ✅ ahora el contexto es válido
+            viewModel.setContext(context: context, util: utilFunctions)
+        }
     }
-    
+
     private var headerCard: some View {
         Text("Crear proyecto")
             .font(.system(size: 30, weight: .bold))
@@ -146,24 +136,5 @@ struct CreateProject: View {
                     .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 6)
             )
             .padding(.horizontal, 20)
-    }
-    
-    private func saveProject() {
-        if newProject.title.isEmpty {
-            isIncompleteTitle = true
-        } else {
-            context.insert(newProject)
-            do {
-                Task{
-                    
-                    await SyncManagerUpload.shared.uploadProject(project: newProject)
-                    
-                }
-                try context.save()
-            } catch {
-                print("❌ Error al guardar proyecto: \(error)")
-            }
-            dismiss()
-        }
     }
 }

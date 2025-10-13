@@ -5,6 +5,7 @@ struct LoginView: View {
     @Environment(\.horizontalSizeClass) var sizeClass   // 👈 Detecta iPhone/iPad
     @State private var appearAnimation = false
     
+    @StateObject private var homeVM = HomeFilesModelView()
     // Campos
     @State private var email = ""
     @State private var password = ""
@@ -235,7 +236,8 @@ struct LoginView: View {
                     .foregroundColor(.black.opacity(0.7))
                     .padding(.bottom, 12)
             }
-            .onAppear { appearAnimation = true }
+            .onAppear { appearAnimation = true
+              }
             .alert("Cuenta creada ✅", isPresented: $loginVM.showSuccessModal) {
                 Button("Ir al login", role: .cancel) {
                     loginVM.isAuthenticated = false

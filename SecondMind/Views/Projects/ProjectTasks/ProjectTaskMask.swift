@@ -484,7 +484,7 @@ struct ProjectTaskMark: View {
                                 .foregroundColor(.primary).lineLimit(1)             // Limita a una línea
                                 .truncationMode(.tail)
                             if let due = task.endDate {
-                                Text(due.formatted(date: .abbreviated, time: .omitted))
+                                Text(utilFunctions.formattedDate(due))
                                     .font(.caption)
                                     .foregroundColor(.gray.opacity(0.8))
                             }

@@ -22,14 +22,10 @@ struct NotesView: View {
                         .padding(.top, 10)
                         .padding(.bottom, 5)
 
-                    if hSizeClass == .regular {
-                        Text("Vista para iPad pendiente")
-                            .padding()
-                    } else {
                         // ——— Aquí pasamos el contexto (proyecto/evento) a NoteMark ———
                         NoteMark(project: project, event: event)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    }
+                    
                 }
                 .ignoresSafeArea(edges: .bottom)
             }

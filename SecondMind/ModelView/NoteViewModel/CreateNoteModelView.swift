@@ -22,8 +22,12 @@ final class NoteDetailViewModel: ObservableObject {
     // Drafts temporales (UI)
     @Published var draftTitle: String
     @Published var draftContent: String
-    @Published var draftProject: Project?
-    @Published var draftEvent: Event?
+    @Published var draftProject: Project? {
+        didSet { handleProjectChange() }
+    }
+    @Published var draftEvent: Event? {
+        didSet { handleEventChange() }
+    }
     
     // Gestión
     private var context: ModelContext?
@@ -34,14 +38,12 @@ final class NoteDetailViewModel: ObservableObject {
             self.note = existing
             self.isNew = false
             
-            // Rellenamos drafts con el contenido actual
             self.draftTitle = existing.title
             self.draftContent = existing.content ?? ""
             self.draftProject = existing.project
             self.draftEvent = existing.event
             
         } else {
-            // Crear nueva nota
             let newNote = NoteItem(
                 title: "",
                 content: "",
@@ -53,13 +55,11 @@ final class NoteDetailViewModel: ObservableObject {
             self.note = newNote
             self.isNew = true
             
-            // Drafts por defecto
             self.draftTitle = ""
             self.draftContent = ""
             self.draftProject = project
             self.draftEvent = event
             
-            // Si venía desde un evento
             if let event {
                 self.draftEvent = event
                 self.lockEvent = true
@@ -67,10 +67,11 @@ final class NoteDetailViewModel: ObservableObject {
                 if let projectFromEvent = event.project {
                     self.draftProject = projectFromEvent
                     self.lockProject = true
+                } else {
+                    self.lockProject = true // evento sin proyecto también bloquea
                 }
             }
             
-            // Si venía desde un proyecto
             if let project {
                 self.draftProject = project
                 self.lockProject = true
@@ -116,24 +117,48 @@ final class NoteDetailViewModel: ObservableObject {
         }
     }
     
+    /// ✅ Cuando se cambia el evento seleccionado
+    private func handleEventChange() {
+        guard let selectedEvent = draftEvent else {
+            // Si se elimina el evento, desbloqueamos el proyecto
+            lockProject = false
+            return
+        }
+        
+        if let linkedProject = selectedEvent.project {
+            // El evento tiene proyecto → lo asignamos y bloqueamos
+            draftProject = linkedProject
+            lockProject = true
+        } else {
+            // El evento no tiene proyecto → limpiamos y bloqueamos
+            draftProject = nil
+            lockProject = true
+        }
+    }
+    
+    /// ✅ Cuando se cambia el proyecto seleccionado
     func handleProjectChange() {
         guard let context else { return }
         
         if let project = draftProject {
+            // Actualizar lista de eventos de ese proyecto
             events = HomeApi.downdloadEventsFromProject(project: project, context: context)
+            
+            // Si el evento actual no pertenece al proyecto, lo limpiamos
+            if let currentEvent = draftEvent, currentEvent.project?.id != project.id {
+                draftEvent = nil
+            }
         } else {
+            // Sin proyecto → mostrar todos los eventos
             events = HomeApi.downdloadEventsFrom(context: context)
         }
     }
     
-    // ✅ Guardado solo aplica drafts a la nota real
     func saveNote() {
         guard let context else {
             print("❌ context es nil")
             return
         }
-        
-        print("➡️ Entrando en saveNote")
         
         note.title = draftTitle.isEmpty ? "Sin título" : draftTitle
         note.content = draftContent
@@ -142,7 +167,6 @@ final class NoteDetailViewModel: ObservableObject {
         note.updatedAt = Date()
         
         if isNew {
-            print("🆕 Nota nueva, insertando en contexto")
             context.insert(note)
             if let p = note.project { p.notes.append(note) }
             if let e = note.event   { e.notes.append(note) }
@@ -150,7 +174,6 @@ final class NoteDetailViewModel: ObservableObject {
         }
         
         do {
-            NSLog("polo") // debería aparecer aquí
             try context.save()
             Task {
                 await SyncManagerUpload.shared.uploadNote(note: note)

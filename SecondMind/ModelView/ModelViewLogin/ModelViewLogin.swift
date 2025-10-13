@@ -14,11 +14,12 @@ class LoginViewModel: ObservableObject {
     private let tokenKey = "SecondMindAuthToken"
     private let baseURL = "https://secondmind-h6hv.onrender.com/auth"
     
-    
+  
     
     @Published var userSession = UserSession()
     
     init() {
+        clearKeychainIfFirstLaunch()
         if let tokenData = KeychainHelper.standard.read(service: tokenKey, account: "SecondMind"),
            let token = String(data: tokenData, encoding: .utf8) {
        
@@ -26,6 +27,16 @@ class LoginViewModel: ObservableObject {
         }
     }
     
+    func clearKeychainIfFirstLaunch() {
+        let launchedBefore = UserDefaults.standard.bool(forKey: "hasLaunchedBefore")
+        if !launchedBefore {
+            KeychainHelper.standard.delete(service: "SecondMindAuthToken", account: "SecondMind")
+            KeychainHelper.standard.delete(service: "SecondMindUserId", account: "SecondMind")
+            UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
+            print("🧹 Keychain limpiado en primer lanzamiento.")
+        }
+    }
+
     @MainActor
     func signInWithGoogle() async {
         guard let rootVC = UIApplication.shared.connectedScenes
@@ -211,7 +222,7 @@ class LoginViewModel: ObservableObject {
                         service: service
                     )
                     
-                   
+                 
                     
                 }
             } else if let message = json["message"] as? String {
@@ -252,6 +263,7 @@ class LoginViewModel: ObservableObject {
     // MARK: - Logout
     func logout() {
         KeychainHelper.standard.delete(service: tokenKey, account: "SecondMind")
+        KeychainHelper.standard.delete(service: "SecondMindUserId", account: "SecondMind")
         if let bundleID = Bundle.main.bundleIdentifier {
             UserDefaults.standard.removePersistentDomain(forName: bundleID)
         }                                                                                                          

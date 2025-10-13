@@ -14,7 +14,6 @@ struct CurrentUser {
         let token = String(data: data, encoding: .utf8) else {
             return "unknown"
         }
-        print(token)
         return token
     }
 }

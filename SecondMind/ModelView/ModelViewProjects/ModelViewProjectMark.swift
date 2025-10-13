@@ -20,12 +20,10 @@ class ProjectMarkViewModel: ObservableObject {
     private var context: ModelContext?
     private var utilFunctions: generalFunctions?
     
-    @Published var eventsForDay: [Event] = []
-    @Published var passedEvents: [Event] = []
+ 
     
     
-    
-    func setContext(_ context: ModelContext, util: generalFunctions, project : Project) {
+    func setContext(_ context: ModelContext, util: generalFunctions) {
         self.context = context
         self.utilFunctions = util
        
@@ -43,10 +41,11 @@ class ProjectMarkViewModel: ObservableObject {
         } else {
             projectList = HomeApi.downloadOnProjects(context: context)
         }
+        
     }
     
     /// Texto del próximo evento
-    func nextEventText(for events: [Event]) -> String {
+    func nextEventText(events: [Event]) -> String {
         guard let utilFunctions else { return "—" }
         let today = Date()
         let futureEvents = events.filter { $0.endDate > today }

@@ -3,11 +3,11 @@ import SwiftData
 
 struct TaskMark: View {
     
-
     @EnvironmentObject var utilFunctions: generalFunctions
     @Environment(\.modelContext) private var context
+    @Environment(\.horizontalSizeClass) private var sizeClass
     @StateObject private var modelView: TaskViewModel
-
+    @State private var refreshID = UUID()
     init() {
         _modelView = StateObject(wrappedValue: TaskViewModel())
     }
@@ -16,39 +16,221 @@ struct TaskMark: View {
     @State private var readyToShowTasks: Bool = false
     @State private var usableSize: CGSize = .zero
     @State private var selectedData: Date = Date()
+    @State private var isSyncing = false
     private let accentColor = Color.taskButtonColor
     
     @State private var showCal: Bool = false
     @State private var showAddTaskView: Bool = false
     
-    
-    
+   
     var body: some View {
         ZStack {
-            BackgroundColorTemplate()
+         
             
             VStack(spacing: 20) {
                 headerCard(title: "Tareas")
                     .padding(.top, 16)
-                pickerBard
+                
+                // MARK: – Picker bar adaptado para iPad
+                if sizeClass == .regular {
+                    HStack(spacing: 10) {
+                        segmentButton(title: "Activas", tag: 0)
+                        segmentButton(title: "Finalizadas", tag: 1)
+                    }
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 20)
+                    .background(
+                        RoundedRectangle(cornerRadius: 40)
+                            .fill(Color.white.opacity(0.85))
+                            .shadow(color: .black.opacity(0.08), radius: 6, x: 0, y: 3)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 40)
+                                    .stroke(Color.taskButtonColor.opacity(0.4), lineWidth: 1)
+                            )
+                    )
+                    .frame(maxWidth: 360) // 👈 ancho máximo, centrado y equilibrado
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+                } else {
+                    pickerBard
+                }
                 
                 ScrollView {
                     VStack(spacing: 20) {
-                        if modelView.selectedTab == 1 && showCal {
-                            calendarCard(selectedDate: $selectedData)
-                        }
-                        else if modelView.selectedTab == 1 && !showCal {
-                            TaskCard
-                        }
-                        else if modelView.selectedTab == 2 {
-                            TaskCard
+                        
+                        // MARK: iPad Layout
+                        if sizeClass == .regular {
+                            if modelView.selectedTab == 0 {
+                                // MARK: ACTIVA (Sin fecha + Agendadas)
+                                VStack(spacing: 24) {
+                                    
+                                    // 🔹 SIN FECHA
+                                    VStack(alignment: .leading, spacing: 12) {
+                                        HStack {
+                                            Text("Sin fecha")
+                                                .foregroundColor(.primary)
+                                                .font(.title2.weight(.bold))
+                                            Spacer()
+                                            Text("\(HomeApi.fetchNoDateTasks(context: context).count)")
+                                                .font(.subheadline.weight(.medium))
+                                                .foregroundColor(.secondary)
+                                        }
+                                        .padding(.horizontal, 20)
+                                        .padding(.top, 16)
+                                        
+                                        Rectangle()
+                                            .fill(Color.primary.opacity(0.1))
+                                            .frame(height: 1)
+                                        
+                                        let noDateTasks = HomeApi.fetchNoDateTasks(context: context)
+                                        if noDateTasks.isEmpty {
+                                            emptyTaskList
+                                        } else {
+                                            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                                                ForEach(noDateTasks, id: \.id) { task in
+                                                    TaskCardExpanded(task: task)
+                                                }
+                                            }
+                                            .padding(.horizontal, 20)
+                                            .padding(.bottom, 10)
+                                        }
+                                    }
+                                    .frame(maxWidth: 800)
+                                    .background(Color.cardBackground)
+                                    .cornerRadius(20)
+                                    .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
+                                    .padding(.horizontal)
+                                    
+                                    // 🔹 AGENDADAS
+                                    VStack(alignment: .leading, spacing: 12) {
+                                        HStack {
+                                            Text("Agendadas")
+                                                .foregroundColor(.primary)
+                                                .font(.title2.weight(.bold))
+                                            Spacer()
+                                            Text("\(HomeApi.fetchDateTasks(date: selectedData, context: context).count)")
+                                                .font(.subheadline.weight(.medium))
+                                                .foregroundColor(.secondary)
+                                        }
+                                        .padding(.horizontal, 20)
+                                        .padding(.top, 16)
+                                        
+                                        Rectangle()
+                                            .fill(Color.primary.opacity(0.1))
+                                            .frame(height: 1)
+                                        
+                                        // ✨ DatePicker centrado con marco
+                                        HStack {
+                                            Spacer()
+                                            DatePicker(
+                                                "",
+                                                selection: $selectedData,
+                                                in: Date()...,
+                                                displayedComponents: [.date]
+                                            )
+                                            .labelsHidden()
+                                            .datePickerStyle(.compact)
+                                            .padding(.vertical, 10)
+                                            .padding(.horizontal, 16)
+                                            .background(
+                                                RoundedRectangle(cornerRadius: 16)
+                                                    .fill(Color.white.opacity(0.9))
+                                                    .shadow(color: .black.opacity(0.08), radius: 6, x: 0, y: 3)
+                                                    .overlay(
+                                                        RoundedRectangle(cornerRadius: 16)
+                                                            .stroke(Color.taskButtonColor.opacity(0.4), lineWidth: 1)
+                                                    )
+                                            )
+                                            .frame(maxWidth: 300)
+                                            Spacer()
+                                        }
+                                        .padding(.vertical, 8)
+                                        .onChange(of: selectedData) {
+                                            listTask = HomeApi.fetchDateTasks(date: selectedData, context: context)
+                                        }
+                                        
+                                        let datedTasks = HomeApi.fetchDateTasks(date: selectedData, context: context)
+                                        if datedTasks.isEmpty {
+                                            emptyTaskList
+                                        } else {
+                                            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                                                ForEach(datedTasks, id: \.id) { task in
+                                                    TaskCardExpanded(task: task)
+                                                }
+                                            }
+                                            .padding(.horizontal, 20)
+                                            .padding(.bottom, 10)
+                                        }
+                                    }
+                                    .frame(maxWidth: 800)
+                                    .background(Color.cardBackground)
+                                    .cornerRadius(20)
+                                    .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
+                                    .padding(.horizontal)
+                                }
+                                .frame(maxWidth: .infinity)
+                                
+                            } else {
+                                // MARK: FINALIZADAS
+                                VStack(alignment: .leading, spacing: 12) {
+                                    HStack {
+                                        Text("Finalizadas")
+                                            .foregroundColor(.primary)
+                                            .font(.title2.weight(.bold))
+                                        Spacer()
+                                        Text("\(HomeApi.loadTasksEnd(context: context).count)")
+                                            .font(.subheadline.weight(.medium))
+                                            .foregroundColor(.secondary)
+                                    }
+                                    .padding(.horizontal, 20)
+                                    .padding(.top, 16)
+                                    
+                                    Rectangle()
+                                        .fill(Color.primary.opacity(0.1))
+                                        .frame(height: 1)
+                                    
+                                
+                                    
+                                    let completedTasks = HomeApi.loadTasksEnd(context: context).filter {
+                                        guard let date = $0.completeDate else { return false }
+                                        return Calendar.current.isDate(date, inSameDayAs: selectedData)
+                                    }
+                                    
+                                    if completedTasks.isEmpty {
+                                        emptyTaskList
+                                    } else {
+                                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                                            ForEach(completedTasks, id: \.id) { task in
+                                                TaskCardExpanded(task: task)
+                                            }
+                                        }
+                                        .padding(.horizontal, 20)
+                                        .padding(.bottom, 10)
+                                    }
+                                }
+                                .frame(maxWidth: 800)
+                                .background(Color.cardBackground)
+                                .cornerRadius(20)
+                                .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
+                                .padding(.horizontal)
+                            }
                         } else {
-                            TaskCard
+                            // iPhone → tu flujo original
+                            if modelView.selectedTab == 1 && showCal {
+                                calendarCard(selectedDate: $selectedData)
+                            } else if modelView.selectedTab == 1 && !showCal {
+                                TaskCard
+                            } else if modelView.selectedTab == 2 {
+                                TaskCard
+                            } else {
+                                TaskCard
+                            }
                         }
                     }
                     .padding(.vertical, 16)
-                }.refreshable {
-                    Task{
+                }.id(refreshID)
+                .refreshable {
+                    Task {
                         await SyncManagerDownload.shared.syncTasks(context: context)
                         switch modelView.selectedTab {
                         case 0:
@@ -69,7 +251,6 @@ struct TaskMark: View {
                 }
             }
             .safeAreaInset(edge: .bottom) {
-                // 👇 Botón flotante bien colocado, no tapa el contenido
                 HStack {
                     Spacer()
                     buttonControlMark
@@ -83,7 +264,99 @@ struct TaskMark: View {
             }
         }
     }
-    
+
+    // MARK: - Tarjeta expandida para iPad
+    private func TaskCardExpanded(task: TaskItem) -> some View {
+        NavigationLink(destination: TaskDetall(editableTask: task)) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(alignment: .top) {
+                    // ✅ Icono principal y título
+                    HStack(spacing: 8) {
+                        Image(systemName: task.endDate == nil ? "checklist" : "calendar")
+                            .font(.system(size: 20))
+                            .foregroundColor(accentColor)
+                        
+                        Text(task.title)
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.primary)
+                            .lineLimit(2)
+                            .truncationMode(.tail)
+                    }
+                    
+                    Spacer()
+                    
+                    // ✅ Botón de completar
+                    if task.status == .on {
+                        Button(action: {
+                            task.completeDate = Date()
+                            task.status = .off
+                            do {
+                                Task {
+                                    await SyncManagerUpload.shared.uploadTask(task: task)
+                                }
+                                try context.save()
+                                
+                                withAnimation(.easeOut(duration: 0.25)) {
+                                    listTask.removeAll { $0.id == task.id }
+                                }
+                            } catch {
+                                print("❌ Error al marcar tarea como completa: \(error)")
+                            }
+                        }) {
+                            Image(systemName: "circle")
+                                .font(.system(size: 22))
+                                .foregroundColor(.gray)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.leading, 6)
+                    } else {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 22))
+                            .foregroundColor(accentColor)
+                            .padding(.leading, 6)
+                    }
+                }
+                
+                // 📁 Proyecto
+                if let project = task.project {
+                    Label(project.title, systemImage: "folder")
+                        .font(.caption)
+                        .foregroundColor(.purple) // 💜 Color para proyectos
+                } else {
+                    Label("Sin proyecto", systemImage: "folder")
+                        .font(.caption)
+                        .foregroundColor(.secondary.opacity(0.8))
+                }
+                
+                // 📅 Evento
+                if let event = task.event {
+                    Label(event.title, systemImage: "calendar")
+                        .font(.caption)
+                        .foregroundColor(Color.eventButtonColor) // 🎨 Color para eventos
+                } else {
+                    Label("Sin evento", systemImage: "calendar")
+                        .font(.caption)
+                        .foregroundColor(.secondary.opacity(0.8))
+                }
+                
+                // ⏰ Hora (si tiene fecha)
+                if let due = task.endDate {
+                    HStack {
+                        Image(systemName: "clock")
+                        Text(utilFunctions.extractHour(due))
+                    }
+                    .font(.caption)
+                    .foregroundColor(accentColor)
+                }
+            }
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.white)
+            .cornerRadius(14)
+            .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+        }
+        .buttonStyle(.plain)
+    }
     
     // MARK: – Segment Button
     
@@ -123,99 +396,187 @@ struct TaskMark: View {
     }
     
     
-    // MARK: – Botón flotante (+ y calendario)
-    
+    // MARK: – Botonera inferior (iPad: 🔄 + ➕ | iPhone: 📅 + ➕)
     private var buttonControlMark: some View {
-        HStack(spacing: 10) {
-            if modelView.selectedTab == 1 {
+        HStack(spacing: 14) {
+            Spacer()
+            
+            // MARK: 💻 iPad (regular width)
+            if sizeClass == .regular {
+                if #available(iOS 26.0, *) {
+                    // 🔄 Actualizar (iPad)
+                    Button(action: {
+                        Task {
+                            isSyncing = true
+                            await SyncManagerDownload.shared.syncTasks(context: context)
+                            withAnimation(.easeOut(duration: 0.3)) {
+                                refreshID = UUID()
+                                isSyncing = false
+                            }
+                        }
+                    }) {
+                        ZStack {
+                            if isSyncing {
+                                ProgressView()
+                                    .progressViewStyle(.circular)
+                                    .tint(.taskButtonColor)
+                                    .scaleEffect(1.1)
+                            } else {
+                                Image(systemName: "arrow.clockwise")
+                                    .font(.system(size: 30, weight: .bold))
+                                    .foregroundColor(.taskButtonColor)
+                            }
+                        }
+                        .frame(width: 58, height: 58)
+                    }
+                    .glassEffect(.regular.tint(Color.white.opacity(0.15)).interactive(), in: .circle)
+                    .shadow(color: .black.opacity(0.35), radius: 6, x: 0, y: 4)
+                    .disabled(isSyncing)
+                    
+                    // ➕ Añadir (iPad)
+                    Button(action: {
+                        showAddTaskView = true
+                    }) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 30, weight: .bold))
+                            .foregroundColor(.taskButtonColor)
+                            .frame(width: 58, height: 58)
+                    }
+                    .glassEffect(.regular.tint(Color.white.opacity(0.1)).interactive(), in: .circle)
+                    .shadow(color: .black.opacity(0.35), radius: 6, x: 0, y: 4)
+                } else {
+                    // 💧 Versiones anteriores → liquidGlass
+                    Button(action: {
+                        Task {
+                            isSyncing = true
+                            await SyncManagerDownload.shared.syncTasks(context: context)
+                            withAnimation(.easeOut(duration: 0.3)) {
+                                refreshID = UUID()
+                                isSyncing = false
+                            }
+                        }
+                    }) {
+                        ZStack {
+                            if isSyncing {
+                                ProgressView()
+                                    .progressViewStyle(.circular)
+                                    .tint(.taskButtonColor)
+                                    .scaleEffect(1.1)
+                            } else {
+                                Image(systemName: "arrow.clockwise")
+                                    .font(.system(size: 30, weight: .bold))
+                                    .foregroundColor(.taskButtonColor)
+                            }
+                        }
+                        .frame(width: 58, height: 58)
+                    }
+                   
+                    .clipShape(Circle())
+                    .shadow(color: .black.opacity(0.25), radius: 4, x: 0, y: 3)
+                    .disabled(isSyncing)
+
+                    Button(action: {
+                        showAddTaskView = true
+                    }) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 30, weight: .bold))
+                            .foregroundColor(.taskButtonColor)
+                            .frame(width: 58, height: 58)
+                    }
+                   
+                    .clipShape(Circle())
+                    .shadow(color: .black.opacity(0.25), radius: 4, x: 0, y: 3)
+                }
+            }
+
+            // MARK: 📱 iPhone (compact width)
+            else {
+                // 🗓️ Calendario (solo iPhone)
+                if modelView.selectedTab == 1 {
+                    if #available(iOS 26.0, *) {
+                        Button(action: {
+                            withAnimation(.easeInOut) { showCal.toggle() }
+                        }) {
+                            Image(systemName: "calendar")
+                                .font(.system(size: 26, weight: .bold))
+                                .foregroundColor(.taskButtonColor)
+                                .padding(14)
+                        }
+                        .glassEffect(.regular.tint(Color.white.opacity(0.15)).interactive(), in: .circle)
+                        .shadow(color: .black.opacity(0.35), radius: 5, x: 0, y: 3)
+                    } else {
+                        Button(action: {
+                            withAnimation(.easeInOut) { showCal.toggle() }
+                        }) {
+                            Image(systemName: "calendar")
+                                .font(.system(size: 26, weight: .bold))
+                                .foregroundColor(.white)
+                                .padding(12)
+                                .background(
+                                    Circle()
+                                        .fill(Color.taskButtonColor.opacity(0.9))
+                                        .shadow(color: .black.opacity(0.25), radius: 5, x: 0, y: 3)
+                                )
+                        }
+                    }
+                }
+
+                // ➕ Añadir (iPhone)
                 if #available(iOS 26.0, *) {
                     Button(action: {
-                        withAnimation(.easeInOut) { showCal.toggle() }
-                        print(showCal, modelView.selectedTab)
+                        showAddTaskView = true
                     }) {
-                        Image(systemName: "calendar")
+                        Image(systemName: "plus")
                             .font(.system(size: 28, weight: .bold))
                             .foregroundColor(.taskButtonColor)
                             .padding(16)
                     }
-                    .glassEffect(.regular.tint(Color.white.opacity(0.1)).interactive(), in: .circle)
-                    .shadow(color: .black.opacity(0.4), radius: 5, x: 0, y: 4)
+                    .glassEffect(.regular.tint(Color.white.opacity(0.15)).interactive(), in: .circle)
+                    .shadow(color: .black.opacity(0.35), radius: 5, x: 0, y: 3)
                 } else {
                     Button(action: {
-                        withAnimation(.easeInOut) { showCal.toggle() }
-                        print(showCal, modelView.selectedTab)
+                        showAddTaskView = true
                     }) {
-                        Image(systemName: "calendar")
+                        Image(systemName: "plus")
                             .font(.system(size: 28, weight: .bold))
                             .foregroundColor(.white)
-                            .padding(10)
+                            .padding(12)
                             .background(
                                 Circle()
                                     .fill(Color.taskButtonColor.opacity(0.9))
-                                    .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                                    .shadow(color: .black.opacity(0.25), radius: 5, x: 0, y: 3)
                             )
                     }
                 }
             }
-            
-            // ✅ BOTÓN +
-            if #available(iOS 26.0, *) {
-                Button(action: {
-                    showAddTaskView = true
-                }) {
-                    Image(systemName: "plus")
-                        .font(.system(size: 28, weight: .bold))
-                        .foregroundColor(.taskButtonColor)
-                        .padding(16)
-                }
-                .glassEffect(.clear.tint(Color.white.opacity(0.1)).interactive(), in: .circle)
-                .shadow(color: .black.opacity(0.4), radius: 5, x: 0, y: 4)
-                .sheet(isPresented: $showAddTaskView, onDismiss: {
-                    if modelView.selectedTab == 1 {
-                        listTask = HomeApi.fetchDateTasks(date: selectedData, context: context)
-                    } else {
-                        listTask = HomeApi.fetchNoDateTasks(context: context)
-                    }
-                }) {
-                    CreateTask() // 👈 sigue igual
-                }
-            } else {
-                Button(action: {
-                    showAddTaskView = true
-                }) {
-                    Image(systemName: "plus")
-                        .font(.system(size: 28, weight: .bold))
-                        .foregroundColor(.white)
-                        .padding(10)
-                        .background(
-                            Circle()
-                                .fill(Color.taskButtonColor.opacity(0.9))
-                                .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-                        )
-                }
-                .sheet(isPresented: $showAddTaskView, onDismiss: {
-                    if modelView.selectedTab == 1 {
-                        listTask = HomeApi.fetchDateTasks(date: selectedData, context: context)
-                    } else {
-                        listTask = HomeApi.fetchNoDateTasks(context: context)
-                    }
-                }) {
-                    CreateTask() // 👈 sigue igual
+        }
+        // 📏 Alineación con el bloque de tareas
+        .padding(.trailing, sizeClass == .regular ? ((UIScreen.main.bounds.width - 800) / 2) + 20 : 20)
+        .padding(.bottom, 70)
+        .sheet(isPresented: $showAddTaskView, onDismiss: {
+            guard let contextTask = try? context.fetch(FetchDescriptor<TaskItem>()) else { return }
+
+            if let lastTask = contextTask.sorted(by: { $0.createDate ?? Date() > $1.createDate ?? Date() }).first {
+                if lastTask.status == .off {
+                    listTask = HomeApi.loadTasksEnd(context: context)
+                } else if lastTask.endDate == nil {
+                    listTask = HomeApi.fetchNoDateTasks(context: context)
+                } else {
+                    listTask = HomeApi.fetchDateTasks(date: lastTask.endDate!, context: context)
                 }
             }
+            refreshID = UUID()
+        }) {
+            CreateTask()
         }
-        .padding(10)
-        .padding(.bottom, 60)
     }
-    
-    
     // MARK: – Task Card
     
     private var TaskCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 if modelView.selectedTab == 0 {
-                    Text("Tareas de hoy")
+                    Text("Sin fecha")
                         .foregroundColor(.primary)
                         .font(.title2.weight(.bold))
                 } else if modelView.selectedTab == 1 {
@@ -445,7 +806,7 @@ struct TaskMark: View {
                                     .lineLimit(1)
                                     .truncationMode(.tail)
                                 if let due = task.endDate {
-                                    Text(due.formatted(date: .abbreviated, time: .omitted))
+                                    Text(utilFunctions.formattedDateShort(due))
                                         .font(.caption)
                                         .foregroundColor(.gray.opacity(0.8))
                                 }

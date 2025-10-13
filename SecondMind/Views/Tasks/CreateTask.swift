@@ -4,7 +4,7 @@ import SwiftData
 struct CreateTask: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
-
+    @EnvironmentObject var utilFunctions: generalFunctions
     @StateObject private var modelView: CreateTaskViewModel
 
     init(project: Project? = nil) {
@@ -78,6 +78,8 @@ struct CreateTask: View {
                                     }
                                 }
                                 .pickerStyle(.menu)
+                                .disabled(modelView.lockProject) // 👈 Añade esta línea
+                             
                                 .padding()
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .background(RoundedRectangle(cornerRadius: 14).fill(textFieldBackground))
@@ -154,7 +156,7 @@ struct CreateTask: View {
                                 HStack {
                                     Image(systemName: "calendar")
                                     if let date = modelView.newTask.endDate {
-                                        Text(date.formatted(date: .long, time: .shortened))
+                                        Text(utilFunctions.formattedDateShort(date))
                                     } else {
                                         Text("Sin fecha")
                                     }
