@@ -218,8 +218,7 @@ struct EventMark: View {
                     Spacer()
                     buttonControlMark
                 }
-                .padding(.trailing, 16)
-                .padding(.bottom, 80)
+             
             }
             .ignoresSafeArea(.keyboard)
         }
@@ -462,8 +461,8 @@ struct EventMark: View {
             }
         }
         // Alineación con el bloque central (maxWidth 800)
-        .padding(.trailing, sizeClass == .regular ? ((UIScreen.main.bounds.width - 800) / 2) + 20 : 20)
-        .padding(.bottom, 70)
+        .padding(.trailing, 30)
+            .padding(.bottom, sizeClass == .regular ? 90 :  150)
     }
     
     // MARK: – Tarjeta expandida para iPad (grid)

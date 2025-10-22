@@ -14,35 +14,47 @@ struct HomeView: View {
         NavigationStack {
             ZStack(alignment: .topTrailing) {
                 
-                // ⚙️ Menú de perfil
+                // ⚙️ Menú de perfil con botón Liquid Glass
                 Menu {
+                    // 🔹 Opción de perfil
                     NavigationLink(destination: SettingView()) {
                         Label("Perfil", systemImage: "person.crop.circle")
                     }
-                    
+
                     Divider()
-                    
+
+                    // 🔹 Cerrar sesión
                     Button(role: .destructive) {
                         loginVM.logout()
                     } label: {
                         Label("Cerrar sesión", systemImage: "arrow.backward.circle")
                     }
-                    
+
                 } label: {
-                    Image(systemName: "gearshape.fill")
-                        .font(.system(size: 20, weight: .semibold))
-                        .padding(10)
-                        .background(
-                            Circle()
-                                .fill(Color.taskButtonColor)
-                                .shadow(color: .blue.opacity(0.3), radius: 6, x: 0, y: 3)
-                        )
-                        .foregroundColor(.white)
+                    // 🧊 Botón estilo Liquid Glass
+                    if #available(iOS 26.0, *) {
+                        Image(systemName: "gearshape.fill")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(.taskButtonColor)
+                            .padding(16)
+                            .glassEffect(.regular.tint(Color.white.opacity(0.15)).interactive(), in: .circle)
+                            .shadow(color: .black.opacity(0.35), radius: 5, x: 0, y: 3)
+                    } else {
+                        // 💧 Fallback para versiones anteriores sin glassEffect
+                        Image(systemName: "gearshape.fill")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(14)
+                            .background(
+                                Circle()
+                                    .fill(Color.purple.opacity(0.9))
+                                    .shadow(color: .black.opacity(0.25), radius: 5, x: 0, y: 3)
+                            )
+                    }
                 }
                 .padding(.top, 5)
                 .padding(.trailing, 25)
                 .zIndex(1000)
-                
                 BackgroundColorTemplate()
                 
                 VStack(alignment: .leading) {
@@ -104,7 +116,7 @@ struct HomeView: View {
                             .transition(.move(edge: .top).combined(with: .opacity))
                             .animation(.easeInOut, value: msg)
                     }
-                }
+                }.animation(.easeInOut, value: homeVM.updateMessage)
                 .onAppear {
                     homeVM.setContext(context: context)
                     loginVM.isLoading = false
@@ -116,7 +128,7 @@ struct HomeView: View {
                             print("✅ Datos sincronizados correctamente")
                         }
                     }
-                    print("ELTOKEEEEN" + loginVM.getToken()!)
+                   
                 }
             }
         }

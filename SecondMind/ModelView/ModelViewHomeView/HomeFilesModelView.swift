@@ -46,8 +46,15 @@ public class HomeFilesModelView: ObservableObject {
 
         isLoading = false
 
+       
         withAnimation {
             updateMessage = "✅ Datos actualizados correctamente"
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            withAnimation {
+                self.updateMessage = nil
+            }
         }
     }
     

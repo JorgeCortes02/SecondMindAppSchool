@@ -102,8 +102,6 @@ struct ProjectTaskMark: View {
                     Spacer()
                     buttonControlMark
                 }
-                .padding(.trailing, 16)
-                .padding(.bottom, 80)
             }
             .ignoresSafeArea(.keyboard)
             .onAppear {
@@ -263,8 +261,7 @@ struct ProjectTaskMark: View {
                         CreateTask(project: project)
                     }
                 } else {
-                    // Compatibilidad versiones previas (liquid glass original tuyo para iPhone lo mantenemos)
-                    // Aquí dejamos botones simples en iPad pre-iOS 26
+                    
                     Button(action: {
                         Task {
                             isSyncing = true
@@ -407,8 +404,9 @@ struct ProjectTaskMark: View {
                         CreateTask(project: project)
                     }}
             }
-        }.padding(10)
-        .padding(.bottom, 60)
+        }.padding(.trailing, 30)
+            .padding(.bottom, sizeClass == .regular ? 90 :  150)
+
     }
     
     // ============================================================

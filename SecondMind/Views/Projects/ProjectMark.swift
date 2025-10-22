@@ -113,8 +113,7 @@ struct ProjectMark: View {
                     Spacer()
                     buttonControlMark
                 }
-                .padding(.trailing, sizeClass == .regular ? ((UIScreen.main.bounds.width - 800) / 2) + 20 : 16)
-                .padding(.bottom, 80)
+               
             }
             .onAppear {
                 modelView.setContext(context, util: utilFunctions)
@@ -163,20 +162,25 @@ struct ProjectMark: View {
         }
         .buttonStyle(.plain)
     }
-    
-    // MARK: Botonera
+    // MARK: – Botonera inferior (iPad: 🔄 + ➕ | iPhone: solo ➕)
     private var buttonControlMark: some View {
         HStack(spacing: 14) {
+            Spacer()
+
+            // 💻 iPad (regular width)
             if sizeClass == .regular {
                 if #available(iOS 26.0, *) {
-                    Button {
+                    // 🔄 Sincronizar proyectos
+                    Button(action: {
                         Task {
                             isSyncing = true
                             await SyncManagerDownload.shared.syncProjects(context: context)
-                            withAnimation { refreshID = UUID() }
-                            isSyncing = false
+                            withAnimation(.easeOut(duration: 0.3)) {
+                                refreshID = UUID()
+                                isSyncing = false
+                            }
                         }
-                    } label: {
+                    }) {
                         ZStack {
                             if isSyncing {
                                 ProgressView()
@@ -185,7 +189,7 @@ struct ProjectMark: View {
                                     .scaleEffect(1.1)
                             } else {
                                 Image(systemName: "arrow.clockwise")
-                                    .font(.system(size: 28, weight: .bold))
+                                    .font(.system(size: 30, weight: .bold))
                                     .foregroundColor(.purple)
                             }
                         }
@@ -194,28 +198,68 @@ struct ProjectMark: View {
                     .glassEffect(.regular.tint(Color.white.opacity(0.15)).interactive(), in: .circle)
                     .shadow(color: .black.opacity(0.35), radius: 6, x: 0, y: 4)
                     .disabled(isSyncing)
-                    
-                    Button { showAddProjectView = true } label: {
+
+                    // ➕ Añadir proyecto
+                    Button(action: {
+                        showAddProjectView = true
+                    }) {
                         Image(systemName: "plus")
-                            .font(.system(size: 28, weight: .bold))
+                            .font(.system(size: 30, weight: .bold))
                             .foregroundColor(.purple)
                             .frame(width: 58, height: 58)
                     }
                     .glassEffect(.regular.tint(Color.white.opacity(0.1)).interactive(), in: .circle)
                     .shadow(color: .black.opacity(0.35), radius: 6, x: 0, y: 4)
+
                 } else {
-                    Button { showAddProjectView = true } label: {
+                    // 💧 Versiones anteriores sin glassEffect
+                    Button(action: {
+                        Task {
+                            isSyncing = true
+                            await SyncManagerDownload.shared.syncProjects(context: context)
+                            withAnimation(.easeOut(duration: 0.3)) {
+                                refreshID = UUID()
+                                isSyncing = false
+                            }
+                        }
+                    }) {
+                        ZStack {
+                            if isSyncing {
+                                ProgressView()
+                                    .progressViewStyle(.circular)
+                                    .tint(.purple)
+                                    .scaleEffect(1.1)
+                            } else {
+                                Image(systemName: "arrow.clockwise")
+                                    .font(.system(size: 30, weight: .bold))
+                                    .foregroundColor(.white)
+                            }
+                        }
+                        .frame(width: 58, height: 58)
+                        .background(Circle().fill(Color.purple.opacity(0.9)))
+                        .shadow(color: .black.opacity(0.25), radius: 5, x: 0, y: 3)
+                    }
+                    .disabled(isSyncing)
+
+                    Button(action: {
+                        showAddProjectView = true
+                    }) {
                         Image(systemName: "plus")
-                            .font(.system(size: 28, weight: .bold))
+                            .font(.system(size: 30, weight: .bold))
                             .foregroundColor(.white)
-                            .padding(12)
+                            .frame(width: 58, height: 58)
                             .background(Circle().fill(Color.purple.opacity(0.9)))
                             .shadow(color: .black.opacity(0.25), radius: 5, x: 0, y: 3)
                     }
                 }
-            } else {
+            }
+
+            // 📱 iPhone (compact width)
+            else {
                 if #available(iOS 26.0, *) {
-                    Button { showAddProjectView = true } label: {
+                    Button(action: {
+                        showAddProjectView = true
+                    }) {
                         Image(systemName: "plus")
                             .font(.system(size: 28, weight: .bold))
                             .foregroundColor(.purple)
@@ -224,11 +268,13 @@ struct ProjectMark: View {
                     .glassEffect(.regular.tint(Color.white.opacity(0.15)).interactive(), in: .circle)
                     .shadow(color: .black.opacity(0.35), radius: 5, x: 0, y: 3)
                 } else {
-                    Button { showAddProjectView = true } label: {
+                    Button(action: {
+                        showAddProjectView = true
+                    }) {
                         Image(systemName: "plus")
                             .font(.system(size: 28, weight: .bold))
                             .foregroundColor(.white)
-                            .padding(10)
+                            .padding(12)
                             .background(
                                 Circle()
                                     .fill(Color.purple.opacity(0.9))
@@ -238,8 +284,9 @@ struct ProjectMark: View {
                 }
             }
         }
+        .padding(.trailing, 30)
+            .padding(.bottom, sizeClass == .regular ? 90 :  150)
     }
-    
     // MARK: Card
     private func projectCard(project: Project) -> some View {
         VStack(alignment: .leading, spacing: 8) {

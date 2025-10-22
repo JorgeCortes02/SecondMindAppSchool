@@ -133,8 +133,7 @@ struct NoteMark: View {
                         Spacer()
                         buttonControlMark
                     }
-                    .padding(.trailing, 16)
-                    .padding(.bottom, 80)
+                   
                 }
                 .ignoresSafeArea(.keyboard)
 
@@ -338,9 +337,8 @@ struct NoteMark: View {
                 }
             }
         }
-        // 📏 Alineación con el bloque de contenido principal (idéntica a tareas/eventos)
-        .padding(.trailing, sizeClass == .regular ? ((UIScreen.main.bounds.width - 800) / 2) + 20 : 20)
-        .padding(.bottom, 70)
+        .padding(.trailing, 30)
+            .padding(.bottom, sizeClass == .regular ? 90 :  150)
     }
     // MARK: – Empty List (igual)
     private var emptyNoteList: some View {

@@ -57,7 +57,7 @@ public class EventMarkProjectDetallModelView: ObservableObject {
         
             events =  project.events.filter{
                    
-               $0.status == .on
+               $0.status == .off
             }
         
           

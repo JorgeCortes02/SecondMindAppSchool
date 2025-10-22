@@ -254,9 +254,9 @@ struct TaskMark: View {
                 HStack {
                     Spacer()
                     buttonControlMark
-                }
-                .padding(.trailing, 16)
-                .padding(.bottom, 80)
+                }.padding(.trailing, 30)
+                    .padding(.bottom, sizeClass == .regular ? 90 :  150)
+               
             }
             .ignoresSafeArea(.keyboard)
             .onAppear{
@@ -551,8 +551,7 @@ struct TaskMark: View {
             }
         }
         // 📏 Alineación con el bloque de tareas
-        .padding(.trailing, sizeClass == .regular ? ((UIScreen.main.bounds.width - 800) / 2) + 20 : 20)
-        .padding(.bottom, 70)
+     
         .sheet(isPresented: $showAddTaskView, onDismiss: {
             guard let contextTask = try? context.fetch(FetchDescriptor<TaskItem>()) else { return }
 

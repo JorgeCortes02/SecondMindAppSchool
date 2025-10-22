@@ -85,7 +85,7 @@ struct SettingView: View {
                             ))
                             .textInputAutocapitalization(.never)
                             .keyboardType(.emailAddress)
-                            .disabled(viewModel.service == "googleLogin")
+                        
                             .padding()
                             .background(Color.black.opacity(0.1), in: RoundedRectangle(cornerRadius: 15))
                             .onChange(of: loginVM.userSession.email) { _ in loginVM.errorMessage = nil }
@@ -147,15 +147,18 @@ struct SettingView: View {
                                 .bold()
                         }
 
-                        // Botón guardar/editar
+                    
                         Button(action: {
                             if isEditing {
+                                let oldName = loginVM.userSession.name
+                                let oldEmail = loginVM.userSession.email
                                 let name = loginVM.userSession.name.trimmingCharacters(in: .whitespacesAndNewlines)
                                 let email = loginVM.userSession.email.trimmingCharacters(in: .whitespacesAndNewlines)
-
-                                // Validaciones
-                                guard !name.isEmpty, !name.contains(" ") else {
-                                    loginVM.errorMessage = "❌ El nombre no puede estar vacío ni contener espacios"
+                                
+                                // ✅ Validaciones
+                                guard !name.isEmpty, name.count <= 20 else {
+                                    loginVM.errorMessage = "❌ El nombre no puede estar vacío ni tener más de 20 caracteres."
+                                    loginVM.userSession.name = oldName
                                     return
                                 }
 
@@ -163,6 +166,7 @@ struct SettingView: View {
                                 let emailPred = NSPredicate(format: "SELF MATCHES %@", emailRegex)
                                 guard emailPred.evaluate(with: email) else {
                                     loginVM.errorMessage = "❌ El correo electrónico no es válido"
+                                    loginVM.userSession.email = oldEmail
                                     return
                                 }
 
@@ -173,21 +177,26 @@ struct SettingView: View {
 
                                 Task {
                                     do {
-                                        let _ = try await APIClient.shared.updateProfile(
+                                        try await APIClient.shared.updateProfile(
                                             token: token,
                                             name: name,
                                             email: email
                                         )
-                                        loginVM.errorMessage = "✅ Perfil actualizado correctamente"
-                                        showSuccessAlert = true
+                                        await MainActor.run {
+                                            loginVM.errorMessage = "✅ Perfil actualizado correctamente"
+                                            showSuccessAlert = true
+                                            isEditing = false  // 🔹 Aquí sí se cambia correctamente
+                                        }
                                     } catch {
-                                        loginVM.errorMessage = "❌ Error: \(error.localizedDescription)"
+                                        await MainActor.run {
+                                            loginVM.errorMessage = "❌ Error: \(error.localizedDescription)"
+                                        }
                                     }
                                 }
-                                loginVM.errorMessage = nil
-                                isEditing.toggle()
                             } else {
-                                isEditing.toggle()
+                                withAnimation {
+                                    isEditing = true
+                                }
                             }
                         }) {
                             HStack {
@@ -204,6 +213,7 @@ struct SettingView: View {
                             .cornerRadius(25)
                         }
                         .padding(.top, 8)
+                        
 
                         Divider().padding(.vertical, 10)
                         
