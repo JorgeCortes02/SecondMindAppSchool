@@ -75,7 +75,7 @@ struct EventCarrousel: View {
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.cardBackground)
+        .background(Color.cardBG)
         .cornerRadius(40)
         .onAppear {
             viewModel.loadEvents(for: editableProject)

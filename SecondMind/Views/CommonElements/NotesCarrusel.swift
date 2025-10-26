@@ -14,7 +14,7 @@ struct NotesCarrousel: View {
             HStack {
                 Text(editableEvent != nil ? "Notas del evento" : "Notas del proyecto")
                     .font(.headline)
-                    .foregroundColor(.blue)
+                    .foregroundColor(Color.noteBlue)
 
                 Text("\(modelView.notes.count)")
                     .bold()
@@ -27,10 +27,10 @@ struct NotesCarrousel: View {
                         HStack(spacing: 4) {
                             Text("Ver más")
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.blue)
+                                .foregroundColor(Color.noteBlue)
                             Image(systemName: "chevron.right")
                                 .font(.system(size: 18, weight: .semibold))
-                                .foregroundColor(.blue)
+                                .foregroundColor(Color.noteBlue)
                         }
                     }
                 } else if let event = editableEvent {
@@ -38,10 +38,10 @@ struct NotesCarrousel: View {
                         HStack(spacing: 4) {
                             Text("Ver más")
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.blue)
+                                .foregroundColor(Color.noteBlue)
                             Image(systemName: "chevron.right")
                                 .font(.system(size: 18, weight: .semibold))
-                                .foregroundColor(.blue)
+                                .foregroundColor(Color.noteBlue)
                         }
                     }
                 }
@@ -58,7 +58,7 @@ struct NotesCarrousel: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 70, height: 70)
-                        .foregroundColor(Color.blue.opacity(0.7))
+                        .foregroundColor(Color.noteBlue.opacity(0.7))
 
                     Text(editableEvent != nil ? "No tienes notas en este evento." : "No tienes notas en este proyecto.")
                         .font(.system(size: 16, weight: .semibold))
@@ -127,10 +127,10 @@ struct NotesCarrousel: View {
                                             HStack(spacing: 4) {
                                                 Image(systemName: "pencil")
                                                     .font(.system(size: 11))
-                                                    .foregroundColor(.blue.opacity(0.7))
+                                                    .foregroundColor(Color.noteBlue.opacity(0.7))
                                                 Text(utilFunctions.formattedDateAndHour(note.updatedAt))
                                                     .font(.system(size: 12))
-                                                    .foregroundColor(.blue.opacity(0.7))
+                                                    .foregroundColor(Color.noteBlue.opacity(0.7))
                                             }
                                         }
                                     }
@@ -155,7 +155,7 @@ struct NotesCarrousel: View {
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.cardBackground)
+        .background(Color.cardBG)
         .cornerRadius(40)
         .onAppear {
             if let project = editableProject {

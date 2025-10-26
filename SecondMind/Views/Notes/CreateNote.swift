@@ -47,10 +47,10 @@ struct NoteDetailView: View {
                             } icon: {
                                 ZStack {
                                     Circle()
-                                        .fill(Color.blue.opacity(0.15))
+                                        .fill(Color.noteBlue.opacity(0.15))
                                         .frame(width: 28, height: 28)
                                     Image(systemName: "calendar.badge.plus")
-                                        .foregroundColor(.blue)
+                                        .foregroundColor(Color.noteBlue)
                                         .font(.system(size: 14, weight: .semibold))
                                 }
                             }

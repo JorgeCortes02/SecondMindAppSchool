@@ -35,7 +35,7 @@ struct HomeView: View {
                     if #available(iOS 26.0, *) {
                         Image(systemName: "gearshape.fill")
                             .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(.taskButtonColor)
+                            .foregroundColor(Color.taskButtonColor)
                             .padding(16)
                             .glassEffect(.regular.tint(Color.white.opacity(0.15)).interactive(), in: .circle)
                             .shadow(color: .black.opacity(0.35), radius: 5, x: 0, y: 3)

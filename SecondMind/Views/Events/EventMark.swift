@@ -29,29 +29,8 @@ struct EventMark: View {
                 headerCard(title: "Eventos")
                     .padding(.top, 16)
                 
-                // MARK: – Picker bar adaptado para iPad
-                if sizeClass == .regular {
-                    HStack(spacing: 10) {
-                        segmentButton(title: "Agendados", tag: 0)
-                        segmentButton(title: "Finalizados", tag: 1)
-                    }
-                    .padding(.vertical, 10)
-                    .padding(.horizontal, 20)
-                    .background(
-                        RoundedRectangle(cornerRadius: 40)
-                            .fill(Color.white.opacity(0.85))
-                            .shadow(color: .black.opacity(0.08), radius: 6, x: 0, y: 3)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 40)
-                                    .stroke(Color.eventButtonColor.opacity(0.4), lineWidth: 1)
-                            )
-                    )
-                    .frame(maxWidth: 360)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
-                } else {
-                    pickerBard
-                }
+                PickerBar(options: ["Agendados", "Finalizados"], selectedTab: $modelView.selectedTab)
+               
                 
                 ScrollView {
                     VStack(spacing: 20) {
@@ -120,7 +99,7 @@ struct EventMark: View {
                                         }
                                     }
                                     .frame(maxWidth: 800)
-                                    .background(Color.cardBackground)
+                                    .background(Color.cardBG)
                                     .cornerRadius(20)
                                     .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
                                     .padding(.horizontal)
@@ -159,7 +138,7 @@ struct EventMark: View {
                                     }
                                 }
                                 .frame(maxWidth: 800)
-                                .background(Color.cardBackground)
+                                .background(Color.cardBG)
                                 .cornerRadius(20)
                                 .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
                                 .padding(.horizontal)
@@ -238,231 +217,47 @@ struct EventMark: View {
                     readyToShowTasks = true
                 }
             }
-        }
-    }
-
-    // MARK: – Segment Button
-    private func segmentButton(title: String, tag: Int) -> some View {
-        let isSelected = (modelView.selectedTab == tag)
-        return Button(action: {
-            withAnimation(.easeInOut) { modelView.selectedTab = tag }
-        }) {
-            Text(title)
-                .font(.system(size: 15, weight: isSelected ? .semibold : .regular))
-                .foregroundColor(isSelected ? .white : .blue)
-                .frame(maxHeight: 36)
-                .frame(maxWidth: .infinity)
-                .frame(height: 40)
-                .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(isSelected ? Color.blue : Color.clear)
-                )
-        }
-        .buttonStyle(.plain)
-    }
-    
-    // MARK: – Picker bar (iPhone)
-    private var pickerBard: some View {
-        HStack(spacing: 10) {
-            segmentButton(title: "Agendados", tag: 0)
-            segmentButton(title: "Finalizados", tag: 1)
-        }
-        .padding(15)
-        .background(Color.cardBackground)
-        .cornerRadius(40)
-        .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
-        .padding(.horizontal, 16)
-    }
-    
-    // MARK: – Botonera inferior (iPad: 🔄 + ➕ | iPhone: 📅 + ➕)
-    private var buttonControlMark: some View {
-        HStack(spacing: 14) {
-            Spacer()
-            
-            // 💻 iPad (regular width): 🔄 + ➕
-            if sizeClass == .regular {
-                if #available(iOS 26.0, *) {
-                    // 🔄 Actualizar
-                    Button(action: {
-                        Task {
-                            isSyncing = true
-                            await SyncManagerDownload.shared.syncEvents(context: context)
-                            withAnimation(.easeOut(duration: 0.3)) {
-                                refreshID = UUID()
-                                isSyncing = false
-                            }
-                        }
-                    }) {
-                        ZStack {
-                            if isSyncing {
-                                ProgressView()
-                                    .progressViewStyle(.circular)
-                                    .tint(.eventButtonColor)
-                                    .scaleEffect(1.05)
-                            } else {
-                                Image(systemName: "arrow.clockwise")
-                                    .font(.system(size: 30, weight: .bold))
-                                    .foregroundColor(.eventButtonColor)
-                            }
-                        }
-                        .frame(width: 58, height: 58)
-                    }
-                    .glassEffect(.regular.tint(Color.white.opacity(0.15)).interactive(), in: .circle)
-                    .shadow(color: .black.opacity(0.35), radius: 6, x: 0, y: 4)
-                    .disabled(isSyncing)
-                    
-                    // ➕ Añadir
-                    Button(action: {
-                        showAddTaskView = true
-                    }) {
-                        Image(systemName: "plus")
-                            .font(.system(size: 30, weight: .bold))
-                            .foregroundColor(.eventButtonColor)
-                            .frame(width: 58, height: 58)
-                    }
-                    .glassEffect(.regular.tint(Color.white.opacity(0.1)).interactive(), in: .circle)
-                    .shadow(color: .black.opacity(0.35), radius: 6, x: 0, y: 4)
-                    .sheet(isPresented: $showAddTaskView, onDismiss: {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            modelView.loadEvents(date: selectedData)
-                            if modelView.selectedTab == 0 {
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                    withAnimation(.easeOut(duration: 0.3)) {
-                                        readyToShowTasks = true
-                                    }
-                                }
-                            }
-                        }
-                    }) {
-                        CreateEvent()
-                    }
-                } else {
-                    // 💧 Versiones anteriores → liquidGlass
-                    Button(action: {
-                        Task {
-                            isSyncing = true
-                            await SyncManagerDownload.shared.syncEvents(context: context)
-                            withAnimation(.easeOut(duration: 0.3)) {
-                                refreshID = UUID()
-                                isSyncing = false
-                            }
-                        }
-                    }) {
-                        ZStack {
-                            if isSyncing {
-                                ProgressView()
-                                    .progressViewStyle(.circular)
-                                    .tint(.eventButtonColor)
-                                    .scaleEffect(1.05)
-                            } else {
-                                Image(systemName: "arrow.clockwise")
-                                    .font(.system(size: 30, weight: .bold))
-                                    .foregroundColor(.eventButtonColor)
-                            }
-                        }
-                        .frame(width: 58, height: 58)
-                    }
-                   
-                    .clipShape(Circle())
-                    .shadow(color: .black.opacity(0.25), radius: 4, x: 0, y: 3)
-                    .disabled(isSyncing)
-
-                    Button(action: {
-                        showAddTaskView = true
-                    }) {
-                        Image(systemName: "plus")
-                            .font(.system(size: 30, weight: .bold))
-                            .foregroundColor(.eventButtonColor)
-                            .frame(width: 58, height: 58)
-                    }
-                 
-                    .clipShape(Circle())
-                    .shadow(color: .black.opacity(0.25), radius: 4, x: 0, y: 3)
-                    .sheet(isPresented: $showAddTaskView, onDismiss: {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            modelView.loadEvents(date: selectedData)
+        }.sheet(isPresented: $showAddTaskView, onDismiss: {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                modelView.loadEvents(date: selectedData)
+                if modelView.selectedTab == 0 {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        withAnimation(.easeOut(duration: 0.3)) {
                             readyToShowTasks = true
                         }
-                    }) {
-                        CreateEvent()
                     }
                 }
             }
-            
-            // 📱 iPhone (compact width): 📅 + ➕
-            else {
-                // 📅 Calendario solo en Agendados
-                if modelView.selectedTab == 0 {
-                    if #available(iOS 26.0, *) {
-                        Button(action: {
-                            withAnimation(.easeInOut) { showCal.toggle() }
-                        }) {
-                            Image(systemName: "calendar")
-                                .font(.system(size: 26, weight: .bold))
-                                .foregroundColor(.eventButtonColor)
-                                .padding(14)
-                        }
-                        .glassEffect(.regular.tint(Color.white.opacity(0.15)).interactive(), in: .circle)
-                        .shadow(color: .black.opacity(0.35), radius: 5, x: 0, y: 3)
-                    } else {
-                        Button(action: {
-                            withAnimation(.easeInOut) { showCal.toggle() }
-                        }) {
-                            Image(systemName: "calendar")
-                                .font(.system(size: 26, weight: .bold))
-                                .foregroundColor(.white)
-                                .padding(12)
-                                .background(
-                                    Circle()
-                                        .fill(Color.eventButtonColor.opacity(0.9))
-                                        .shadow(color: .black.opacity(0.25), radius: 5, x: 0, y: 3)
-                                )
-                        }
-                    }
-                }
-                
-                // ➕ Añadir (iPhone)
-                if #available(iOS 26.0, *) {
-                    Button(action: {
-                        showAddTaskView = true
-                    }) {
-                        Image(systemName: "plus")
-                            .font(.system(size: 28, weight: .bold))
-                            .foregroundColor(.eventButtonColor)
-                            .padding(16)
-                    }
-                    .glassEffect(.regular.tint(Color.white.opacity(0.15)).interactive(), in: .circle)
-                    .shadow(color: .black.opacity(0.35), radius: 5, x: 0, y: 3)
-                    .sheet(isPresented: $showAddTaskView, onDismiss: {
-                        modelView.loadEvents(date: selectedData)
-                    }) {
-                        CreateEvent()
-                    }
-                } else {
-                    Button(action: {
-                        showAddTaskView = true
-                    }) {
-                        Image(systemName: "plus")
-                            .font(.system(size: 28, weight: .bold))
-                            .foregroundColor(.white)
-                            .padding(12)
-                            .background(
-                                Circle()
-                                    .fill(Color.eventButtonColor.opacity(0.9))
-                                    .shadow(color: .black.opacity(0.25), radius: 5, x: 0, y: 3)
-                            )
-                    }
-                    .sheet(isPresented: $showAddTaskView, onDismiss: {
-                        modelView.loadEvents(date: selectedData)
-                    }) {
-                        CreateEvent()
-                    }
-                }
+        }) {
+            CreateEvent()
+        } .sheet(isPresented: $showAddTaskView, onDismiss: {
+            modelView.loadEvents(date: selectedData)
+        }) {
+            CreateEvent()
+        }
+
+    }
+
+    
+    
+    // MARK: – Botonera inferior
+    private var buttonControlMark: some View {
+        
+        
+        glassButtonBar(funcAddButton: {showAddTaskView = true},
+                       funcSyncButton: {                        Task {
+            isSyncing = true
+            await SyncManagerDownload.shared.syncEvents(context: context)
+            withAnimation(.easeOut(duration: 0.3)) {
+                refreshID = UUID()
+                isSyncing = false
             }
         }
-        // Alineación con el bloque central (maxWidth 800)
-        .padding(.trailing, 30)
-            .padding(.bottom, sizeClass == .regular ? 90 :  150)
+},
+    funcCalendarButton: {withAnimation(.easeInOut) { showCal.toggle() }}
+    , color: accentColor, selectedTab: $modelView.selectedTab, isSyncing: $isSyncing)
+        
+       
     }
     
     // MARK: – Tarjeta expandida para iPad (grid)
@@ -556,7 +351,7 @@ struct EventMark: View {
                 }
             }
         }
-        .background(Color.cardBackground)
+        .background(Color.cardBG)
         .cornerRadius(20)
         .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
         .padding(.horizontal, 16)
@@ -624,7 +419,7 @@ struct EventMark: View {
             }
         }
         .padding(.vertical, 12)
-        .background(Color.cardBackground)
+        .background(Color.cardBG)
         .cornerRadius(20)
         .shadow(color: Color.black.opacity(0.06), radius: 6, x: 0, y: 3)
         .padding(.horizontal, 16)

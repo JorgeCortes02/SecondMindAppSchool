@@ -368,7 +368,7 @@ struct EventDetall: View {
                         .foregroundColor(.white)
                         .padding()
                         .frame(maxWidth: .infinity)
-                        .background(.blue)
+                        .background(Color.noteBlue)
                         .cornerRadius(12)
                         .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
                 }

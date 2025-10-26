@@ -24,7 +24,7 @@ struct NoteMark: View {
     @State private var isSyncing = false
     @State private var refreshID = UUID()
 
-    private let accentColor = Color.blue
+    private let accentColor = Color.noteBlue
 
     var body: some View {
         NavigationStack {
@@ -33,30 +33,7 @@ struct NoteMark: View {
                     headerCard(title: project?.title ?? event?.title ?? "Notas")
                         .padding(.top, 16)
 
-                    // ✅ Picker como en tareas/eventos (iPad estilizado)
-                    if sizeClass == .regular {
-                        HStack(spacing: 10) {
-                            segmentButton(title: "Todas", tag: 0)
-                            segmentButton(title: "Favoritas", tag: 1)
-                            segmentButton(title: "Archivadas", tag: 2)
-                        }
-                        .padding(.vertical, 10)
-                        .padding(.horizontal, 20)
-                        .background(
-                            RoundedRectangle(cornerRadius: 40)
-                                .fill(Color.white.opacity(0.9))
-                                .shadow(color: .black.opacity(0.08), radius: 6, x: 0, y: 3)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 40)
-                                        .stroke(accentColor.opacity(0.3), lineWidth: 1)
-                                )
-                        )
-                        .frame(maxWidth: 400)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
-                    } else {
-                        pickerBar
-                    }
+                    PickerBar(options: ["Todas", "Favoritas", "Archivadas"], selectedTab: $modelView.selectedTab)
 
                     searchBar
 
@@ -96,7 +73,7 @@ struct NoteMark: View {
                                         .padding(.bottom, 10)
                                     }
                                     .frame(maxWidth: 800)
-                                    .background(Color.cardBackground)
+                                    .background(Color.cardBG)
                                     .cornerRadius(20)
                                     .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
                                     .padding(.horizontal)
@@ -154,38 +131,7 @@ struct NoteMark: View {
         }
     }
 
-    // MARK: – Picker (iPhone)
-    private var pickerBar: some View {
-        HStack(spacing: 10) {
-            segmentButton(title: "Todas", tag: 0)
-            segmentButton(title: "Favoritas", tag: 1)
-            segmentButton(title: "Archivadas", tag: 2)
-        }
-        .padding(15)
-        .background(Color.cardBackground)
-        .cornerRadius(40)
-        .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
-        .padding(.horizontal, 16)
-    }
-
-    private func segmentButton(title: String, tag: Int) -> some View {
-        let isSelected = (modelView.selectedTab == tag)
-        return Button {
-            withAnimation { modelView.selectedTab = tag }
-        } label: {
-            Text(title)
-                .font(.system(size: 15, weight: isSelected ? .semibold : .regular))
-                .foregroundColor(isSelected ? .white : accentColor)
-                .frame(maxHeight: 36)
-                .frame(maxWidth: .infinity)
-                .frame(height: 40)
-                .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(isSelected ? accentColor : Color.clear)
-                )
-        }
-        .buttonStyle(.plain)
-    }
+   
 
     private var searchBar: some View {
         HStack {
@@ -212,7 +158,7 @@ struct NoteMark: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
         .frame(maxWidth: 500) // 👈 LIMITA el ancho máximo (ajústalo a gusto)
-        .background(Color.cardBackground)
+        .background(Color.cardBG)
         .overlay(
             RoundedRectangle(cornerRadius: 25)
                 .stroke(Color.black.opacity(0.6), lineWidth: 1.2)
@@ -223,122 +169,23 @@ struct NoteMark: View {
     }
     // MARK: – Botonera inferior (iPad: 🔄 + ➕ | iPhone: ➕)
     private var buttonControlMark: some View {
-        HStack(spacing: 14) {
-            if sizeClass == .regular {
-                // 💻 iPad → 🔄 + ➕ (igual que tareas/eventos)
-                if #available(iOS 26.0, *) {
-                    // 🔄 Actualizar
-                    Button {
-                        Task {
-                            isSyncing = true
-                            await SyncManagerDownload.shared.syncNotes(context: context)
-                            modelView.loadNotes()
-                            withAnimation { refreshID = UUID() }
-                            isSyncing = false
-                        }
-                    } label: {
-                        ZStack {
-                            if isSyncing {
-                                ProgressView()
-                                    .progressViewStyle(.circular)
-                                    .tint(accentColor)
-                                    .scaleEffect(1.1)
-                            } else {
-                                Image(systemName: "arrow.clockwise")
-                                    .font(.system(size: 28, weight: .bold))
-                                    .foregroundColor(accentColor)
-                            }
-                        }
-                        .frame(width: 58, height: 58)
-                    }
-                    .glassEffect(.regular.tint(Color.white.opacity(0.15)).interactive(), in: .circle)
-                    .shadow(color: .black.opacity(0.35), radius: 6, x: 0, y: 4)
-                    .disabled(isSyncing)
-
-                    // ➕ Añadir
-                    Button {
-                        navigateToNewNote = true
-                    } label: {
-                        Image(systemName: "plus")
-                            .font(.system(size: 28, weight: .bold))
-                            .foregroundColor(accentColor)
-                            .frame(width: 58, height: 58)
-                    }
-                    .glassEffect(.regular.tint(Color.white.opacity(0.15)).interactive(), in: .circle)
-                    .shadow(color: .black.opacity(0.35), radius: 6, x: 0, y: 4)
-
-                } else {
-                    // 💧 Fallback (iPad sin glassEffect)
-                    Button {
-                        Task {
-                            isSyncing = true
-                            await SyncManagerDownload.shared.syncNotes(context: context)
-                            modelView.loadNotes()
-                            withAnimation { refreshID = UUID() }
-                            isSyncing = false
-                        }
-                    } label: {
-                        ZStack {
-                            if isSyncing {
-                                ProgressView()
-                                    .progressViewStyle(.circular)
-                                    .tint(accentColor)
-                                    .scaleEffect(1.1)
-                            } else {
-                                Image(systemName: "arrow.clockwise")
-                                    .font(.system(size: 28, weight: .bold))
-                                    .foregroundColor(accentColor)
-                            }
-                        }
-                        .frame(width: 58, height: 58)
-                    }
-                    .clipShape(Circle())
-                    .shadow(color: .black.opacity(0.25), radius: 4, x: 0, y: 3)
-                    .disabled(isSyncing)
-
-                    Button {
-                        navigateToNewNote = true
-                    } label: {
-                        Image(systemName: "plus")
-                            .font(.system(size: 28, weight: .bold))
-                            .foregroundColor(accentColor)
-                            .frame(width: 58, height: 58)
-                    }
-                    .clipShape(Circle())
-                    .shadow(color: .black.opacity(0.25), radius: 4, x: 0, y: 3)
-                }
-            } else {
-                // 📱 iPhone → solo botón +
-                if #available(iOS 26.0, *) {
-                    Button {
-                        navigateToNewNote = true
-                    } label: {
-                        Image(systemName: "plus")
-                            .font(.system(size: 28, weight: .bold))
-                            .foregroundColor(accentColor)
-                            .padding(16)
-                    }
-                    .glassEffect(.regular.tint(Color.white.opacity(0.15)).interactive(), in: .circle)
-                    .shadow(color: .black.opacity(0.35), radius: 5, x: 0, y: 3)
-                } else {
-                    Button {
-                        navigateToNewNote = true
-                    } label: {
-                        Image(systemName: "plus")
-                            .font(.system(size: 28, weight: .bold))
-                            .foregroundColor(.white)
-                            .padding(10)
-                            .background(
-                                Circle()
-                                    .fill(accentColor.opacity(0.9))
-                                    .shadow(color: .black.opacity(0.25), radius: 5, x: 0, y: 3)
-                            )
-                    }
-                }
-            }
-        }
-        .padding(.trailing, 30)
-            .padding(.bottom, sizeClass == .regular ? 90 :  150)
+        
+            
+            
+    glassButtonBar(funcAddButton: {navigateToNewNote = true},
+                   funcSyncButton: {
+                                    Task {
+                                            isSyncing = true
+                                            await SyncManagerDownload.shared.syncNotes(context: context)
+                                            modelView.loadNotes()
+                                            withAnimation { refreshID = UUID() }
+                                            isSyncing = false
+                                        }},
+                   funcCalendarButton: {},
+                   color: accentColor,
+                   selectedTab: $modelView.selectedTab,
+                   isSyncing: $isSyncing)
+            
     }
     // MARK: – Empty List (igual)
     private var emptyNoteList: some View {
@@ -376,7 +223,7 @@ struct NoteMark: View {
                     Text(utilFunctions.formattedDateAndHour(note.updatedAt))
                 }
                 .font(.footnote)
-                .foregroundColor(.blue)
+                .foregroundColor(Color.noteBlue)
             }
 
             // 🔹 Proyecto y evento (ambos si existen)
@@ -391,7 +238,7 @@ struct NoteMark: View {
                 if let event = note.event {
                     Label(event.title, systemImage: "calendar")
                         .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(.eventButtonColor)
+                        .foregroundColor(Color.eventButtonColor)
                         .lineLimit(1)
                 }
             }
@@ -442,7 +289,7 @@ struct NoteMark: View {
                     Text(utilFunctions.formattedDateAndHour(note.updatedAt))
                 }
                 .font(.caption)
-                .foregroundColor(.blue)
+                .foregroundColor(Color.noteBlue)
             }
 
             // 🔹 Proyecto / Evento
@@ -563,7 +410,7 @@ struct NoteMark: View {
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(.white)
                     .padding(10)
-                    .background(Circle().fill(Color.blue))
+                    .background(Circle().fill(Color.noteBlue))
             }
 
             // ⭐️ Favorito (toggle + sync individual)

@@ -2,18 +2,7 @@ import SwiftUI
 import SwiftData
 // MARK: - Colores personalizados (extiende según estilo general)
 
-struct EventCardModifier: ViewModifier {
-    func body(content: Content) -> some View {
-        content.padding()
-            .background(Color.white)
-            .cornerRadius(18)
-            .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
-            .overlay(
-                RoundedRectangle(cornerRadius: 18)
-                    .stroke(Color.primary.opacity(0.08), lineWidth: 1)
-            )
-    }
-}
+
 
 struct TodayEventView: View {
   
@@ -21,7 +10,7 @@ struct TodayEventView: View {
     @EnvironmentObject var  utilFunctions : generalFunctions
 
     var todayEvent: [Event]
-    private let accentColor = Color(red: 240/255, green: 100/255, blue: 44/255)
+    private let accentColor = Color.eventButtonColor
 
     private var orderedEvents: [Event] {
         sortedArrayEvent(todayEvent).filter { Calendar.current.isDateInToday($0.endDate) }
@@ -170,7 +159,7 @@ struct TodayEventView: View {
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.cardBackground)
+        .background(Color.cardBG)
         .cornerRadius(40)
         .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
         .overlay(
@@ -189,3 +178,4 @@ struct TodayEventView: View {
 
     
 }
+

@@ -1,25 +1,9 @@
 import SwiftUI
 import SwiftData
 import Foundation
-// MARK: - Colores personalizados (extiende según estilo general)
-extension Color {
-    static let taskAccent     = Color(red: 8/255, green: 56/255, blue: 97/255)
-    static let cardBackground = Color.white
-}
+
     
-    // MARK: - Modificador reutilizable para tarjetas de tarea
-    struct TaskCardModifier: ViewModifier {
-        func body(content: Content) -> some View {
-            content
-                .background(Color.white)
-                .cornerRadius(18)
-                .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 18)
-                        .stroke(Color.primary.opacity(0.08), lineWidth: 1)
-                )
-        }
-    }
+
     
     struct TodayTaskView: View {
         
@@ -32,7 +16,7 @@ extension Color {
         
         
         // Color de acento (igual que en TodayElementsView)
-        private let accentColor = Color.taskAccent
+        private let accentColor = Color.taskButtonColor
         
         var body: some View {
             VStack(alignment: .leading, spacing: 16) {
@@ -172,7 +156,7 @@ extension Color {
                 }
             }
             .padding(20)
-            .background(Color.cardBackground)
+            .background(Color.cardBG)
             .cornerRadius(40)
             .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
             .overlay(
@@ -180,11 +164,7 @@ extension Color {
                     .stroke(Color.primary.opacity(0.08), lineWidth: 1)
             )
             .padding(.horizontal, 16)
-            .onAppear{
-                
-                
-                
-            }
+            
         }
         
         // Ordena el array por dueDate
@@ -200,7 +180,7 @@ extension Color {
         }
         
         
-        
+   
         
     }
 

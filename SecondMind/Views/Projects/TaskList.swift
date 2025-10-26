@@ -71,7 +71,7 @@ struct TaskList: View {
             }
         }
         .padding(20)
-        .background(Color.cardBackground)
+        .background(Color.cardBG)
         .cornerRadius(20)
         .onAppear {
             // ✅ Inyectamos dependencias reales aquí (sin reasignar el StateObject)

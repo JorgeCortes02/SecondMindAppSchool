@@ -17,7 +17,7 @@ struct ProjectMark: View {
         _modelView = StateObject(wrappedValue: ProjectMarkViewModel())
     }
     
-    private let accentColor = Color.purple
+    private let accentColor = Color.projectPurpel
     
     var body: some View {
         ZStack {
@@ -25,24 +25,7 @@ struct ProjectMark: View {
                 headerCard(title: "Proyectos")
                     .padding(.top, 16)
                 
-                if sizeClass == .regular {
-                    HStack(spacing: 10) {
-                        segmentButton(title: "Activos", tag: 0)
-                        segmentButton(title: "Finalizados", tag: 1)
-                    }
-                    .padding(.vertical, 10)
-                    .padding(.horizontal, 20)
-                    .background(
-                        RoundedRectangle(cornerRadius: 40)
-                            .fill(Color.cardBackground)
-                            .shadow(color: .black.opacity(0.08), radius: 6, x: 0, y: 3)
-                    )
-                    .frame(maxWidth: 360)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
-                } else {
-                    pickerBar
-                }
+                PickerBar(options: ["Activos", "Finalizados"], selectedTab: $modelView.selectedTab)
                 
                 ScrollView {
                     VStack(spacing: 26) { // 💡 más espacio entre bloques
@@ -80,7 +63,7 @@ struct ProjectMark: View {
                                 }
                             }
                             .frame(maxWidth: 800)
-                            .background(Color.cardBackground)
+                            .background(Color.cardBG)
                             .cornerRadius(20)
                             .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
                             .padding(.horizontal)
@@ -131,161 +114,26 @@ struct ProjectMark: View {
         }
     }
     
-    // MARK: Picker
-    private var pickerBar: some View {
-        HStack(spacing: 10) {
-            segmentButton(title: "Activos", tag: 0)
-            segmentButton(title: "Finalizados", tag: 1)
-        }
-        .padding(15)
-        .background(Color.cardBackground)
-        .cornerRadius(40)
-        .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
-        .padding(.horizontal, 16)
-    }
-    
-    private func segmentButton(title: String, tag: Int) -> some View {
-        let isSelected = (modelView.selectedTab == tag)
-        return Button(action: {
-            withAnimation(.easeInOut) { modelView.selectedTab = tag }
-        }) {
-            Text(title)
-                .font(.system(size: 15, weight: isSelected ? .semibold : .regular))
-                .foregroundColor(isSelected ? .white : .blue)
-                .frame(maxHeight: 36)
-                .frame(maxWidth: .infinity)
-                .frame(height: 40)
-                .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(isSelected ? .blue : Color.clear)
-                )
-        }
-        .buttonStyle(.plain)
-    }
+   
     // MARK: – Botonera inferior (iPad: 🔄 + ➕ | iPhone: solo ➕)
     private var buttonControlMark: some View {
-        HStack(spacing: 14) {
-            Spacer()
-
-            // 💻 iPad (regular width)
-            if sizeClass == .regular {
-                if #available(iOS 26.0, *) {
-                    // 🔄 Sincronizar proyectos
-                    Button(action: {
-                        Task {
-                            isSyncing = true
-                            await SyncManagerDownload.shared.syncProjects(context: context)
-                            withAnimation(.easeOut(duration: 0.3)) {
-                                refreshID = UUID()
-                                isSyncing = false
-                            }
-                        }
-                    }) {
-                        ZStack {
-                            if isSyncing {
-                                ProgressView()
-                                    .progressViewStyle(.circular)
-                                    .tint(.purple)
-                                    .scaleEffect(1.1)
-                            } else {
-                                Image(systemName: "arrow.clockwise")
-                                    .font(.system(size: 30, weight: .bold))
-                                    .foregroundColor(.purple)
-                            }
-                        }
-                        .frame(width: 58, height: 58)
-                    }
-                    .glassEffect(.regular.tint(Color.white.opacity(0.15)).interactive(), in: .circle)
-                    .shadow(color: .black.opacity(0.35), radius: 6, x: 0, y: 4)
-                    .disabled(isSyncing)
-
-                    // ➕ Añadir proyecto
-                    Button(action: {
-                        showAddProjectView = true
-                    }) {
-                        Image(systemName: "plus")
-                            .font(.system(size: 30, weight: .bold))
-                            .foregroundColor(.purple)
-                            .frame(width: 58, height: 58)
-                    }
-                    .glassEffect(.regular.tint(Color.white.opacity(0.1)).interactive(), in: .circle)
-                    .shadow(color: .black.opacity(0.35), radius: 6, x: 0, y: 4)
-
-                } else {
-                    // 💧 Versiones anteriores sin glassEffect
-                    Button(action: {
-                        Task {
-                            isSyncing = true
-                            await SyncManagerDownload.shared.syncProjects(context: context)
-                            withAnimation(.easeOut(duration: 0.3)) {
-                                refreshID = UUID()
-                                isSyncing = false
-                            }
-                        }
-                    }) {
-                        ZStack {
-                            if isSyncing {
-                                ProgressView()
-                                    .progressViewStyle(.circular)
-                                    .tint(.purple)
-                                    .scaleEffect(1.1)
-                            } else {
-                                Image(systemName: "arrow.clockwise")
-                                    .font(.system(size: 30, weight: .bold))
-                                    .foregroundColor(.white)
-                            }
-                        }
-                        .frame(width: 58, height: 58)
-                        .background(Circle().fill(Color.purple.opacity(0.9)))
-                        .shadow(color: .black.opacity(0.25), radius: 5, x: 0, y: 3)
-                    }
-                    .disabled(isSyncing)
-
-                    Button(action: {
-                        showAddProjectView = true
-                    }) {
-                        Image(systemName: "plus")
-                            .font(.system(size: 30, weight: .bold))
-                            .foregroundColor(.white)
-                            .frame(width: 58, height: 58)
-                            .background(Circle().fill(Color.purple.opacity(0.9)))
-                            .shadow(color: .black.opacity(0.25), radius: 5, x: 0, y: 3)
-                    }
+        
+        
+        glassButtonBar(funcAddButton: {showAddProjectView = true},
+                       funcSyncButton: {
+            Task {
+                isSyncing = true
+                await SyncManagerDownload.shared.syncProjects(context: context)
+                withAnimation(.easeOut(duration: 0.3)) {
+                    refreshID = UUID()
+                    isSyncing = false
                 }
-            }
-
-            // 📱 iPhone (compact width)
-            else {
-                if #available(iOS 26.0, *) {
-                    Button(action: {
-                        showAddProjectView = true
-                    }) {
-                        Image(systemName: "plus")
-                            .font(.system(size: 28, weight: .bold))
-                            .foregroundColor(.purple)
-                            .padding(16)
-                    }
-                    .glassEffect(.regular.tint(Color.white.opacity(0.15)).interactive(), in: .circle)
-                    .shadow(color: .black.opacity(0.35), radius: 5, x: 0, y: 3)
-                } else {
-                    Button(action: {
-                        showAddProjectView = true
-                    }) {
-                        Image(systemName: "plus")
-                            .font(.system(size: 28, weight: .bold))
-                            .foregroundColor(.white)
-                            .padding(12)
-                            .background(
-                                Circle()
-                                    .fill(Color.purple.opacity(0.9))
-                                    .shadow(color: .black.opacity(0.25), radius: 5, x: 0, y: 3)
-                            )
-                    }
-                }
-            }
-        }
-        .padding(.trailing, 30)
-            .padding(.bottom, sizeClass == .regular ? 90 :  150)
+            }},
+                       funcCalendarButton: {},
+                       color: accentColor,
+                       selectedTab: $modelView.selectedTab,
+                       isSyncing: $isSyncing)
+                
     }
     // MARK: Card
     private func projectCard(project: Project) -> some View {

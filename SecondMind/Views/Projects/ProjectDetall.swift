@@ -165,7 +165,7 @@ struct ProjectDetall: View {
                     NavigationLink(destination: NoteDetailView(project: viewModel.editableProject)) {
                         Label("Nueva nota", systemImage: "plus")
                     }
-                    .buttonStyle(RoundedButtonStyle(backgroundColor: .blue))
+                    .buttonStyle(RoundedButtonStyle(backgroundColor: Color.noteBlue))
                 }
                 .padding(.top, 10)
             }
