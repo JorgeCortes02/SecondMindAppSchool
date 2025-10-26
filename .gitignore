@@ -1,0 +1,55 @@
+# ===========================
+# Xcode & macOS
+# ===========================
+.DS_Store
+build/
+DerivedData/
+*.xcuserstate
+*.xcuserdata/
+*.xcworkspace
+*.zip
+
+# ===========================
+# Swift Package Manager
+# ===========================
+.build/
+Packages/
+Package.resolved
+Package.pins
+
+# ===========================
+# CocoaPods
+# ===========================
+Pods/
+Podfile.lock
+
+# ===========================
+# Carthage
+# ===========================
+Carthage/Build/
+
+# ===========================
+# Fastlane
+# ===========================
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+
+# ===========================
+# Other common files
+# ===========================
+*.swp
+*.lock
+*.tmp
+*.bak
+*.log
+*.orig
+*.mode1v3
+*.pbxuser
+
+# ===========================
+# Local configuration
+# ===========================
+*.env
+*.local
