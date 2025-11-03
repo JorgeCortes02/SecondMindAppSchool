@@ -33,7 +33,7 @@ struct ProjectTaskView: View {
 
                 
                         // ——— Cuerpo: TaskMark ocupa todo el espacio que queda ———
-                        ProjectTaskMark(project : project)
+                    ProjectTaskMark<TaskMarkProjectDetallModelView>(project : project)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                           
                     

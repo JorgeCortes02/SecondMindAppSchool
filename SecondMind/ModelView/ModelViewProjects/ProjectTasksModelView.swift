@@ -11,13 +11,17 @@ import SwiftUI
 
 public class TaskMarkProjectDetallModelView: ObservableObject {
     
-    @Published var tasks: [TaskItem] = []
+    @Published var taskList: [TaskItem] = []
     @Published var selectedTab: Int = 0
-    private var project : Project? = nil
+    @Published var readyToShowTasks: Bool = false
+    @Published var selectedData: Date = Date()
+    @Published var showCal: Bool = false
+    @Published var showAddTaskView: Bool = false
+    
+    private var project: Project?
     private var context: ModelContext?
-    @Published var readyToShowTasks : Bool = false
-    init(context: ModelContext? = nil, project : Project? = nil){
-        
+    
+    init(context: ModelContext? = nil, project: Project? = nil) {
         self.context = context
         self.project = project
     }
@@ -27,75 +31,37 @@ public class TaskMarkProjectDetallModelView: ObservableObject {
         self.project = project
     }
     
-    func extractDayTasks(date : Date) -> [TaskItem] {
-        let calendar = Calendar.current
-        let startOfDay = calendar.startOfDay(for: date)
-        let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
-        var tasks: [TaskItem] = []
-        
-        if let project = project {
-        
-            return project.tasks.filter { task in
-                   if let endDate = task.endDate {
-                       return Calendar.current.isDate(endDate, inSameDayAs: date) && task.status == .on
-                   } else {
-                       return false
-                   }
-               }
-          
+    func extractDayTasks(date: Date) -> [TaskItem] {
+        guard let project else { return [] }
+        return project.tasks.filter { task in
+            if let endDate = task.endDate {
+                return Calendar.current.isDate(endDate, inSameDayAs: date) && task.status == .on
+            }
+            return false
         }
-        
-        return tasks
-        
-        
     }
     
     func extractNoDateTasks() -> [TaskItem] {
-        var tasks: [TaskItem] = []
+        guard let project else { return []}
         
-        if let project = project {
-            
-            tasks = project.tasks.filter { $0.endDate == nil && $0.status == .on }
-            
-        }
-        return tasks
+        return project.tasks.filter { $0.endDate == nil && $0.status == .on }
     }
     
     func extractOffTasks() -> [TaskItem] {
-       
-        var tasks: [TaskItem] = []
-        
-        if let project = project {
-        
-            tasks =  project.tasks.filter{
-                   
-               $0.status == .off
-            }
-        
-          
-        }
-        
-        return tasks
-        
-        
+        guard let project else { return [] }
+        return project.tasks.filter { $0.status == .off }
     }
     
-     func loadEvents(selectedData: Date? = nil) {
+    func loadEvents() {
         switch selectedTab {
         case 0:
-     
-                tasks = extractNoDateTasks()
-            break;
+            taskList = extractNoDateTasks()
         case 1:
+        
+                taskList = extractDayTasks(date: selectedData)
             
-            if let selectedData {
-                tasks = extractDayTasks(date: selectedData)
-                
-            }
-         
-            break;
         case 2:
-            tasks = extractOffTasks()
+            taskList = extractOffTasks()
         default:
             break
         }
@@ -106,8 +72,46 @@ public class TaskMarkProjectDetallModelView: ObservableObject {
             }
         }
     }
+}
 
-        
+extension TaskMarkProjectDetallModelView: BaseTaskViewModel {
+
+    var listTask: [TaskItem] {
+        get { taskList }
+        set { taskList = newValue }
     }
-    
 
+    func setContext(_ context: ModelContext) {
+        self.context = context
+    }
+
+    func loadTasks() {
+       
+        loadEvents()
+    }
+
+    func markAsCompleted(_ task: TaskItem) {
+        guard let context else { return }
+        task.status = .off
+        task.completeDate = Date()
+        do {
+            try context.save()
+            Task { await SyncManagerUpload.shared.uploadTask(task: task) }
+            taskList.removeAll { $0.id == task.id }
+        } catch {
+            print("❌ Error al guardar tarea completada: \(error)")
+        }
+    }
+
+    func deleteTask(_ task: TaskItem) {
+        guard let context else { return }
+        do {
+            try context.delete(task)
+            try context.save()
+            Task { await SyncManagerUpload.shared.deleteTask(task: task) }
+            taskList.removeAll { $0.id == task.id }
+        } catch {
+            print("❌ Error al borrar tarea: \(error)")
+        }
+    }
+}

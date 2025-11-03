@@ -1,10 +1,3 @@
-//
-//  TaskMarkModelView.swift
-//  SecondMind
-//
-//  Created by Jorge Cortes on 24/9/25.
-//
-
 import Foundation
 import SwiftData
 import SwiftUI
@@ -14,22 +7,25 @@ class TaskViewModel: ObservableObject {
     @Published var listTask: [TaskItem] = []
     @Published var readyToShowTasks: Bool = false
     @Published var selectedDate: Date = Date()
-    @Published var selectedTab: Int = 0   
+    @Published var selectedTab: Int = 0
+    @Published var selectedData: Date = Date()
+    @Published var showCal: Bool = false
+    @Published var showAddTaskView: Bool = false
+    
     private var context: ModelContext?
 
-    // Configurar contexto desde la vista
     func setContext(_ context: ModelContext) {
         self.context = context
     }
 
-    // Cargar según pestaña
-    func loadTasks(for tab: Int, utilFunctions: generalFunctions) {
+    func loadTasks() {
         guard let context else { return }
-        switch tab {
+        
+        switch selectedTab {
         case 0:
             listTask = HomeApi.fetchNoDateTasks(context: context)
         case 1:
-            listTask = HomeApi.fetchDateTasks(date: selectedDate, context: context)
+            listTask = HomeApi.fetchDateTasks(date: selectedData, context: context)
         case 2:
             listTask = HomeApi.loadTasksEnd(context: context)
         default:
@@ -49,11 +45,7 @@ class TaskViewModel: ObservableObject {
         task.status = .off
         do {
             try context.save()
-            Task{
-                
-                await SyncManagerUpload.shared.uploadTask(task: task)
-                
-            }
+            Task { await SyncManagerUpload.shared.uploadTask(task: task) }
             listTask.removeAll { $0.id == task.id }
         } catch {
             print("❌ Error al guardar: \(error)")
@@ -65,12 +57,13 @@ class TaskViewModel: ObservableObject {
         do {
             try context.delete(task)
             try context.save()
-            Task{
-               await SyncManagerUpload.shared.deleteTask(task: task)
-            }
+            Task { await SyncManagerUpload.shared.deleteTask(task: task) }
             listTask.removeAll { $0.id == task.id }
         } catch {
             print("❌ Error al borrar: \(error)")
         }
     }
 }
+
+// ✅ Cumple el protocolo correctamente (no vacío)
+extension TaskViewModel: BaseTaskViewModel {}

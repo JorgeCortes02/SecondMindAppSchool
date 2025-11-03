@@ -6,445 +6,92 @@ struct TaskMark: View {
     @EnvironmentObject var utilFunctions: generalFunctions
     @Environment(\.modelContext) private var context
     @Environment(\.horizontalSizeClass) private var sizeClass
+    
     @StateObject private var modelView: TaskViewModel
+    
     @State private var refreshID = UUID()
+    @State private var isSyncing = false
+    
+    private let accentColor = Color.taskButtonColor
+    
     init() {
         _modelView = StateObject(wrappedValue: TaskViewModel())
     }
     
-    @State var listTask: [TaskItem] = []
-    @State private var readyToShowTasks: Bool = false
-    @State private var usableSize: CGSize = .zero
-    @State private var selectedData: Date = Date()
-    @State private var isSyncing = false
-    private let accentColor = Color.taskButtonColor
-    
-    @State private var showCal: Bool = false
-    @State private var showAddTaskView: Bool = false
-    
-    
     var body: some View {
         ZStack {
-            
-            
             VStack(spacing: 20) {
+                
                 headerCard(title: "Tareas")
                     .padding(.top, 16)
                 
-                // MARK: – Picker bar adaptado para iPad
                 if sizeClass == .regular {
                     PickerBar(options: ["Activas", "Finalizadas"], selectedTab: $modelView.selectedTab)
                 } else {
-                    PickerBar(options: ["Sin fecha","Agendadas", "Finalizadas"], selectedTab: $modelView.selectedTab)
+                    PickerBar(options: ["Sin fecha", "Agendadas", "Finalizadas"], selectedTab: $modelView.selectedTab)
                 }
                 
                 ScrollView {
                     VStack(spacing: 20) {
-                        
-                        // MARK: iPad Layout
                         if sizeClass == .regular {
-                            if modelView.selectedTab == 0 {
-                                // MARK: ACTIVA (Sin fecha + Agendadas)
-                                VStack(spacing: 24) {
-                                    
-                                    // 🔹 SIN FECHA
-                                    VStack(alignment: .leading, spacing: 12) {
-                                        HStack {
-                                            Text("Sin fecha")
-                                                .foregroundColor(.primary)
-                                                .font(.title2.weight(.bold))
-                                            Spacer()
-                                            Text("\(HomeApi.fetchNoDateTasks(context: context).count)")
-                                                .font(.subheadline.weight(.medium))
-                                                .foregroundColor(.secondary)
-                                        }
-                                        .padding(.horizontal, 20)
-                                        .padding(.top, 16)
-                                        
-                                        Rectangle()
-                                            .fill(Color.primary.opacity(0.1))
-                                            .frame(height: 1)
-                                        
-                                        let noDateTasks = HomeApi.fetchNoDateTasks(context: context)
-                                        if noDateTasks.isEmpty {
-                                            emptyTaskList
-                                        } else {
-                                            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-                                                ForEach(noDateTasks, id: \.id) { task in
-                                                    TaskCardExpanded(task: task)
-                                                }
-                                            }
-                                            .padding(.horizontal, 20)
-                                            .padding(.bottom, 10)
-                                        }
-                                    }
-                                    .frame(maxWidth: 800)
-                                    .background(Color.cardBG)
-                                    .cornerRadius(20)
-                                    .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
-                                    .padding(.horizontal)
-                                    
-                                    // 🔹 AGENDADAS
-                                    VStack(alignment: .leading, spacing: 12) {
-                                        HStack {
-                                            Text("Agendadas")
-                                                .foregroundColor(.primary)
-                                                .font(.title2.weight(.bold))
-                                            Spacer()
-                                            Text("\(HomeApi.fetchDateTasks(date: selectedData, context: context).count)")
-                                                .font(.subheadline.weight(.medium))
-                                                .foregroundColor(.secondary)
-                                        }
-                                        .padding(.horizontal, 20)
-                                        .padding(.top, 16)
-                                        
-                                        Rectangle()
-                                            .fill(Color.primary.opacity(0.1))
-                                            .frame(height: 1)
-                                        
-                                        // ✨ DatePicker centrado con marco
-                                        HStack {
-                                            Spacer()
-                                            DatePicker(
-                                                "",
-                                                selection: $selectedData,
-                                                in: Date()...,
-                                                displayedComponents: [.date]
-                                            )
-                                            .labelsHidden()
-                                            .datePickerStyle(.compact)
-                                            .padding(.vertical, 10)
-                                            .padding(.horizontal, 16)
-                                            .background(
-                                                RoundedRectangle(cornerRadius: 16)
-                                                    .fill(Color.white.opacity(0.9))
-                                                    .shadow(color: .black.opacity(0.08), radius: 6, x: 0, y: 3)
-                                                    .overlay(
-                                                        RoundedRectangle(cornerRadius: 16)
-                                                            .stroke(Color.taskButtonColor.opacity(0.4), lineWidth: 1)
-                                                    )
-                                            )
-                                            .frame(maxWidth: 300)
-                                            Spacer()
-                                        }
-                                        .padding(.vertical, 8)
-                                        .onChange(of: selectedData) {
-                                            listTask = HomeApi.fetchDateTasks(date: selectedData, context: context)
-                                        }
-                                        
-                                        let datedTasks = HomeApi.fetchDateTasks(date: selectedData, context: context)
-                                        if datedTasks.isEmpty {
-                                            emptyTaskList
-                                        } else {
-                                            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-                                                ForEach(datedTasks, id: \.id) { task in
-                                                    TaskCardExpanded(task: task)
-                                                }
-                                            }
-                                            .padding(.horizontal, 20)
-                                            .padding(.bottom, 10)
-                                        }
-                                    }
-                                    .frame(maxWidth: 800)
-                                    .background(Color.cardBG)
-                                    .cornerRadius(20)
-                                    .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
-                                    .padding(.horizontal)
-                                }
-                                .frame(maxWidth: .infinity)
-                                
-                            } else {
-                                // MARK: FINALIZADAS
-                                VStack(alignment: .leading, spacing: 12) {
-                                    HStack {
-                                        Text("Finalizadas")
-                                            .foregroundColor(.primary)
-                                            .font(.title2.weight(.bold))
-                                        Spacer()
-                                        Text("\(HomeApi.loadTasksEnd(context: context).count)")
-                                            .font(.subheadline.weight(.medium))
-                                            .foregroundColor(.secondary)
-                                    }
-                                    .padding(.horizontal, 20)
-                                    .padding(.top, 16)
-                                    
-                                    Rectangle()
-                                        .fill(Color.primary.opacity(0.1))
-                                        .frame(height: 1)
-                                    
-                                    
-                                    
-                                    let completedTasks = HomeApi.loadTasksEnd(context: context).filter {
-                                        guard let date = $0.completeDate else { return false }
-                                        return Calendar.current.isDate(date, inSameDayAs: selectedData)
-                                    }
-                                    
-                                    if completedTasks.isEmpty {
-                                        emptyTaskList
-                                    } else {
-                                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-                                            ForEach(completedTasks, id: \.id) { task in
-                                                TaskCardExpanded(task: task)
-                                            }
-                                        }
-                                        .padding(.horizontal, 20)
-                                        .padding(.bottom, 10)
-                                    }
-                                }
-                                .frame(maxWidth: 800)
-                                .background(Color.cardBG)
-                                .cornerRadius(20)
-                                .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
-                                .padding(.horizontal)
-                            }
+                            // iPad → secciones en grid
+                            TasksSectionsiPadView(modelView: modelView, accentColor: accentColor)
                         } else {
-                            // iPhone → tu flujo original
-                            if modelView.selectedTab == 1 && showCal {
-                                calendarCard(selectedDate: $selectedData)
-                            } else if modelView.selectedTab == 1 && !showCal {
-                                TaskCard
-                            } else if modelView.selectedTab == 2 {
-                                TaskCard
+                            // iPhone → lista compacta + Calendar Card opcional
+                            if modelView.selectedTab == 1 && modelView.showCal {
+                                calendarCard(selectedDate: $modelView.selectedData)
                             } else {
-                                TaskCard
+                                TasksElementsListView(modelView: modelView)
                             }
                         }
                     }
                     .padding(.vertical, 16)
-                }.id(refreshID)
-                    .refreshable {
-                        Task {
-                            await SyncManagerDownload.shared.syncTasks(context: context)
-                            switch modelView.selectedTab {
-                            case 0:
-                                listTask = HomeApi.fetchNoDateTasks(context: context)
-                            case 1:
-                                listTask = HomeApi.fetchDateTasks(date: selectedData, context: context)
-                            case 2:
-                                listTask = HomeApi.loadTasksEnd(context: context)
-                            default:
-                                listTask = []
-                            }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                withAnimation(.easeOut(duration: 0.3)) {
-                                    readyToShowTasks = true
-                                }
-                            }
-                        }
-                    }
-            }.sheet(isPresented: $showAddTaskView, onDismiss: {
-                guard let contextTask = try? context.fetch(FetchDescriptor<TaskItem>()) else { return }
-                
-                if let lastTask = contextTask.sorted(by: { $0.createDate ?? Date() > $1.createDate ?? Date() }).first {
-                    if lastTask.status == .off {
-                        listTask = HomeApi.loadTasksEnd(context: context)
-                    } else if lastTask.endDate == nil {
-                        listTask = HomeApi.fetchNoDateTasks(context: context)
-                    } else {
-                        listTask = HomeApi.fetchDateTasks(date: lastTask.endDate!, context: context)
-                    }
                 }
-                refreshID = UUID()
+                .id(refreshID)
+                .refreshable {
+                    await refreshTasksFromServer()
+                }
+            }
+            .safeAreaInset(edge: .bottom) {
+                HStack { Spacer(); buttonControlMark }
+            }
+            .ignoresSafeArea(.keyboard)
+            .onAppear {
+                modelView.setContext(context)
+                modelView.loadTasks() // usa selectedTab/selectedData internamente
+            }
+            .onChange(of: modelView.selectedTab) { _ in
+                modelView.loadTasks()
+            }
+            .onChange(of: modelView.selectedData) { _ in
+                // 🔐 Solo recarga si estás en “Agendadas”
+                if modelView.selectedTab == 1 {
+                    modelView.loadTasks()
+                }
+            }
+            .sheet(isPresented: $modelView.showAddTaskView, onDismiss: {
+                modelView.loadTasks()
             }) {
                 CreateTask()
             }
-            .safeAreaInset(edge: .bottom) {
-                HStack {
-                    Spacer()
-                    buttonControlMark
-                }
-                
-            }
-            .ignoresSafeArea(.keyboard)
-            .onAppear{
-                modelView.setContext(context)
-            }
         }
     }
     
-    // MARK: - Tarjeta expandida para iPad
-    private func TaskCardExpanded(task: TaskItem) -> some View {
-        NavigationLink(destination: TaskDetall(editableTask: task)) {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(alignment: .top) {
-                    // ✅ Icono principal y título
-                    HStack(spacing: 8) {
-                        Image(systemName: task.endDate == nil ? "checklist" : "calendar")
-                            .font(.system(size: 20))
-                            .foregroundColor(accentColor)
-                        
-                        Text(task.title)
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.primary)
-                            .lineLimit(2)
-                            .truncationMode(.tail)
-                    }
-                    
-                    Spacer()
-                    
-                    // ✅ Botón de completar
-                    if task.status == .on {
-                        Button(action: {
-                            task.completeDate = Date()
-                            task.status = .off
-                            do {
-                                Task {
-                                    await SyncManagerUpload.shared.uploadTask(task: task)
-                                }
-                                try context.save()
-                                
-                                withAnimation(.easeOut(duration: 0.25)) {
-                                    listTask.removeAll { $0.id == task.id }
-                                }
-                            } catch {
-                                print("❌ Error al marcar tarea como completa: \(error)")
-                            }
-                        }) {
-                            Image(systemName: "circle")
-                                .font(.system(size: 22))
-                                .foregroundColor(.gray)
-                        }
-                        .buttonStyle(.plain)
-                        .padding(.leading, 6)
-                    } else {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 22))
-                            .foregroundColor(accentColor)
-                            .padding(.leading, 6)
-                    }
-                }
-                
-                // 📁 Proyecto
-                if let project = task.project {
-                    Label(project.title, systemImage: "folder")
-                        .font(.caption)
-                        .foregroundColor(.purple) // 💜 Color para proyectos
-                } else {
-                    Label("Sin proyecto", systemImage: "folder")
-                        .font(.caption)
-                        .foregroundColor(.secondary.opacity(0.8))
-                }
-                
-                // 📅 Evento
-                if let event = task.event {
-                    Label(event.title, systemImage: "calendar")
-                        .font(.caption)
-                        .foregroundColor(Color.eventButtonColor) // 🎨 Color para eventos
-                } else {
-                    Label("Sin evento", systemImage: "calendar")
-                        .font(.caption)
-                        .foregroundColor(.secondary.opacity(0.8))
-                }
-                
-                // ⏰ Hora (si tiene fecha)
-                if let due = task.endDate {
-                    HStack {
-                        Image(systemName: "clock")
-                        Text(utilFunctions.extractHour(due))
-                    }
-                    .font(.caption)
-                    .foregroundColor(accentColor)
-                }
-            }
-            .padding(12)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.white)
-            .cornerRadius(14)
-            .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
-            
-        }
-        .buttonStyle(.plain)
-    }
-    
-    
-    // MARK: – Botonera inferior (iPad: 🔄 + ➕ | iPhone: 📅 + ➕)
+    // MARK: – Botonera inferior
     private var buttonControlMark: some View {
-        
-        glassButtonBar(funcAddButton: {showAddTaskView = true},
-                       funcSyncButton: {
-            Task {
-                isSyncing = true
-                await SyncManagerDownload.shared.syncEvents(context: context)
-                withAnimation(.easeOut(duration: 0.3)) {
-                    refreshID = UUID()
-                    isSyncing = false
-                }
-            }
-        },
-                       funcCalendarButton: {withAnimation(.easeInOut) { showCal.toggle() }}
-                       , color: accentColor, selectedTab: $modelView.selectedTab, isSyncing: $isSyncing)
-        
-        
-        
-        
-    }
-    // MARK: – Task Card
-    
-    private var TaskCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                if modelView.selectedTab == 0 {
-                    Text("Sin fecha")
-                        .foregroundColor(.primary)
-                        .font(.title2.weight(.bold))
-                } else if modelView.selectedTab == 1 {
-                    Text(utilFunctions.formattedDate(selectedData))
-                        .foregroundColor(.primary)
-                        .font(.title2.weight(.bold))
-                } else {
-                    Text("Tareas finalizadas")
-                        .foregroundColor(.primary)
-                        .font(.title2.weight(.bold))
-                }
-                
-                Spacer()
-                Text("\(listTask.count)")
-                    .font(.subheadline.weight(.medium))
-                    .foregroundColor(.secondary)
-            }
-            .padding(.horizontal, 20)
-            .padding(.top, 16)
-            
-            Rectangle()
-                .fill(Color.primary.opacity(0.1))
-                .frame(height: 1)
-            
-            if listTask.isEmpty {
-                emptyTaskList
-            } else if readyToShowTasks {
-                if modelView.selectedTab == 2 {
-                    endTaskList
-                } else {
-                    taskListToDo
-                }
-            }
-        }
-        .background(Color.cardBG)
-        .cornerRadius(20)
-        .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
-        .padding(.horizontal, 16)
-        .onAppear {
-            switch modelView.selectedTab {
-            case 0:
-                listTask = HomeApi.fetchNoDateTasks(context: context)
-            case 1:
-                listTask = HomeApi.fetchDateTasks(date: selectedData, context: context)
-            case 2:
-                listTask = HomeApi.loadTasksEnd(context: context)
-            default:
-                listTask = []
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                withAnimation(.easeOut(duration: 0.3)) {
-                    readyToShowTasks = true
-                }
-            }
-        }
+        glassButtonBar(
+            funcAddButton: { modelView.showAddTaskView = true },
+            funcSyncButton: { Task { await refreshTasksFromServer() } },
+            funcCalendarButton: {
+                withAnimation(.easeInOut) { modelView.showCal.toggle() }
+            },
+            color: accentColor,
+            selectedTab: $modelView.selectedTab,
+            isSyncing: $isSyncing
+        )
     }
     
-    
-    // MARK: – Calendar Card
-    
+    // MARK: – Calendar Card (iPhone, tab = Agendadas)
     private func calendarCard(selectedDate: Binding<Date>) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Selecciona fecha")
@@ -460,15 +107,12 @@ struct TaskMark: View {
             )
             .datePickerStyle(.compact)
             .padding(.horizontal, 20)
-            .onChange(of: selectedData) {
+            .onChange(of: modelView.selectedData) { _ in
+                // Al cambiar la fecha, oculta el calendario y recarga SOLO en tab=1
                 withAnimation(.easeInOut(duration: 0.3)) {
-                    showCal = false
-                    readyToShowTasks = true
-                    listTask = HomeApi.fetchDateTasks(date: selectedData, context: context)
-                }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                    withAnimation(.easeOut(duration: 0.35)) {
-                        readyToShowTasks = true
+                    modelView.showCal = false
+                    if modelView.selectedTab == 1 {
+                        modelView.loadTasks()
                     }
                 }
             }
@@ -481,175 +125,14 @@ struct TaskMark: View {
         .transition(.move(edge: .top).combined(with: .opacity))
     }
     
-    
-    // MARK: – Empty state
-    
-    private var emptyTaskList: some View {
-        VStack(alignment: .center, spacing: 20) {
-            Image(systemName: "checkmark.seal.text.page")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 70, height: 90)
-                .foregroundColor(accentColor.opacity(0.7))
-            
-            Text("No hay tareas disponibles")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.primary)
+    // MARK: – Utilidad: refetch y refresh
+    private func refreshTasksFromServer() async {
+        isSyncing = true
+        await SyncManagerDownload.shared.syncTasks(context: context)
+        modelView.loadTasks()
+        withAnimation(.easeOut(duration: 0.3)) {
+            refreshID = UUID()
+            isSyncing = false
         }
-        .frame(maxWidth: .infinity, minHeight: 150)
-        .padding(20)
-    }
-    
-    
-    // MARK: – Task list ToDo
-    
-    private var taskListToDo: some View {
-        LazyVStack(spacing: 12) {
-            ForEach(listTask, id: \.id) { task in
-                NavigationLink(destination: TaskDetall(editableTask: task)) {
-                    HStack(spacing: 12) {
-                        // Icono inicial
-                        Image(systemName: "checklist")
-                            .font(.system(size: 20))
-                            .foregroundColor(accentColor)
-                        
-                        // Texto principal (título)
-                        Text(task.title)
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.primary)
-                            .lineLimit(1)
-                            .truncationMode(.tail)
-                        
-                        Spacer() // 🔹 empuja hora + botón al final
-                        
-                        // Hora pegada al botón
-                        if let due = task.endDate {
-                            Label {
-                                Text(utilFunctions.extractHour(due))
-                            } icon: {
-                                Image(systemName: "clock")
-                            }
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(accentColor)
-                            .padding(.vertical, 2)
-                            .padding(.horizontal, 8)
-                            .background(accentColor.opacity(0.1))
-                            .clipShape(Capsule())
-                        }
-                        
-                        // Botón de completar
-                        Button(action: {
-                            task.completeDate = Date()
-                            task.status = .off
-                            do {
-                                Task{
-                                    
-                                    await SyncManagerUpload.shared.uploadTask(task: task)
-                                    
-                                }
-                                try context.save()
-                                listTask.removeAll { $0.id == task.id }
-                            } catch {
-                                print("❌ Error al guardar: \(error)")
-                            }
-                        }) {
-                            Image(systemName: "circle")
-                                .font(.system(size: 21))
-                                .foregroundColor(.gray)
-                        }
-                    }
-                    .padding(12)
-                    .background(Color.white)
-                    .cornerRadius(12)
-                    .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
-                    .padding(.horizontal, 20)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-                }            }
-        }
-        .padding(.vertical, 8)
-        .animation(.easeOut(duration: 0.35), value: listTask)
-    }
-    
-    
-    // MARK: – End Task list
-    
-    private var endTaskList: some View {
-        let tasksWithDate = listTask.filter { $0.completeDate != nil }
-        let groupTaskByDate = Dictionary(grouping: tasksWithDate) { task in
-            Calendar.current.startOfDay(for: task.completeDate!)
-        }
-        let groupTaskByDateOrdered = groupTaskByDate
-            .map { (date: $0.key, task: $0.value) }
-            .sorted { $0.date > $1.date }
-        
-        return LazyVStack(spacing: 12) {
-            ForEach(groupTaskByDateOrdered, id: \.date) { tasks in
-                Text("\(utilFunctions.formattedDate(tasks.date))")
-                    .font(.title3.weight(.bold))
-                    .foregroundColor(.primary)
-                    .padding()
-                    .background(
-                        LinearGradient(
-                            gradient: Gradient(colors: [
-                                Color(red: 0.95, green: 0.95, blue: 0.97, opacity: 0.8),
-                                Color(red: 0.90, green: 0.90, blue: 0.93, opacity: 0.8)
-                            ]),
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                        .cornerRadius(20)
-                    )
-                
-                ForEach(tasks.task, id: \.id) { task in
-                    NavigationLink(destination: TaskDetall(editableTask: task)) {
-                        HStack(spacing: 12) {
-                            Image(systemName: "checklist")
-                                .font(.system(size: 20))
-                                .foregroundColor(accentColor)
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(task.title)
-                                    .font(.system(size: 16, weight: .medium))
-                                    .foregroundColor(.primary)
-                                    .lineLimit(1)
-                                    .truncationMode(.tail)
-                                if let due = task.endDate {
-                                    Text(utilFunctions.formattedDateShort(due))
-                                        .font(.caption)
-                                        .foregroundColor(.gray.opacity(0.8))
-                                }
-                            }
-                            
-                            Spacer()
-                            
-                            Button(action: {
-                                do {
-                                    try context.delete(task)
-                                    Task{
-                                        await SyncManagerUpload.shared.deleteTask(task: task)
-                                    }
-                                    withAnimation {
-                                        listTask.removeAll { $0.id == task.id }
-                                    }
-                                } catch {
-                                    print("❌ Error al guardar: \(error)")
-                                }
-                            }) {
-                                Image(systemName: "trash")
-                                    .font(.system(size: 21))
-                                    .foregroundColor(Color.red)
-                            }
-                        }
-                        .padding(12)
-                        .cornerRadius(12)
-                        .shadow(color: Color.black.opacity(0.02), radius: 4, x: 0, y: 2)
-                        .padding(.horizontal, 20)
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
-                    }
-                }
-            }
-        }
-        .padding(.vertical, 8)
-        .animation(.easeOut(duration: 0.35), value: listTask)
     }
 }

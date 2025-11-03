@@ -189,19 +189,9 @@ struct NoteMark: View {
     }
     // MARK: – Empty List (igual)
     private var emptyNoteList: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "note.text")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 60, height: 60)
-                .foregroundColor(.orange.opacity(0.7))
-
-            Text("No hay notas disponibles")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.primary)
-        }
-        .frame(maxWidth: .infinity, minHeight: 150)
-        .padding(20)
+   
+            EmptyList(color: accentColor, textIcon: "note.text")
+            
     }
 
     // MARK: – Fila de Nota (versión móvil)

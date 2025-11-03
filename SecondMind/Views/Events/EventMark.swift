@@ -428,19 +428,9 @@ struct EventMark: View {
     
     // MARK: – Empty state
     private func emptyEventsList() -> some View {
-        VStack(alignment: .center, spacing: 20) {
-            Image(systemName: "calendar.badge.exclamationmark")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 70, height: 70)
-                .foregroundColor(accentColor.opacity(0.7))
-            
-            Text("No hay eventos disponibles")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.primary)
-        }
-        .frame(maxWidth: .infinity, minHeight: 150)
-        .padding(20)
+       
+        EmptyList(color: accentColor, textIcon: "calendar.badge.exclamationmark")
+        
     }
     
     // MARK: – Lista de eventos (iPhone, agendados)

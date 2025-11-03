@@ -182,18 +182,9 @@ struct ProjectMark: View {
     }
     
     private var emptyProjectList: some View {
-        VStack(alignment: .center, spacing: 20) {
-            Image(systemName: "folder")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 70, height: 90)
-                .foregroundColor(Color.taskButtonColor.opacity(0.7))
-            Text("No hay proyectos disponibles")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.primary)
-        }
-        .frame(maxWidth: .infinity, minHeight: 150)
-        .padding(20)
+        
+        EmptyList(color: accentColor, textIcon: "folder")
+        
     }
 }
 
