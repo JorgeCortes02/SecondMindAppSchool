@@ -5,6 +5,7 @@ import SwiftUI
 @MainActor
 class TaskViewModel: ObservableObject {
     @Published var listTask: [TaskItem] = []
+    @Published var listTaskCalendarIpad: [TaskItem] = []
     @Published var readyToShowTasks: Bool = false
     @Published var selectedDate: Date = Date()
     @Published var selectedTab: Int = 0
@@ -24,6 +25,7 @@ class TaskViewModel: ObservableObject {
         switch selectedTab {
         case 0:
             listTask = HomeApi.fetchNoDateTasks(context: context)
+            listTaskCalendarIpad = HomeApi.fetchDateTasks(date: selectedData, context: context)
         case 1:
             listTask = HomeApi.fetchDateTasks(date: selectedData, context: context)
         case 2:
@@ -38,6 +40,9 @@ class TaskViewModel: ObservableObject {
             }
         }
     }
+    
+
+    
 
     func markAsCompleted(_ task: TaskItem) {
         guard let context else { return }

@@ -1,31 +1,23 @@
-//
-//  EventMarkModelView.swift
-//  SecondMind
-//
-//  Created by Jorge Cortés on 31/8/25.
-//
-
 import Foundation
 import SwiftData
 import SwiftUI
 
-public class EventMarkModelView: ObservableObject {
+public class EventMarkModelView: BaseEventViewModel {
     
     @Published var events: [Event] = []
-    private var context: ModelContext?
-    
-    /// Pestaña seleccionada → 0 = Agendados, 1 = Finalizados
     @Published var selectedTab: Int = 0
+    
+    var context: ModelContext?
     
     init(context: ModelContext? = nil) {
         self.context = context
     }
     
-    func setContext(context: ModelContext) {
+    func setContext(_ context: ModelContext) {
         self.context = context
     }
     
-    // MARK: - Cargar eventos globales
+    // MARK: - Cargar eventos globales (agendados o finalizados)
     func loadEvents(date: Date? = nil) {
         guard let context else { return }
         
@@ -58,7 +50,7 @@ public class EventMarkModelView: ObservableObject {
     }
     
     // MARK: - Ordenación
-    func sortedArrayEvent(_ inputArray: [Event]) -> [Event] {
+    private func sortedArrayEvent(_ inputArray: [Event]) -> [Event] {
         inputArray.sorted { $0.endDate < $1.endDate }
     }
 }

@@ -16,7 +16,7 @@ struct TasksSectionsiPadView<ViewModel: BaseTaskViewModel>: View {
                 }
                 sectionView(title: "Agendadas") {
                     // Filtra las tareas por la fecha seleccionada
-                    let datedTasks = modelView.listTask.filter {
+                    let datedTasks = modelView.listTaskCalendarIpad.filter {
                         if let due = $0.endDate {
                             return Calendar.current.isDate(due, inSameDayAs: modelView.selectedData) && $0.status == .on
                         }
@@ -41,6 +41,11 @@ struct TasksSectionsiPadView<ViewModel: BaseTaskViewModel>: View {
                                     .fill(Color.white.opacity(0.9))
                             )
                             .shadow(color: .black.opacity(0.08), radius: 6)
+                            .onChange(of: modelView.selectedData) {
+                                
+                                modelView.loadTasks()
+                              
+                            }
                             Spacer()
                         }
                         // Grid de tareas agendadas

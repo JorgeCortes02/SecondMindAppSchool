@@ -10,7 +10,7 @@ protocol BaseTaskViewModel: ObservableObject {
     var selectedData: Date { get set }
     var showCal: Bool { get set }
     var showAddTaskView: Bool { get set }
-    
+    var listTaskCalendarIpad: [TaskItem] { get set }
     // MARK: - Context management
     func setContext(_ context: ModelContext)
     

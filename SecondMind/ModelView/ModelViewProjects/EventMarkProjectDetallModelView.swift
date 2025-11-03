@@ -1,25 +1,23 @@
-//
-//  EventMarkProjectDetallModelView.swift
-//  SecondMind
-//
-//  Created by Jorge Cortés on 19/9/25.
-//
-
 import Foundation
 import SwiftData
 import SwiftUI
 
-public class EventMarkProjectDetallModelView: ObservableObject {
+public class EventMarkProjectDetallModelView: BaseEventViewModel {
     
     @Published var events: [Event] = []
     @Published var selectedTab: Int = 0
-    private var project : Project? = nil
-    private var context: ModelContext?
-    @Published var readyToShowTasks : Bool = false
-    init(context: ModelContext? = nil, project : Project? = nil){
-        
+    @Published var readyToShowTasks: Bool = false
+    
+    var project: Project?
+    var context: ModelContext?
+    
+    init(context: ModelContext? = nil, project: Project? = nil) {
         self.context = context
         self.project = project
+    }
+    
+    func setContext(_ context: ModelContext) {
+        self.context = context
     }
     
     func setParameters(context: ModelContext, project: Project) {
@@ -27,67 +25,41 @@ public class EventMarkProjectDetallModelView: ObservableObject {
         self.project = project
     }
     
-    func extractDayEvents(date : Date) -> [Event] {
+    // MARK: - Extraer eventos del día (activos)
+    private func extractDayEvents(date: Date) -> [Event] {
+        guard let project = project else { return [] }
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: date)
         let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
-        var events: [Event] = []
         
-        if let project = project {
-        
-            events =  project.events.filter{
-                   
-               $0.endDate >= startOfDay && $0.endDate < endOfDay
-               && $0.status == .on
-            }
-        
-          
+        return project.events.filter {
+            $0.endDate >= startOfDay && $0.endDate < endOfDay && $0.status == .on
         }
-        
-        return events
-        
-        
     }
     
-    func extractOffEvents() -> [Event] {
-       
-        var events: [Event] = []
-        
-        if let project = project {
-        
-            events =  project.events.filter{
-                   
-               $0.status == .off
-            }
-        
-          
-        }
-        
-        return events
-        
-        
+    // MARK: - Extraer eventos finalizados
+    private func extractOffEvents() -> [Event] {
+        guard let project = project else { return [] }
+        return project.events.filter { $0.status == .off }
     }
     
-     func loadEvents(selectedData: Date? = nil) {
+    // MARK: - Cargar eventos según pestaña y fecha seleccionada
+    func loadEvents(date selectedData: Date? = nil) {
         switch selectedTab {
         case 0:
             if let selectedData {
                 events = extractDayEvents(date: selectedData)
             }
-            break;
         case 1:
-          events = extractOffEvents()
+            events = extractOffEvents()
         default:
             break
         }
-
+        
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             withAnimation(.easeOut(duration: 0.3)) {
                 self.readyToShowTasks = true
             }
         }
     }
-
-        
-    }
-    
+}

@@ -12,6 +12,7 @@ import SwiftUI
 public class TaskMarkProjectDetallModelView: ObservableObject {
     
     @Published var taskList: [TaskItem] = []
+    @Published var listTaskCalendarIpad: [TaskItem] = []
     @Published var selectedTab: Int = 0
     @Published var readyToShowTasks: Bool = false
     @Published var selectedData: Date = Date()
@@ -56,6 +57,7 @@ public class TaskMarkProjectDetallModelView: ObservableObject {
         switch selectedTab {
         case 0:
             taskList = extractNoDateTasks()
+            listTaskCalendarIpad = extractDayTasks(date: selectedData)
         case 1:
         
                 taskList = extractDayTasks(date: selectedData)

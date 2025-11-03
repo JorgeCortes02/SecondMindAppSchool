@@ -44,7 +44,8 @@ struct glassButtonBar: View {
                     
                 }
                 
-                if (selectedTab == 0 && color == .eventButtonColor) || (selectedTab == 1 && color == .taskButtonColor) &&
+                if (selectedTab == 0 && color == .eventButtonColor) &&
+                    sizeClass == .compact || (selectedTab == 1 && color == .taskButtonColor) &&
                    sizeClass == .compact {
                     
                     BaseActionButton(icon: "calendar", color: color, action: funcCalendarButton)
