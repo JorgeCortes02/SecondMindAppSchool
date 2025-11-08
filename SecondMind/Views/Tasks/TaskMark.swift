@@ -57,7 +57,11 @@ struct TaskMark: View {
             }
             .ignoresSafeArea(.keyboard)
             .onAppear {
-                modelView.setContext(context)
+                if sizeClass == .regular {
+                    modelView.setParameters(context, .regular)
+                }else{
+                    modelView.setParameters(context, .compact)
+                }
                 modelView.loadTasks() // usa selectedTab/selectedData internamente
             }
             .onChange(of: modelView.selectedTab) { _ in
@@ -128,7 +132,7 @@ struct TaskMark: View {
     // MARK: – Utilidad: refetch y refresh
     private func refreshTasksFromServer() async {
         isSyncing = true
-        await SyncManagerDownload.shared.syncTasks(context: context)
+        await SyncManagerDownload.shared.syncAll(context: context)
         modelView.loadTasks()
         withAnimation(.easeOut(duration: 0.3)) {
             refreshID = UUID()

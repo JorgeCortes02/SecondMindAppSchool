@@ -15,8 +15,12 @@ class CreateTaskViewModel: ObservableObject {
     @Published var lockEvent: Bool = false
 
     private var context: ModelContext?
-
+    private var project: Project?
+    
     init(project: Project? = nil) {
+        
+        self.project = project
+        
         self.newTask = TaskItem(
             title: "",
             endDate: nil,
@@ -29,6 +33,7 @@ class CreateTaskViewModel: ObservableObject {
         if let project {
             self.newTask.project = project
             self.lockProject = true
+            
         }
     }
 
@@ -39,8 +44,16 @@ class CreateTaskViewModel: ObservableObject {
 
     func loadData() {
         guard let context else { return }
-        events = HomeApi.downdloadEventsFrom(context: context)
-        projects = HomeApi.downdloadProjectsFrom(context: context)
+        
+        if let project {
+            projects = HomeApi.downdloadProjectsFrom(context: context)
+            events = HomeApi.downdloadEventsFromProject(project: project, context: context)
+        }else{
+            events = HomeApi.downdloadEventsFrom(context: context)
+            projects = HomeApi.downdloadProjectsFrom(context: context)
+        }
+        
+       
     }
 
     // MARK: - 🔹 Proyecto seleccionado

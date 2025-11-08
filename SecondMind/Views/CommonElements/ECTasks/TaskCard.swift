@@ -48,10 +48,7 @@ struct TasksElementsListView<ViewModel: BaseTaskViewModel>: View {
         .cornerRadius(20)
         .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
         .padding(.horizontal, 16)
-        .onAppear {
-            modelView.setContext(context)
-            modelView.loadTasks()
-        }
+        
     }
 
 

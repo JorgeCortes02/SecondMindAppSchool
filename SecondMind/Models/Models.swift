@@ -57,7 +57,7 @@ class Project {
         externalId: UUID? = nil,
         token: String = CurrentUser.token()
     ) {
-        print("El token: " + token)
+   
         self.title = title
         self.endDate = endDate
         self.status = status

@@ -140,8 +140,11 @@ struct HomeApi {
         let descriptor = FetchDescriptor<Event>(predicate: predicate)
 
         do {
-            let eventsOn = try context.fetch(descriptor)
-            return eventsOn.filter { $0.status == .on && $0.project == project }
+            var eventsOn = try context.fetch(descriptor)
+            eventsOn = eventsOn.filter { $0.status == .on && $0.project == project }
+         
+            return eventsOn
+                
         } catch {
             print("❌ Error al hacer fetch de Eventos de proyecto: \(error)")
             return []
@@ -186,7 +189,7 @@ struct HomeApi {
 
         do {
             let events = try context.fetch(descriptor)
-            return events.filter { $0.endDate >= startOfDay && $0.endDate < endOfDay }
+            return events.filter { $0.endDate >= startOfDay && $0.endDate < endOfDay && $0.status == .on}
         } catch {
             print("❌ Error al hacer fetch de eventos del día: \(error)")
             return []
@@ -363,6 +366,32 @@ struct HomeApi {
         } catch {
             print("❌ Error buscando notas favoritas: \(error)")
             return []
+        }
+    }
+    
+    static func fetchProjectByExternalId(id: UUID, context: ModelContext) -> Project? {
+        let descriptor = FetchDescriptor<Project>(
+            predicate: #Predicate { $0.externalId == id }
+        )
+
+        do {
+            return try context.fetch(descriptor).first
+        } catch {
+            print("❌ Error al obtener Project con externalId \(id): \(error)")
+            return nil
+        }
+    }
+    
+    static func fetchEventByExternalId(id: UUID, context: ModelContext) -> Event? {
+        let descriptor = FetchDescriptor<Event>(
+            predicate: #Predicate { $0.externalId == id }
+        )
+
+        do {
+            return try context.fetch(descriptor).first
+        } catch {
+            print("❌ Error al obtener Project con externalId \(id): \(error)")
+            return nil
         }
     }
 }

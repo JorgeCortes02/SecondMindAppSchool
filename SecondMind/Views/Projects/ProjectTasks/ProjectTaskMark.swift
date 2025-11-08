@@ -26,10 +26,12 @@ struct ProjectTaskMark<ViewModel: BaseTaskViewModel>: View {
                 headerCard(title: "Tareas de \(project.title)")
                     .padding(.top, 16)
                 
-                PickerBar(
-                    options: ["Sin fecha", "Agendadas", "Finalizadas"],
-                    selectedTab: $modelView.selectedTab
-                )
+                if sizeClass == .regular {
+                    PickerBar(options: ["Activas", "Finalizadas"], selectedTab: $modelView.selectedTab)
+                } else {
+                    PickerBar(options: ["Sin fecha", "Agendadas", "Finalizadas"], selectedTab: $modelView.selectedTab)
+                }
+                
                 
                 ScrollView {
                     VStack(spacing: 20) {
@@ -79,7 +81,14 @@ struct ProjectTaskMark<ViewModel: BaseTaskViewModel>: View {
                 }
             }
             .onAppear {
-                modelView.setParameters(context: context, project :  project)
+                
+                if sizeClass == .regular {
+                    modelView.setParameters(context: context, project :  project, sizeClass: .regular)
+                }else{
+                    modelView.setParameters(context: context, project :  project, sizeClass: .compact)
+                }
+                
+               
                 modelView.loadTasks()
             }
             .sheet(isPresented: $showAddTaskView, onDismiss: {
@@ -138,7 +147,7 @@ struct ProjectTaskMark<ViewModel: BaseTaskViewModel>: View {
     // MARK: - Sincronización
     private func syncAndReload() async {
         isSyncing = true
-        await SyncManagerDownload.shared.syncTasks(context: context)
+        await SyncManagerDownload.shared.syncAll(context: context)
         modelView.loadTasks()
         withAnimation {
             refreshID = UUID()

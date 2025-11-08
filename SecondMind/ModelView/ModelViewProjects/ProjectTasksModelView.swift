@@ -9,7 +9,11 @@ import Foundation
 import SwiftData
 import SwiftUI
 
+
+
 public class TaskMarkProjectDetallModelView: ObservableObject {
+    
+    
     
     @Published var taskList: [TaskItem] = []
     @Published var listTaskCalendarIpad: [TaskItem] = []
@@ -18,18 +22,20 @@ public class TaskMarkProjectDetallModelView: ObservableObject {
     @Published var selectedData: Date = Date()
     @Published var showCal: Bool = false
     @Published var showAddTaskView: Bool = false
-    
+    @Published var sizeClass: enumSizeClass.UserInterfaceType = .compact
     private var project: Project?
     private var context: ModelContext?
     
-    init(context: ModelContext? = nil, project: Project? = nil) {
+    init(context: ModelContext? = nil, project: Project? = nil, sizeClass: enumSizeClass.UserInterfaceType = .compact) {
         self.context = context
         self.project = project
+        self.sizeClass = sizeClass
     }
     
-    func setParameters(context: ModelContext, project: Project) {
+    func setParameters(context: ModelContext, project: Project, sizeClass: enumSizeClass.UserInterfaceType) {
         self.context = context
         self.project = project
+        self.sizeClass = sizeClass
     }
     
     func extractDayTasks(date: Date) -> [TaskItem] {
@@ -54,18 +60,41 @@ public class TaskMarkProjectDetallModelView: ObservableObject {
     }
     
     func loadEvents() {
-        switch selectedTab {
-        case 0:
-            taskList = extractNoDateTasks()
-            listTaskCalendarIpad = extractDayTasks(date: selectedData)
-        case 1:
-        
+       
+        if sizeClass == .compact{
+            switch selectedTab {
+                
+                
+            case 0:
+                taskList = extractNoDateTasks()
+                break;
+            case 1:
+                
                 taskList = extractDayTasks(date: selectedData)
+                break;
+            case 2:
+                
+                taskList = extractOffTasks()
+                break;
+            default:
+                break
+            }
+        }else{
             
-        case 2:
-            taskList = extractOffTasks()
-        default:
-            break
+            switch selectedTab {
+                
+                
+            case 0:
+                taskList = extractNoDateTasks()
+                listTaskCalendarIpad = extractDayTasks(date: selectedData)
+                break;
+            case 1:
+            
+                taskList = extractOffTasks()
+                break;
+            default:
+                break
+            }
         }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
@@ -83,10 +112,9 @@ extension TaskMarkProjectDetallModelView: BaseTaskViewModel {
         set { taskList = newValue }
     }
 
-    func setContext(_ context: ModelContext) {
+     func setContext(context: ModelContext) {
         self.context = context
     }
-
     func loadTasks() {
        
         loadEvents()

@@ -30,6 +30,11 @@
 	</array>
 	<key>GIDClientID</key>
 	<string>842840902718-bpje6d0lq3fek87n7bt5padqiab8qub5.apps.googleusercontent.com</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>comgooglemaps</string>
+		<string></string>
+	</array>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>

@@ -11,7 +11,7 @@ struct ProjectEventMark: View {
     @Bindable var project: Project
     @StateObject var modelView = EventMarkProjectDetallModelView()
     
-    @State private var selectedDate: Date = Date()
+  
     @State private var showCal: Bool = false
     @State private var showAddTaskView: Bool = false
     @State private var isSyncing: Bool = false
@@ -30,33 +30,57 @@ struct ProjectEventMark: View {
                 ScrollView {
                     VStack(spacing: 20) {
                         if sizeClass == .regular {
-                            EventListSection(
-                                modelView: modelView,
-                                title: modelView.selectedTab == 0 ? "Agendados" : "Finalizados",
-                                accentColor: accentColor,
-                                selectedDate: modelView.selectedTab == 0 ? $selectedDate : nil,
-                                isDateFilterEnabled: modelView.selectedTab == 0,
-                                isIpad: true
-                            )
+                            
+                            
+                            if modelView.selectedTab == 0 {
+                                
+                                EventListSection(
+                                    modelView: modelView,
+                                    title: modelView.selectedTab == 0 ? "Agendados" : "Finalizados",
+                                    accentColor: accentColor,
+                                    selectedDate: $modelView.selectedData ,
+                                    isDateFilterEnabled: modelView.selectedTab == 0,
+                                    isIpad: true
+                                )
+                                
+                            }else{
+                                
+                                FinalizedEventListSection(
+                                    modelView: modelView,
+                                    accentColor: accentColor,
+                                    isIpad: true
+                                )
+                                
+                                
+                            }
+                            
+                           
                         } else {
                             if modelView.selectedTab == 0 && showCal {
                                 EventCalendarCard(
                                     modelView: modelView,
-                                    selectedDate: $selectedDate,
+                                    selectedDate: $modelView.selectedData,
                                     accentColor: accentColor,
                                     showCal: $showCal
                                 )
-                            } else {
+                            }else if modelView.selectedTab == 0{
+                                
                                 EventListSection(
                                     modelView: modelView,
-                                    title: modelView.selectedTab == 0 ?
-                                        utilFunctions.formattedDate(selectedDate) :
-                                        "Eventos finalizados",
+                                    title: "Agendados",
                                     accentColor: accentColor,
-                                    selectedDate: modelView.selectedTab == 0 ? $selectedDate : nil,
+                                    selectedDate: $modelView.selectedData ,
                                     isDateFilterEnabled: false,
                                     isIpad: false
                                 )
+                                
+                            } else {
+                                FinalizedEventListSection(
+                                    modelView: modelView,
+                                    accentColor: accentColor,
+                                    isIpad: false
+                                )
+                                
                             }
                         }
                     }
@@ -71,6 +95,7 @@ struct ProjectEventMark: View {
                         showCal = false
                         loadEvents()
                     }
+                
                 }
             }
             .safeAreaInset(edge: .bottom) {
@@ -83,9 +108,9 @@ struct ProjectEventMark: View {
         }
         .onAppear {
             modelView.setParameters(context: context, project: project)
-            loadEvents()
+            modelView.loadEvents()
         }
-        .sheet(isPresented: $showAddTaskView, onDismiss: { loadEvents() }) {
+        .sheet(isPresented: $showAddTaskView, onDismiss: { modelView.loadEvents(); print ("cargodo juju") }) {
             CreateEvent(project: project)
         }
     }
@@ -103,7 +128,7 @@ struct ProjectEventMark: View {
     
     private func syncFromServer() async {
         isSyncing = true
-        await SyncManagerDownload.shared.syncEvents(context: context)
+        await SyncManagerDownload.shared.syncAll(context: context)
         withAnimation(.easeOut(duration: 0.3)) {
             refreshID = UUID()
             isSyncing = false

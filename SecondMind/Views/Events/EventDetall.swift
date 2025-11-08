@@ -29,7 +29,9 @@ struct EventDetall: View {
     }
 
     // Estilo
-    let textFieldBackground = Color(red: 240/255, green: 240/255, blue: 245/255)
+    private let fieldBackground = Color(red: 248/255, green: 248/255, blue: 250/255)
+    private let borderColor = Color.purple.opacity(0.2)
+    private let accentColor = Color.purple
 
     // Estado UI
     @State var isEditing = false
@@ -40,6 +42,7 @@ struct EventDetall: View {
     var body: some View {
         ZStack {
             BackgroundColorTemplate()
+                .ignoresSafeArea()
                 .toolbar {
                     ToolbarItemGroup(placement: .topBarTrailing) {
                         Button(action: { showReminderModal = true }) {
@@ -63,33 +66,39 @@ struct EventDetall: View {
                     }
                 }
 
-            VStack(spacing: 10) {
-                Header()
-                    .frame(height: 40)
-                    .padding(.horizontal)
-                    .padding(.top, 10)
-                    .padding(.bottom, 5)
+            ScrollView {
+                VStack(spacing: 32) {
+                
 
-                Spacer()
-
-                ScrollView {
-                    VStack(spacing: 32) {
-                        contentView
+                    VStack(spacing: 20) {
+                        headerCard
+                        titleSection
+                        Divider().padding(.horizontal, 20)
+                        descriptionAndProjectSection
+                        Divider().padding(.horizontal, 20)
+                        dateSection
+                        Divider().padding(.horizontal, 20)
+                        locationSection
+                        Divider().padding(.horizontal, 20)
+                        notesSection
+                        Divider().padding(.horizontal, 20)
+                        buttonsSection
                     }
-                    .background(Color.white)
-                    .cornerRadius(40)
-                    .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 6)
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 24)
-                    // ✅ Centrado en iPad, igual en iPhone
-                    .frame(maxWidth: sizeClass == .regular ? 900 : .infinity)
-                    .padding(.horizontal, sizeClass == .regular ? 50 : 0)
+                    .padding(.vertical, 28)
+                    .padding(.horizontal, 22)
+                    .frame(maxWidth: 800)
+                    .background(
+                        RoundedRectangle(cornerRadius: 36)
+                            .fill(Color.white)
+                            .shadow(color: .black.opacity(0.1), radius: 12, x: 0, y: 6)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 36)
+                            .stroke(borderColor, lineWidth: 1)
+                    )
+                    .padding(.horizontal, 12)
+                    .padding(.top, 16)
                 }
-
-                Spacer()
-            }
-            .sheet(isPresented: $showReminderModal) {
-                SendReminderModal(event: editableEvent)
             }
             .onAppear {
                 viewModel.setContext(context: context)
@@ -98,332 +107,335 @@ struct EventDetall: View {
             .onChange(of: utilFunctions.dismissView) { value in
                 if value { dismiss() }
             }
+            .sheet(isPresented: $showReminderModal) {
+                SendReminderModal(event: editableEvent)
+            }
         }
     }
 
-    // MARK: - Contenido principal
-    private var contentView: some View {
-        VStack(spacing: 32) {
-            // MARK: Título
+    // MARK: - HEADER CARD
+    private var headerCard: some View {
+        HStack {
+            Image(systemName: "calendar")
+                .font(.system(size: 28, weight: .semibold))
+                .foregroundColor(accentColor)
+            Text("Detalle del Evento")
+                .font(.system(size: 26, weight: .bold))
+                .foregroundColor(accentColor)
+            Spacer()
+        }
+        .padding(.horizontal, 20)
+    }
+
+    // MARK: - TITLE SECTION
+    private var titleSection: some View {
+        VStack(alignment: .center, spacing: 12) {
+            Text("Título")
+                .font(.headline)
+                .foregroundColor(.primary)
+
             if isEditing {
-                VStack(alignment: .leading) {
-                    Text("Titulo")
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                        .padding(.bottom, 4)
-
-                    TextEditor(text: $editableEvent.title)
-                        .font(.body)
-                        .foregroundColor(.primary)
-                        .scrollContentBackground(.hidden)
-                        .padding(12)
-                        .frame(minHeight: 100)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12).fill(textFieldBackground)
-                        )
-                        .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 4)
-                        .onChange(of: editableEvent.title) { newValue in
-                            if newValue.contains("\n") {
-                                editableEvent.title = newValue.replacingOccurrences(of: "\n", with: " ")
-                            }
+                TextField("Escribe el título", text: $editableEvent.title)
+                    .padding(12)
+                    .background(RoundedRectangle(cornerRadius: 12).fill(fieldBackground))
+                    .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
+                    .onChange(of: editableEvent.title) { newValue in
+                        if newValue.contains("\n") {
+                            editableEvent.title = newValue.replacingOccurrences(of: "\n", with: " ")
                         }
-
-                    HStack {
-                        Spacer()
-                        if isIncompleteTask {
-                            Text("Es obligatorio añadir un título")
-                                .font(.caption)
-                                .foregroundStyle(.red)
-                        }
-                        Spacer()
                     }
+
+                if isIncompleteTask && editableEvent.title.isEmpty {
+                    Text("⚠️ Es obligatorio añadir un título")
+                        .font(.caption)
+                        .foregroundColor(.red)
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 20)
             } else {
                 Text(editableEvent.title)
-                    .font(.system(size: 28, weight: .bold))
+                    .font(.title2)
                     .foregroundColor(.primary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 24)
-                    .padding()
-                    .opacity(0.9)
-                    .padding(.top, 20)
             }
+        }
+        .padding(.horizontal, 20)
+    }
 
-            // MARK: Descripción + Proyecto
-            VStack(alignment: .leading, spacing: 36) {
-                // Descripción
-                VStack(alignment: .leading) {
-                    Text("Descripción")
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                        .padding(.bottom, 4)
-
-                    if isEditing {
-                        TextEditor(text: Binding(
-                            get: { editableEvent.descriptionEvent ?? "" },
-                            set: { editableEvent.descriptionEvent = $0 }
-                        ))
-                        .font(.body)
-                        .foregroundColor(.primary)
-                        .scrollContentBackground(.hidden)
-                        .padding(12)
-                        .frame(minHeight: 100)
-                        .background(RoundedRectangle(cornerRadius: 12).fill(textFieldBackground))
-                        .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 4)
-                    } else {
-                        Text((editableEvent.descriptionEvent?.isEmpty ?? true)
-                             ? "No hay descripción disponible."
-                             : editableEvent.descriptionEvent!)
-                        .font(.body)
-                        .foregroundColor(.primary)
-                        .padding(12)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(textFieldBackground)
-                        .cornerRadius(12)
-                        .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 4)
-                        .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-
-                // Proyecto
-                HStack(spacing: 16) {
-                    VStack(alignment: .leading) {
-                        Text("Proyecto")
-                            .font(.headline)
-                            .foregroundColor(.primary)
-                            .padding(.bottom, 4)
-
-                        if isEditing {
-                            Picker("Selecciona un proyecto", selection: $editableEvent.project) {
-                                Text("Sin proyecto").tag(nil as Project?)
-                                ForEach(viewModel.projects, id: \.self) { project in
-                                    Text(project.title).tag(project as Project?)
-                                }
-                            }
-                            .pickerStyle(.menu)
-                            .font(.body)
-                            .foregroundColor(.primary)
-                            .padding(12)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(textFieldBackground)
-                            .cornerRadius(12)
-                            .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 4)
-                        } else {
-                            Text(editableEvent.project?.title ?? "No hay proyecto.")
-                                .font(.body)
-                                .foregroundColor(.primary)
-                                .padding(12)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .background(textFieldBackground)
-                                .cornerRadius(12)
-                                .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 4)
-                        }
-                    }
-                }
-            }
-            .padding(.horizontal, 16)
-
-            // MARK: Fecha
+    // MARK: - DESCRIPTION AND PROJECT
+    private var descriptionAndProjectSection: some View {
+        VStack(alignment: .leading, spacing: 24) {
+            // Descripción
             VStack(alignment: .leading, spacing: 8) {
-                Text("Fecha de vencimiento")
+                Text("Descripción")
                     .font(.headline)
                     .foregroundColor(.primary)
-                    .padding(.bottom, 4)
 
                 if isEditing {
-                    VStack(spacing: 8) {
-                        DatePicker(
-                            "Selecciona una fecha",
-                            selection: $editableEvent.endDate,
-                            in: Date()...,
-                            displayedComponents: [.date]
-                        )
-                        .datePickerStyle(.compact)
-
-                        DatePicker(
-                            "Selecciona una hora",
-                            selection: $editableEvent.endDate,
-                            displayedComponents: [.hourAndMinute]
-                        )
-                        .datePickerStyle(.compact)
-                    }
-                    .padding(.bottom, 16)
+                    TextEditor(text: Binding(
+                        get: { editableEvent.descriptionEvent ?? "" },
+                        set: { editableEvent.descriptionEvent = $0 }
+                    ))
+                    .frame(minHeight: 100)
+                    .padding(12)
+                    .background(RoundedRectangle(cornerRadius: 12).fill(fieldBackground))
+                    .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
                 } else {
-                    HStack(spacing: 8) {
-                        Image(systemName: "calendar")
-                            .foregroundColor(.orange)
-
-                        Text(utilFunctions.formattedDateAndHour(editableEvent.endDate))
-                            .font(.body)
-                            .foregroundColor(.primary)
-
-                        Spacer()
-                    }
+                    Text((editableEvent.descriptionEvent?.isEmpty ?? true)
+                         ? "No hay descripción disponible."
+                         : editableEvent.descriptionEvent!)
                     .padding(12)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(textFieldBackground)
+                    .background(fieldBackground)
                     .cornerRadius(12)
-                    .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 4)
-                    .padding(.bottom, 16)
+                    .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
                 }
             }
-            .padding(.horizontal, 16)
 
-            // MARK: Ubicación
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Ubicación")
+            // Proyecto
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Proyecto")
                     .font(.headline)
                     .foregroundColor(.primary)
 
                 if isEditing {
-                    VStack(alignment: .leading, spacing: 10) {
-                        TextField("Buscar dirección", text: $viewModelLocation.queryFragment)
-                            .textFieldStyle(.plain)
-                            .padding(12)
-                            .background(textFieldBackground)
-                            .cornerRadius(12)
-                            .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 4)
-                            .focused($locationFieldFocused)
-
-                        if !viewModelLocation.searchResults.isEmpty {
-                            VStack(spacing: 0) {
-                                ForEach(viewModelLocation.searchResults, id: \.self) { result in
-                                    Button {
-                                        selectSuggestion(result)
-                                    } label: {
-                                        VStack(alignment: .leading, spacing: 2) {
-                                            Text(result.title).font(.body)
-                                            if !result.subtitle.isEmpty {
-                                                Text(result.subtitle)
-                                                    .font(.caption)
-                                                    .foregroundColor(.secondary)
-                                            }
-                                        }
-                                        .padding(.vertical, 10)
-                                        .padding(.horizontal, 12)
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                    }
-                                    Divider()
-                                }
-                            }
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color.white)
-                                    .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 3)
-                            )
-                        }
-
-                        if let lat = editableEvent.latitude,
-                           let lon = editableEvent.longitude {
-                            let coord = CLLocationCoordinate2D(latitude: lat, longitude: lon)
-                            let region = MKCoordinateRegion(center: coord, span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01))
-                            let annotations = [EventAnnotation(coordinate: coord)]
-                            Map(coordinateRegion: .constant(region), annotationItems: annotations) { item in
-                                MapMarker(coordinate: item.coordinate, tint: .red)
-                            }
-                            .frame(height: 200)
-                            .cornerRadius(12)
-                            .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 4)
+                    Picker("Selecciona un proyecto", selection: $editableEvent.project) {
+                        Text("Sin proyecto").tag(nil as Project?)
+                        ForEach(viewModel.projects, id: \.self) { project in
+                            Text(project.title).tag(project as Project?)
                         }
                     }
+                    .pickerStyle(.menu)
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(RoundedRectangle(cornerRadius: 12).fill(fieldBackground))
+                    .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
                 } else {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text(editableEvent.address ?? "No hay dirección.")
-                            .font(.body)
-                            .foregroundColor(.primary)
+                    Text(editableEvent.project?.title ?? "No hay proyecto asignado.")
+                        .padding(12)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(fieldBackground)
+                        .cornerRadius(12)
+                        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
+                }
+            }
+        }
+        .padding(.horizontal, 20)
+    }
+
+    // MARK: - DATE SECTION
+    private var dateSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Fecha y hora")
+                .font(.headline)
+                .foregroundColor(.primary)
+
+            if isEditing {
+                VStack(alignment: .leading, spacing: 10) {
+                    DatePicker(
+                        "Selecciona una fecha",
+                        selection: $editableEvent.endDate,
+                        in: Date()...,
+                        displayedComponents: [.date]
+                    )
+                    .datePickerStyle(.compact)
+
+                    DatePicker(
+                        "Selecciona una hora",
+                        selection: $editableEvent.endDate,
+                        displayedComponents: [.hourAndMinute]
+                    )
+                    .datePickerStyle(.compact)
+                }
+            } else {
+                HStack(spacing: 8) {
+                    Image(systemName: "calendar")
+                    Text(utilFunctions.formattedDateAndHour(editableEvent.endDate))
+                    Spacer()
+                }
+                .padding(12)
+                .frame(maxWidth: .infinity)
+                .background(fieldBackground)
+                .cornerRadius(12)
+                .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
+            }
+        }
+        .padding(.horizontal, 20)
+    }
+
+    // MARK: - LOCATION SECTION
+    private var locationSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Ubicación")
+                .font(.headline)
+                .foregroundColor(.primary)
+
+            if isEditing {
+                VStack(spacing: 10) {
+                    TextField("Buscar dirección", text: $viewModelLocation.queryFragment)
+                        .padding(12)
+                        .background(fieldBackground)
+                        .cornerRadius(12)
+                        .shadow(color: .black.opacity(0.03), radius: 4, x: 0, y: 2)
+                        .focused($locationFieldFocused)
+
+                    if !viewModelLocation.searchResults.isEmpty {
+                        VStack(spacing: 0) {
+                            ForEach(viewModelLocation.searchResults, id: \.self) { result in
+                                Button {
+                                    selectSuggestion(result)
+                                } label: {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(result.title).font(.body)
+                                        if !result.subtitle.isEmpty {
+                                            Text(result.subtitle)
+                                                .font(.caption)
+                                                .foregroundColor(.secondary)
+                                        }
+                                    }
+                                    .padding(.vertical, 10)
+                                    .padding(.horizontal, 12)
+                                }
+                                Divider()
+                            }
+                        }
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color.white)
+                                .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 3)
+                        )
+                    }
+
+                    mapView
+                }
+            } else {
+                VStack(alignment: .leading, spacing: 10) {
+                    if let address = editableEvent.address {
+                        Text(address)
                             .padding(12)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(textFieldBackground)
+                            .background(fieldBackground)
                             .cornerRadius(12)
-                            .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 4)
-
-                        if let lat = editableEvent.latitude,
-                           let lon = editableEvent.longitude {
-                            let coord = CLLocationCoordinate2D(latitude: lat, longitude: lon)
-                            let region = MKCoordinateRegion(center: coord, span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01))
-                            let annotations = [EventAnnotation(coordinate: coord)]
-                            Map(coordinateRegion: .constant(region), annotationItems: annotations) { item in
-                                MapMarker(coordinate: item.coordinate, tint: .red)
-                            }
-                            .frame(height: 200)
-                            .cornerRadius(12)
-                            .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 4)
-                        }
+                            .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
                     }
+
+                    mapView
                 }
             }
-            .padding(.horizontal, 16)
+        }
+        .padding(.horizontal, 20)
+    }
 
-            // MARK: Notas
-            NotesCarrousel(editableEvent: editableEvent)
-                .padding(.horizontal, 8)
+    // MARK: - MAP VIEW WITH OPEN IN MAPS BUTTON
+    private var mapView: some View {
+        Group {
+            if let lat = editableEvent.latitude,
+               let lon = editableEvent.longitude {
+                let coord = CLLocationCoordinate2D(latitude: lat, longitude: lon)
+                let region = MKCoordinateRegion(
+                    center: coord,
+                    span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+                )
+                let annotations = [EventAnnotation(coordinate: coord)]
 
-            // MARK: Botones
-            VStack(spacing: 16) {
-                NavigationLink(destination: NoteDetailView(event: editableEvent)) {
-                    Label("Nueva nota", systemImage: "plus")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color.noteBlue)
-                        .cornerRadius(12)
-                        .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
-                }
+                VStack(alignment: .leading, spacing: 10) {
+                    Map(
+                        coordinateRegion: .constant(region),
+                        annotationItems: annotations
+                    ) { item in
+                        MapMarker(coordinate: item.coordinate, tint: .red)
+                    }
+                    .frame(height: 200)
+                    .cornerRadius(12)
+                    .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 4)
 
-                Button(action: {
-                    viewModel.deleteEvent(event: editableEvent)
-                    utilFunctions.dismissViewFunc()
-                }) {
-                    Text("Eliminar Evento")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(
-                            LinearGradient(gradient: Gradient(colors: [
-                                Color(red: 0.0, green: 0.45, blue: 0.75),
-                                Color(red: 0.0, green: 0.35, blue: 0.65)
-                            ]),
-                                           startPoint: .topLeading,
-                                           endPoint: .bottomTrailing)
-                        )
-                        .cornerRadius(12)
-                        .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
-                }
-                .buttonStyle(ScaleButtonStyle())
-
-                if isEditing {
                     Button(action: {
-                        viewModel.saveEvent(event: editableEvent)
-                        isEditing = false
-                        dismiss()
+                        openInMaps()
                     }) {
-                        Text("Guardar Evento")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color.eventButtonColor)
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.eventButtonColor, lineWidth: 1.5)
-                            )
+                        HStack {
+                            Image(systemName: "map")
+                            Text("Abrir en Mapas")
+                        }
+                        .font(.body)
+                        .foregroundColor(.blue)
+                        .padding(.top, 4)
                     }
-                    .buttonStyle(ScaleButtonStyle())
                 }
             }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 24)
         }
     }
 
-    // MARK: - Actions
+    // MARK: - NOTES SECTION
+    private var notesSection: some View {
+        NotesCarrousel(editableEvent: editableEvent)
+            .padding(.horizontal, 8)
+    }
+
+    // MARK: - BUTTONS SECTION
+    private var buttonsSection: some View {
+        VStack(spacing: 14) {
+            NavigationLink(destination: NoteDetailView(event: editableEvent)) {
+                Text("Nueva nota")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.noteBlue)
+                    .cornerRadius(12)
+            }
+
+            Button(action: {
+                viewModel.deleteEvent(event: editableEvent)
+                utilFunctions.dismissViewFunc()
+            }) {
+                Text("Eliminar Evento")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(
+                        LinearGradient(
+                            colors: [Color(red: 0.0, green: 0.45, blue: 0.75),
+                                     Color(red: 0.0, green: 0.35, blue: 0.65)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .cornerRadius(12)
+            }
+
+            if isEditing {
+                Button(action: {
+                    viewModel.saveEvent(event: editableEvent)
+                    isEditing = false
+                    dismiss()
+                }) {
+                    Text("Guardar Evento")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(accentColor)
+                        .cornerRadius(12)
+                }
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.bottom, 24)
+    }
+
+    // MARK: - ACTIONS
+    private func openInMaps() {
+        guard let lat = editableEvent.latitude,
+              let lon = editableEvent.longitude else { return }
+
+        let appleMapsURL = URL(string: "http://maps.apple.com/?ll=\(lat),\(lon)")!
+        let googleMapsURL = URL(string: "comgooglemaps://?q=\(lat),\(lon)&center=\(lat),\(lon)&zoom=14")!
+
+        if UIApplication.shared.canOpenURL(googleMapsURL) {
+            UIApplication.shared.open(googleMapsURL)
+        } else {
+            UIApplication.shared.open(appleMapsURL)
+        }
+    }
+
     @MainActor
     private func selectSuggestion(_ result: MKLocalSearchCompletion) {
         viewModelLocation.search(for: result) { item in

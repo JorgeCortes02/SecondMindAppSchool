@@ -23,7 +23,7 @@ struct EventCalendarCard<VM: BaseEventViewModel>: View {
             .padding(.horizontal, 20)
             .onChange(of: selectedDate) { newDate in
                 withAnimation(.easeInOut(duration: 0.3)) {
-                    modelView.loadEvents(date: newDate)
+                    modelView.loadEvents()
                     showCal = false // Cierra el calendario
                 }
             }

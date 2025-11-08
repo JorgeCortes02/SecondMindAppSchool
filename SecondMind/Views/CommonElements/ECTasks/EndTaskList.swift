@@ -5,30 +5,34 @@ struct EndTaskList<ViewModel: BaseTaskViewModel>: View {
     let utilFunctions = generalFunctions()
     
     var body: some View {
-        ScrollView {
-            LazyVStack(spacing: 12) {
-                ForEach(groupTasksByDate(), id: \.date) { group in
-                    VStack(alignment: .leading, spacing: 8) {
-                        // Header de la fecha
-                        Text(utilFunctions.formattedDate(group.date))
-                            .font(.headline)
-                            .foregroundColor(.primary)
-                            .padding(.horizontal)
-                        
-                        // Tareas de esa fecha
+        LazyVStack(spacing: 12) {
+            ForEach(groupTasksByDate(), id: \.date) { group in
+                VStack(alignment: .leading, spacing: 8) {
+                    // Encabezado de la fecha
+                    Text(utilFunctions.formattedDate(group.date))
+                        .font(.title3.weight(.bold))
+                        .foregroundColor(.white)
+                        .padding(.vertical, 6)
+                        .padding(.horizontal, 18)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14)
+                                .fill(
+                                    Color.taskButtonColor.opacity(0.8)
+                                )
+                        )
+                        .frame(maxWidth: .infinity, alignment: .center)
+                    
+                    // Tareas de esa fecha
+                    VStack{
                         ForEach(group.tasks, id: \.id) { task in
                             taskRow(task)
                         }
-                    }
-                    .padding(.vertical)
+                    }.padding(.top, 10)
                 }
+                .padding(.vertical)
             }
-            .padding(.bottom, 30)
         }
-        .onAppear {
-            viewModel.loadTasks()
-        }
-        .animation(.easeInOut, value: viewModel.listTask)
+        .padding(.bottom, 30)
     }
     
     // MARK: - Agrupar tareas por fecha

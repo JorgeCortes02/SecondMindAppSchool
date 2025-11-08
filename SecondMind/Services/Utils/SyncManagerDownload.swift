@@ -33,9 +33,36 @@ class SyncManagerDownload {
         defer { isSyncing = false }
         
         await syncProjects(context: context)
+        do {
+            try context.save()
+            print("✅ Tasks sincronizadas correctamente")
+        } catch {
+            print("❌ Error guardando projects:", error)
+        } // <-- salva proyectos
+
         await syncEvents(context: context)
-        await syncTasks(context: context)
+        do {
+            try context.save()
+            print("✅ Tasks sincronizadas correctamente")
+        } catch {
+            print("❌ Error guardando events:", error)
+        }
+
+        await syncTasks(context: context) // <-- ahora puedes usar Project/Event con seguridad
+        do {
+            try context.save()
+            print("✅ Tasks sincronizadas correctamente")
+        } catch {
+            print("❌ Error guardando tasks:", error)
+        }
+
         await syncNotes(context: context)
+        do {
+            try context.save()
+            print("✅ Tasks sincronizadas correctamente")
+        } catch {
+            print("❌ Error guardando notas:", error)
+        }
         
         
         
@@ -114,10 +141,15 @@ class SyncManagerDownload {
                     event = Event(title: dto.title, endDate: dto.end_date)
                     context.insert(event)
                 }
-
+                print("🔍 Encontrado Event:", dto.project_external_id)
                 event.externalId = extId
                 event.title = dto.title
                 event.endDate = dto.end_date
+                if let idString = dto.project_external_id,
+                   let uuid = UUID(uuidString: idString) {
+                   
+                    event.project = HomeApi.fetchProjectByExternalId(id: uuid, context: context)
+                }
                 event.status = ActivityStatus(rawValue: dto.status) ?? .on
                 event.descriptionEvent = dto.description_event
                 event.address = dto.address
@@ -166,13 +198,26 @@ class SyncManagerDownload {
 
                 task.externalId = extId
                 task.title = dto.title
+                print("DETALLES DEL DTO   " , dto.event_external_id, dto.project_external_id)
+                if let idString = dto.project_external_id,
+                   let uuid = UUID(uuidString: idString) {
+                   print("estoy dentro")
+                    task.project = HomeApi.fetchProjectByExternalId(id: uuid, context: context)
+                }
+                
+                if let idString = dto.event_external_id,
+                   let uuid = UUID(uuidString: idString) {
+                   let event = HomeApi.fetchEventByExternalId(id: uuid, context: context)
+                    print("este es el evento:", event)
+                    task.event = event
+                }
                 task.endDate = dto.end_date
                 task.completeDate = dto.complete_date
                 task.status = ActivityStatus(rawValue: dto.status) ?? .on
                 task.descriptionTask = dto.description_task
                 task.token = stableToken   // ✅ token correcto
 
-                print("📥 Guardada Task:", task.title, "token:", task.token, "ext:", extId)
+                print("📥 Guardada Task:", task.title, dto.event_external_id, dto.project_external_id)
             }
 
             try context.save()
@@ -210,7 +255,17 @@ class SyncManagerDownload {
                     note = NoteItem(title: dto.title, content: dto.content ?? "")
                     context.insert(note)
                 }
-
+                if let idString = dto.project_external_id,
+                   let uuid = UUID(uuidString: idString) {
+                   
+                    note.project = HomeApi.fetchProjectByExternalId(id: uuid, context: context)
+                }
+                
+                if let idString = dto.event_external_id,
+                   let uuid = UUID(uuidString: idString) {
+                   
+                    note.event = HomeApi.fetchEventByExternalId(id: uuid, context: context)
+                }
                 note.externalId = extId
                 note.title = dto.title
                 note.content = dto.content ?? ""

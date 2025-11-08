@@ -32,7 +32,7 @@ public class HomeFilesModelView: ObservableObject {
     
     @MainActor
     func refreshAll() async {
-        print("🔄 refreshAll llamado")
+ 
         guard let context else { return }
         isLoading = true
         updateMessage = nil
@@ -42,7 +42,7 @@ public class HomeFilesModelView: ObservableObject {
         downdloadTodayTasks()
         downdloadTodayEvents()
 
-        print("📌 after sync → tasks: \(todayTask.count), events: \(todayEvents.count)")
+
 
         isLoading = false
 

@@ -51,7 +51,7 @@ struct EventListSection<VM: BaseEventViewModel>: View {
                             ForEach(modelView.events, id: \.id) { event in
                                 EventCardExpanded(event: event, accentColor: accentColor)
                             }
-                        }
+                        }.padding(.bottom, 20)
                         .padding(.horizontal, 20)
                     } else {
                         LazyVStack(spacing: 12) {
@@ -60,7 +60,7 @@ struct EventListSection<VM: BaseEventViewModel>: View {
                                     EventListItem(event: event, accentColor: accentColor)
                                 }
                             }
-                        }
+                        }.padding(.bottom, 20)
                         .padding(.horizontal, 16)
                     }
                 }
@@ -101,7 +101,7 @@ struct EventListSection<VM: BaseEventViewModel>: View {
         }
         .padding(.vertical, 8)
         .onChange(of: selectedDate.wrappedValue) { newDate in
-            modelView.loadEvents(date: newDate)
+            modelView.loadEvents()
         }
     }
 

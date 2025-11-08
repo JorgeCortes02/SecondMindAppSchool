@@ -98,7 +98,7 @@ struct NoteMark: View {
                     .refreshable {
                         Task {
                             isSyncing = true
-                            await SyncManagerDownload.shared.syncNotes(context: context)
+                            await SyncManagerDownload.shared.syncAll(context: context)
                             modelView.loadNotes()
                             isSyncing = false
                         }
@@ -176,7 +176,7 @@ struct NoteMark: View {
                    funcSyncButton: {
                                     Task {
                                             isSyncing = true
-                                            await SyncManagerDownload.shared.syncNotes(context: context)
+                                            await SyncManagerDownload.shared.syncAll(context: context)
                                             modelView.loadNotes()
                                             withAnimation { refreshID = UUID() }
                                             isSyncing = false

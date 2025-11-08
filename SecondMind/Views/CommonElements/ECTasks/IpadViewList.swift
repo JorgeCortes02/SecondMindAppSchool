@@ -110,7 +110,7 @@ struct TasksSectionsiPadView<ViewModel: BaseTaskViewModel>: View {
                 }
             }
             .padding(.horizontal, 20)
-            .padding(.bottom, 10)
+            .padding(.bottom, 20)
         }
     }
     

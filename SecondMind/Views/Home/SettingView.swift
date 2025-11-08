@@ -4,7 +4,7 @@ struct SettingView: View {
     @EnvironmentObject var loginVM: LoginViewModel
     @StateObject var viewModel: ModelViewSettingView
     @Environment(\.modelContext) private var context
-    
+    @Environment(\.horizontalSizeClass) private var hSizeClass
     @State private var appearAnimation = false
     @State private var isEditing = false
     @State private var changePass = false
@@ -31,7 +31,7 @@ struct SettingView: View {
                     .padding(.bottom, 5)
 
                 ScrollView {
-                    VStack(spacing: 22) {
+                    VStack(alignment: .leading, spacing: 22) {
                         
                         // Título
                         HStack {
@@ -45,7 +45,7 @@ struct SettingView: View {
                         // 👤 Nombre
                         if isEditing {
                             Text("Nombre")
-                                .font(.body)
+                                .font(.body).bold()
                                 .foregroundColor(.black)
                             TextField("Nombre", text: Binding(
                                 get: { loginVM.userSession.name },
@@ -58,7 +58,7 @@ struct SettingView: View {
                         } else {
                             HStack {
                                 Text("Nombre:")
-                                    .font(.subheadline)
+                                    .font(.subheadline).bold()
                                     .foregroundColor(.black)
                                 Spacer()
                                 Text(loginVM.userSession.name)
@@ -77,7 +77,7 @@ struct SettingView: View {
                         // 📧 Email
                         if isEditing {
                             Text("Email")
-                                .font(.body)
+                                .font(.body).bold()
                                 .foregroundColor(.black)
                             TextField("Email", text: Binding(
                                 get: { loginVM.userSession.email },
@@ -92,7 +92,7 @@ struct SettingView: View {
                         } else {
                             HStack {
                                 Text("Email:")
-                                    .font(.subheadline)
+                                    .font(.subheadline).bold()
                                     .foregroundColor(.black)
                                 Spacer()
                                 Text(loginVM.userSession.email)
@@ -111,7 +111,7 @@ struct SettingView: View {
                         // 🔑 Service
                         if isEditing {
                             Text("Servicio")
-                                .font(.body)
+                                .font(.body).bold()
                                 .foregroundColor(.black)
                             TextField("Service", text: $loginVM.userSession.service)
                                 .disabled(true)
@@ -121,7 +121,7 @@ struct SettingView: View {
                         } else {
                             HStack {
                                 Text("Servicio:")
-                                    .font(.subheadline)
+                                    .font(.subheadline).bold()
                                     .foregroundColor(.black)
                                 Spacer()
                                 Text(loginVM.userSession.service)
@@ -231,28 +231,28 @@ struct SettingView: View {
                         if changePass  {
                             VStack(spacing: 16) {
                                 Text("Contraseña nueva")
-                                    .font(.body)
+                                    .font(.body).bold()
                                     .foregroundColor(.black)
                                 SecureField("Contraseña nueva", text: $newPassword)
                                     .padding()
                                     .background(Color.black.opacity(0.1), in: RoundedRectangle(cornerRadius: 15))
                                 
                                 Text("Confirmar contraseña")
-                                    .font(.body)
+                                    .font(.body).bold()
                                     .foregroundColor(.black)
                                 SecureField("Confirmar contraseña", text: $newPasswordConfirm)
                                     .padding()
                                     .background(Color.black.opacity(0.1), in: RoundedRectangle(cornerRadius: 15))
                                 
                                 Text("Contraseña Actual")
-                                    .font(.body)
+                                    .font(.body).bold()
                                     .foregroundColor(.black)
                                 SecureField("Contraseña Actual", text: $currentPassword)
                                     .padding()
                                     .background(Color.black.opacity(0.1), in: RoundedRectangle(cornerRadius: 15))
                                 
                                 Text("La contraseña debe tener al menos 8 caracteres 🔑")
-                                    .font(.footnote)
+                                    .font(.footnote).bold()
                                     .foregroundColor(.black)
                                 
                                 // Mostrar error también aquí
@@ -331,7 +331,10 @@ struct SettingView: View {
                     }
                     .padding(.horizontal, 28)
                     .padding(.vertical, 30)
-                }
+                } .frame(
+                    maxWidth: hSizeClass == .regular ? 800 : .infinity, // 👈 Solo limita en iPad
+                    alignment: .leading
+                )
                 .scrollBounceBehavior(.basedOnSize)
                 .modifier(GlassContainerProfile())
                 

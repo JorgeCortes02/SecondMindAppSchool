@@ -33,7 +33,7 @@ class LoginViewModel: ObservableObject {
             KeychainHelper.standard.delete(service: "SecondMindAuthToken", account: "SecondMind")
             KeychainHelper.standard.delete(service: "SecondMindUserId", account: "SecondMind")
             UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
-            print("🧹 Keychain limpiado en primer lanzamiento.")
+       
         }
     }
 
@@ -52,11 +52,7 @@ class LoginViewModel: ObservableObject {
             let result = try await GIDSignIn.sharedInstance.signIn(withPresenting: rootVC)
 
             if let token = result.user.idToken?.tokenString {
-                // 👇 Sacamos el `sub` estable del token
-                if let sub = extractSub(from: token) {
-                    print("🔑 Google sub:", sub)
-                    // ⚠️ Aquí podrías guardar el sub en tu userSession o enviarlo al backend
-                }
+            
                 sendGoogleTokenToServer(idToken: token)
             } else {
                 await MainActor.run { self.isLoading = false }

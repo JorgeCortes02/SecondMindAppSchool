@@ -7,6 +7,7 @@ public class EventMarkProjectDetallModelView: BaseEventViewModel {
     @Published var events: [Event] = []
     @Published var selectedTab: Int = 0
     @Published var readyToShowTasks: Bool = false
+    @Published var selectedData: Date = Date()
     
     var project: Project?
     var context: ModelContext?
@@ -26,10 +27,10 @@ public class EventMarkProjectDetallModelView: BaseEventViewModel {
     }
     
     // MARK: - Extraer eventos del día (activos)
-    private func extractDayEvents(date: Date) -> [Event] {
+    private func extractDayEvents() -> [Event] {
         guard let project = project else { return [] }
         let calendar = Calendar.current
-        let startOfDay = calendar.startOfDay(for: date)
+        let startOfDay = calendar.startOfDay(for: selectedData)
         let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
         
         return project.events.filter {
@@ -44,12 +45,12 @@ public class EventMarkProjectDetallModelView: BaseEventViewModel {
     }
     
     // MARK: - Cargar eventos según pestaña y fecha seleccionada
-    func loadEvents(date selectedData: Date? = nil) {
+    func loadEvents() {
         switch selectedTab {
         case 0:
-            if let selectedData {
-                events = extractDayEvents(date: selectedData)
-            }
+            
+                events = extractDayEvents()
+            
         case 1:
             events = extractOffEvents()
         default:

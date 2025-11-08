@@ -4,6 +4,8 @@ import SwiftUI
 
 @MainActor
 class TaskViewModel: ObservableObject {
+    
+   
     @Published var listTask: [TaskItem] = []
     @Published var listTaskCalendarIpad: [TaskItem] = []
     @Published var readyToShowTasks: Bool = false
@@ -12,27 +14,62 @@ class TaskViewModel: ObservableObject {
     @Published var selectedData: Date = Date()
     @Published var showCal: Bool = false
     @Published var showAddTaskView: Bool = false
-    
-    private var context: ModelContext?
+    @Published var sizeClass: enumSizeClass.UserInterfaceType = .compact
 
-    func setContext(_ context: ModelContext) {
+    private var context: ModelContext?
+    func setContext(context: ModelContext) {
         self.context = context
+    }
+    func setParameters(_ context: ModelContext, _ sizeClass: enumSizeClass.UserInterfaceType) {
+        self.context = context
+  
+        self.sizeClass = sizeClass
     }
 
     func loadTasks() {
         guard let context else { return }
-        
-        switch selectedTab {
-        case 0:
-            listTask = HomeApi.fetchNoDateTasks(context: context)
-            listTaskCalendarIpad = HomeApi.fetchDateTasks(date: selectedData, context: context)
-        case 1:
-            listTask = HomeApi.fetchDateTasks(date: selectedData, context: context)
-        case 2:
-            listTask = HomeApi.loadTasksEnd(context: context)
-        default:
-            listTask = []
+        // 🔥 Siempre limpias.
+           
+               
+               readyToShowTasks = false
+           
+
+        if sizeClass == .compact{
+            switch selectedTab {
+                
+                
+            case 0:
+                listTask = HomeApi.fetchNoDateTasks(context: context)
+                break;
+            case 1:
+                listTask = HomeApi.fetchDateTasks(date: selectedData, context: context)
+            case 2:
+                listTask = HomeApi.loadTasksEnd(context: context)
+                
+            default:
+                listTask = []
+                break
+            }
+        }else{
+            
+            switch selectedTab {
+                
+                
+            case 0:
+                listTask = HomeApi.fetchNoDateTasks(context: context)
+                listTaskCalendarIpad = HomeApi.fetchDateTasks(date: selectedData, context: context)
+                break;
+            case 1:
+            
+                listTask = HomeApi.loadTasksEnd(context: context)
+                break;
+            default:
+                listTask = []
+                break
+            }
         }
+
+        
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             withAnimation(.easeOut(duration: 0.3)) {
@@ -68,7 +105,9 @@ class TaskViewModel: ObservableObject {
             print("❌ Error al borrar: \(error)")
         }
     }
+    
+    
 }
 
-// ✅ Cumple el protocolo correctamente (no vacío)
+
 extension TaskViewModel: BaseTaskViewModel {}

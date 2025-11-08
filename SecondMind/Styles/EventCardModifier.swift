@@ -5,15 +5,17 @@
 //  Created by Jorge Cortés on 26/10/25.
 //
 import SwiftUI
+
 struct EventCardModifier: ViewModifier {
     func body(content: Content) -> some View {
-        content.padding()
+        content
+            .padding(10) // 🔹 Reduce el padding interno
             .background(Color.white)
-            .cornerRadius(18)
-            .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
+            .cornerRadius(14) // 🔹 Menor radio de esquina
+            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2) // 🔹 Sombra más sutil
             .overlay(
-                RoundedRectangle(cornerRadius: 18)
-                    .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(Color.primary.opacity(0.07), lineWidth: 0.8) // 🔹 Trazo más fino
             )
     }
 }

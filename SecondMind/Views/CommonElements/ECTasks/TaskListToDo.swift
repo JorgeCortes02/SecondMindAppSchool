@@ -60,8 +60,8 @@ struct TaskListToDoView<ViewModel: BaseTaskViewModel>: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
-        }
-        .padding(.vertical, 8)
-        .animation(.easeOut(duration: 0.35), value: modelView.listTask)
+        }.padding(.bottom, 20)
+       
+       
     }
 }

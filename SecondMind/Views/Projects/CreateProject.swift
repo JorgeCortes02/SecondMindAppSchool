@@ -6,28 +6,38 @@ struct CreateProject: View {
     @Environment(\.modelContext) private var context
     @EnvironmentObject var utilFunctions: generalFunctions
 
-    @StateObject private var viewModel = CreateProjectViewModel()  // ✅ sin argumentos
+    @StateObject private var viewModel = CreateProjectViewModel()
 
-    private let softRed = Color(red: 220/255, green: 75/255, blue: 75/255)
-    private let textFieldBackground = Color(red: 248/255, green: 248/255, blue: 250/255)
+    // 🎨 Estética coherente con CreateTask / TaskDetall
+    private let purpleAccent = Color(red: 176/255, green: 133/255, blue: 231/255)
+    private let cardStroke   = Color(red: 176/255, green: 133/255, blue: 231/255).opacity(0.2)
+    private let fieldBG      = Color(red: 248/255, green: 248/255, blue: 250/255)
+    private let softRed      = Color(red: 220/255, green: 75/255, blue: 75/255)
 
     var body: some View {
         ZStack {
             BackgroundColorTemplate().ignoresSafeArea()
 
-            VStack(spacing: 20) {
-                headerCard.padding(.top, 40)
+            ScrollView {
+                VStack(spacing: 0) {
 
-                ScrollView {
-                    VStack(spacing: 24) {
-                        // Campo Título
+                    // 🧾 Contenedor visual principal
+                    VStack(spacing: 26) {
+
+                        // Encabezado igual que en CreateTask
+                        headerCard
+
+                        Divider().padding(.horizontal, 20)
+
+                        // ——— Título ———
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Título")
                                 .font(.headline)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(.primary)
+                            
                             TextField("Escribe el título", text: $viewModel.newProject.title)
-                                .padding()
-                                .background(RoundedRectangle(cornerRadius: 14).fill(textFieldBackground))
+                                .padding(12)
+                                .background(RoundedRectangle(cornerRadius: 12).fill(fieldBG))
                                 .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
                         }
                         .padding(.horizontal, 20)
@@ -38,11 +48,14 @@ struct CreateProject: View {
                                 .foregroundColor(.red)
                         }
 
-                        // Fecha
+                        Divider().padding(.horizontal, 20)
+
+                        // ——— Fecha límite ———
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Fecha fin")
                                 .font(.headline)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(.primary)
+
                             DatePicker(
                                 "Selecciona una fecha",
                                 selection: Binding(
@@ -58,20 +71,23 @@ struct CreateProject: View {
                                 Button("Eliminar fecha") {
                                     viewModel.clearDate()
                                 }
-                                .foregroundColor(.red)
                                 .font(.caption)
+                                .foregroundColor(.red)
                             }
                         }
-                        .padding()
-                        .background(RoundedRectangle(cornerRadius: 14).fill(textFieldBackground))
+                        .padding(12)
+                        .background(RoundedRectangle(cornerRadius: 12).fill(fieldBG))
                         .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
                         .padding(.horizontal, 20)
 
-                        // Descripción
+                        Divider().padding(.horizontal, 20)
+
+                        // ——— Descripción ———
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Descripción")
                                 .font(.headline)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(.primary)
+
                             TextEditor(
                                 text: Binding(
                                     get: { viewModel.newProject.descriptionProject ?? "" },
@@ -79,13 +95,15 @@ struct CreateProject: View {
                                 )
                             )
                             .frame(minHeight: 120)
-                            .padding()
-                            .background(RoundedRectangle(cornerRadius: 14).fill(textFieldBackground))
+                            .padding(12)
+                            .background(RoundedRectangle(cornerRadius: 12).fill(fieldBG))
                             .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
                         }
                         .padding(.horizontal, 20)
 
-                        // Botones
+                        Divider().padding(.horizontal, 20)
+
+                        // ——— Botones ———
                         VStack(spacing: 14) {
                             Button(action: { viewModel.saveProject(dismiss: dismiss) }) {
                                 Text("Guardar Proyecto")
@@ -94,10 +112,10 @@ struct CreateProject: View {
                                     .frame(maxWidth: .infinity)
                                     .padding()
                                     .background(
-                                        LinearGradient(colors: [Color.purple, Color.pink],
+                                        LinearGradient(colors: [Color.taskButtonColor, purpleAccent],
                                                        startPoint: .leading,
                                                        endPoint: .trailing)
-                                        .cornerRadius(14)
+                                        .cornerRadius(12)
                                     )
                             }
 
@@ -107,34 +125,46 @@ struct CreateProject: View {
                                     .foregroundColor(.white)
                                     .frame(maxWidth: .infinity)
                                     .padding()
-                                    .background(RoundedRectangle(cornerRadius: 14).fill(softRed))
+                                    .background(RoundedRectangle(cornerRadius: 12).fill(softRed))
                             }
                         }
                         .padding(.horizontal, 20)
                         .padding(.bottom, 30)
                     }
+                    .padding(.vertical, 28)
+                    .padding(.horizontal, 22)
+                    .frame(maxWidth: 800)
+                    .background(
+                        RoundedRectangle(cornerRadius: 36)
+                            .fill(Color.white)
+                            .shadow(color: .black.opacity(0.1), radius: 12, x: 0, y: 6)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 36)
+                            .stroke(cardStroke, lineWidth: 1)
+                    )
+                    .padding(.horizontal, 12)
+                    .padding(.top, 16)
                 }
             }
         }
         .onAppear {
-            // ✅ ahora el contexto es válido
             viewModel.setContext(context: context, util: utilFunctions)
         }
     }
 
+    // 🟥 Cabecera visual adaptada a la nueva estética
     private var headerCard: some View {
-        Text("Crear proyecto")
-            .font(.system(size: 30, weight: .bold))
-            .foregroundColor(.purple)
-            .padding()
-            .frame(maxWidth: .infinity)
-            .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(LinearGradient(colors: [Color.white, Color.purple.opacity(0.05)],
-                                         startPoint: .topLeading,
-                                         endPoint: .bottomTrailing))
-                    .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 6)
-            )
-            .padding(.horizontal, 20)
+        HStack {
+            Image(systemName: "folder.badge.plus")
+                .font(.system(size: 28, weight: .semibold))
+                .foregroundColor(.taskButtonColor)
+            Text("Crear proyecto")
+                .font(.system(size: 26, weight: .bold))
+                .foregroundColor(.taskButtonColor)
+            Spacer()
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 6)
     }
 }

@@ -134,6 +134,7 @@ class SyncManagerUpload {
                     title: t.title,
                     description: t.descriptionTask,
                     projectExternalId: t.project?.externalId,
+                    
                     eventExternalId: t.event?.externalId,
                     endDate: t.endDate,
                     completeDate: t.completeDate,
@@ -166,10 +167,11 @@ class SyncManagerUpload {
                 status: task.status.rawValue,
                 token: token
             )
-            
+            print( task.event?.externalId, task.project?.externalId)
             print("✅ Task subida correctamente:", task.title)
         } catch {
             print("❌ Upload Task failed:", error)
+            print( task.event?.externalId, task.project?.externalId)
         }
     }
     

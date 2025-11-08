@@ -13,7 +13,7 @@ import SwiftData
     
     /// Lista de eventos cargados (filtrados, procesados).
     var events: [Event] { get set }
-    
+     var selectedData: Date { get set }
     /// Pestaña seleccionada (por ejemplo: 0 = activos, 1 = finalizados).
     var selectedTab: Int { get set }
     
@@ -24,5 +24,5 @@ import SwiftData
     func setContext(_ context: ModelContext)
     
     /// Carga eventos según el estado (`global` o filtrados por fecha).
-    func loadEvents(date: Date?)
+    func loadEvents()
 }

@@ -3,23 +3,24 @@ import SwiftData
 import MapKit
 
 struct CreateEvent: View {
-    // Colores
-    let softRed = Color(red: 220/255, green: 75/255, blue: 75/255)
-    let textFieldBackground = Color(red: 248/255, green: 248/255, blue: 250/255)
-
-    // Modelo
     @State private var newEvent: Event
     @State private var isIncompleteEvent: Bool = false
-
+    
     @Environment(\.modelContext) var context
     @Environment(\.dismiss) var dismiss
     @ObservedObject var utilFunctions: generalFunctions = generalFunctions()
     @StateObject var viewModel: CreateEventModelView
-
+    
     // Para autocompletado ubicación
     @StateObject private var viewModelLocation = LocationSearchViewModel()
     @FocusState private var locationFieldFocused: Bool
-
+    
+    // 🎨 Estética coherente con CreateTask / TaskDetall
+    private let purpleAccent = Color(red: 176/255, green: 133/255, blue: 231/255)
+    private let cardStroke   = Color(red: 176/255, green: 133/255, blue: 231/255).opacity(0.2)
+    private let fieldBG      = Color(red: 248/255, green: 248/255, blue: 250/255)
+    let softRed              = Color(red: 220/255, green: 75/255, blue: 75/255)
+    
     init(project: Project? = nil) {
         self._newEvent = State(initialValue: Event(
             title: "",
@@ -30,64 +31,71 @@ struct CreateEvent: View {
         ))
         _viewModel = StateObject(wrappedValue: CreateEventModelView())
     }
-
+    
     var body: some View {
         ZStack {
-            BackgroundColorTemplate()
-                .ignoresSafeArea()
-
-            VStack(spacing: 20) {
-                headerCard
-                    .padding(.top, 40)
-
-                ScrollView {
-                    VStack(spacing: 24) {
-
-                        // Campo título
+            BackgroundColorTemplate().ignoresSafeArea()
+            
+            ScrollView {
+                VStack(spacing: 0) {
+                    
+                    // 🧾 Tarjeta principal
+                    VStack(spacing: 26) {
+                        
+                        headerCard
+                        
+                        Divider().padding(.horizontal, 20)
+                        
+                        // ——— Título ———
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Título")
                                 .font(.headline)
-                                .foregroundColor(.secondary)
-
+                                .foregroundColor(.primary)
+                            
                             TextField("Escribe el título", text: $newEvent.title)
-                                .padding()
-                                .background(RoundedRectangle(cornerRadius: 14).fill(textFieldBackground))
+                                .padding(12)
+                                .background(RoundedRectangle(cornerRadius: 12).fill(fieldBG))
                                 .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
                                 .onChange(of: newEvent.title) { newValue in
                                     newEvent.title = newValue.replacingOccurrences(of: "\n", with: " ")
                                 }
                         }
                         .padding(.horizontal, 20)
-
+                        
                         if isIncompleteEvent {
                             Text("⚠️ Es obligatorio añadir un título")
                                 .font(.caption)
                                 .foregroundColor(.red)
+                                .padding(.horizontal, 20)
                         }
-
-                        // Campo descripción
+                        
+                        Divider().padding(.horizontal, 20)
+                        
+                        // ——— Descripción ———
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Descripción")
                                 .font(.headline)
-                                .foregroundColor(.secondary)
-
+                                .foregroundColor(.primary)
+                            
                             TextEditor(text: Binding(
                                 get: { newEvent.descriptionEvent ?? "" },
                                 set: { newEvent.descriptionEvent = $0 }
                             ))
                             .frame(minHeight: 120)
-                            .padding()
-                            .background(RoundedRectangle(cornerRadius: 14).fill(textFieldBackground))
+                            .padding(12)
+                            .background(RoundedRectangle(cornerRadius: 12).fill(fieldBG))
                             .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
                         }
                         .padding(.horizontal, 20)
-
-                        // Picker de proyecto
+                        
+                        Divider().padding(.horizontal, 20)
+                        
+                        // ——— Picker Proyecto ———
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Proyecto")
                                 .font(.headline)
-                                .foregroundColor(.secondary)
-
+                                .foregroundColor(.primary)
+                            
                             Picker("Selecciona un proyecto", selection: $newEvent.project) {
                                 Text("Sin proyecto").tag(nil as Project?)
                                 ForEach(viewModel.projects, id: \.self) { project in
@@ -95,19 +103,21 @@ struct CreateEvent: View {
                                 }
                             }
                             .pickerStyle(.menu)
-                            .padding()
+                            .padding(12)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(RoundedRectangle(cornerRadius: 14).fill(textFieldBackground))
+                            .background(RoundedRectangle(cornerRadius: 12).fill(fieldBG))
                             .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
                         }
                         .padding(.horizontal, 20)
-
-                        // Fecha y hora
+                        
+                        Divider().padding(.horizontal, 20)
+                        
+                        // ——— Fecha y hora ———
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Fecha y hora del evento")
                                 .font(.headline)
-                                .foregroundColor(.secondary)
-
+                                .foregroundColor(.primary)
+                            
                             VStack(alignment: .leading, spacing: 12) {
                                 DatePicker(
                                     "Selecciona una fecha",
@@ -119,7 +129,7 @@ struct CreateEvent: View {
                                     displayedComponents: [.date]
                                 )
                                 .datePickerStyle(.compact)
-
+                                
                                 DatePicker(
                                     "Selecciona una hora",
                                     selection: Binding(
@@ -130,26 +140,27 @@ struct CreateEvent: View {
                                 )
                                 .datePickerStyle(.compact)
                             }
-                            .padding()
-                            .background(RoundedRectangle(cornerRadius: 14).fill(textFieldBackground))
-                            .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
+                            .padding(.horizontal, 10)
                         }
+                        .padding(12)
+                        .background(RoundedRectangle(cornerRadius: 12).fill(fieldBG))
+                        .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
                         .padding(.horizontal, 20)
-
-                        // Ubicación
+                        
+                        Divider().padding(.horizontal, 20)
+                        
+                        // ——— Ubicación ———
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Ubicación")
                                 .font(.headline)
-                                .foregroundColor(.secondary)
-
+                                .foregroundColor(.primary)
+                            
                             VStack(spacing: 10) {
-                                // Buscador
                                 TextField("Buscar dirección", text: $viewModelLocation.queryFragment)
                                     .textFieldStyle(.roundedBorder)
                                     .padding(.horizontal, 8)
                                     .focused($locationFieldFocused)
-
-                                // Sugerencias
+                                
                                 if !viewModelLocation.searchResults.isEmpty {
                                     ScrollView {
                                         LazyVStack(alignment: .leading, spacing: 0) {
@@ -158,8 +169,7 @@ struct CreateEvent: View {
                                                     selectSuggestion(result)
                                                 } label: {
                                                     VStack(alignment: .leading, spacing: 2) {
-                                                        Text(result.title)
-                                                            .font(.body)
+                                                        Text(result.title).font(.body)
                                                         if !result.subtitle.isEmpty {
                                                             Text(result.subtitle)
                                                                 .font(.caption)
@@ -168,9 +178,7 @@ struct CreateEvent: View {
                                                     }
                                                     .padding(.vertical, 10)
                                                     .padding(.horizontal, 12)
-                                                    .frame(maxWidth: .infinity, alignment: .leading)
                                                 }
-                                                .background(Color.white.opacity(0.001))
                                                 Divider()
                                             }
                                         }
@@ -182,21 +190,14 @@ struct CreateEvent: View {
                                             .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 3)
                                     )
                                 }
-
-                                // Mini-mapa
-                                if let lat = newEvent.latitude,
-                                   let lon = newEvent.longitude {
+                                
+                                // Mapa (solo si hay coordenadas)
+                                if let lat = newEvent.latitude, let lon = newEvent.longitude {
                                     let coord = CLLocationCoordinate2D(latitude: lat, longitude: lon)
-                                    let region = MKCoordinateRegion(
-                                        center: coord,
-                                        span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
-                                    )
+                                    let region = MKCoordinateRegion(center: coord, span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01))
                                     let annotations = [EventAnnotation(coordinate: coord)]
-
-                                    Map(
-                                        coordinateRegion: .constant(region),
-                                        annotationItems: annotations
-                                    ) { item in
+                                    
+                                    Map(coordinateRegion: .constant(region), annotationItems: annotations) { item in
                                         MapMarker(coordinate: item.coordinate, tint: .red)
                                     }
                                     .frame(height: 200)
@@ -204,13 +205,14 @@ struct CreateEvent: View {
                                 }
                             }
                             .padding(12)
-                            .background(textFieldBackground)
-                            .cornerRadius(12)
-                            .shadow(color: Color.black.opacity(0.05), radius: 6, x: 0, y: 4)
+                            .background(RoundedRectangle(cornerRadius: 12).fill(fieldBG))
+                            .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
                         }
                         .padding(.horizontal, 20)
-
-                        // Botones
+                        
+                        Divider().padding(.horizontal, 20)
+                        
+                        // ——— Botones ———
                         VStack(spacing: 14) {
                             Button(action: saveEvent) {
                                 Text("Guardar Evento")
@@ -219,25 +221,42 @@ struct CreateEvent: View {
                                     .frame(maxWidth: .infinity)
                                     .padding()
                                     .background(
-                                        LinearGradient(colors: [Color.eventButtonColor, .purple],
+                                        LinearGradient(colors: [Color.eventButtonColor, purpleAccent],
                                                        startPoint: .leading,
                                                        endPoint: .trailing)
-                                        .cornerRadius(14)
+                                        .cornerRadius(12)
                                     )
                             }
-
+                            
                             Button(action: { utilFunctions.dismissViewFunc() }) {
                                 Text("Cerrar")
                                     .font(.headline)
                                     .foregroundColor(.white)
                                     .frame(maxWidth: .infinity)
                                     .padding()
-                                    .background(RoundedRectangle(cornerRadius: 14).fill(softRed))
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(softRed)
+                                    )
                             }
                         }
                         .padding(.horizontal, 20)
                         .padding(.bottom, 30)
                     }
+                    .padding(.vertical, 28)
+                    .padding(.horizontal, 22)
+                    .frame(maxWidth: 800)
+                    .background(
+                        RoundedRectangle(cornerRadius: 36)
+                            .fill(Color.white)
+                            .shadow(color: .black.opacity(0.1), radius: 12, x: 0, y: 6)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 36)
+                            .stroke(cardStroke, lineWidth: 1)
+                    )
+                    .padding(.horizontal, 12)
+                    .padding(.top, 16)
                 }
             }
         }
@@ -249,23 +268,21 @@ struct CreateEvent: View {
             if value { dismiss() }
         }
     }
-
+    
     private var headerCard: some View {
-        Text("Crear evento")
-            .font(.system(size: 30, weight: .bold))
-            .foregroundColor(.eventButtonColor)
-            .padding()
-            .frame(maxWidth: .infinity)
-            .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(LinearGradient(colors: [Color.white, Color.eventButtonColor.opacity(0.08)],
-                                         startPoint: .topLeading,
-                                         endPoint: .bottomTrailing))
-                    .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 6)
-            )
-            .padding(.horizontal, 20)
+        HStack {
+            Image(systemName: "calendar.badge.plus")
+                .font(.system(size: 28, weight: .semibold))
+                .foregroundColor(.eventButtonColor)
+            Text("Crear evento")
+                .font(.system(size: 26, weight: .bold))
+                .foregroundColor(.eventButtonColor)
+            Spacer()
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 6)
     }
-
+    
     private func saveEvent() {
         if newEvent.title.isEmpty {
             isIncompleteEvent = true
@@ -276,10 +293,8 @@ struct CreateEvent: View {
             }
             do {
                 try context.save()
-                Task{
-                    
+                Task {
                     await SyncManagerUpload.shared.uploadEvent(event: newEvent)
-                    
                 }
             } catch {
                 print("❌ Error al guardar evento: \(error)")
@@ -287,21 +302,19 @@ struct CreateEvent: View {
             dismiss()
         }
     }
-
-    // Selección de dirección
+    
+    // Selección del resultado del autocompletado
     @MainActor
     private func selectSuggestion(_ result: MKLocalSearchCompletion) {
         viewModelLocation.search(for: result) { item in
             guard let placemark = item?.placemark else { return }
-
+            
             let direccion = placemark.title ?? result.title
-
-            // Actualiza el evento nuevo
+            
             newEvent.address = direccion
             newEvent.latitude = placemark.coordinate.latitude
             newEvent.longitude = placemark.coordinate.longitude
-
-            // Refresca buscador y oculta sugerencias
+            
             viewModelLocation.setQuery(direccion)
             viewModelLocation.clearResults()
             locationFieldFocused = false
