@@ -8,7 +8,7 @@ struct CreateProject: View {
 
     @StateObject private var viewModel = CreateProjectViewModel()
 
-    // 🎨 Estética coherente con CreateTask / TaskDetall
+    // 🎨 Estética coherente con CreateTask / CreateEvent
     private let purpleAccent = Color(red: 176/255, green: 133/255, blue: 231/255)
     private let cardStroke   = Color(red: 176/255, green: 133/255, blue: 231/255).opacity(0.2)
     private let fieldBG      = Color(red: 248/255, green: 248/255, blue: 250/255)
@@ -16,7 +16,8 @@ struct CreateProject: View {
 
     var body: some View {
         ZStack {
-            BackgroundColorTemplate().ignoresSafeArea()
+            Color(red: 0.97, green: 0.96, blue: 1.0)
+                .ignoresSafeArea()
 
             ScrollView {
                 VStack(spacing: 0) {
@@ -37,7 +38,14 @@ struct CreateProject: View {
                             
                             TextField("Escribe el título", text: $viewModel.newProject.title)
                                 .padding(12)
-                                .background(RoundedRectangle(cornerRadius: 12).fill(fieldBG))
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(fieldBG)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                        )
+                                )
                                 .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
                         }
                         .padding(.horizontal, 20)
@@ -46,37 +54,48 @@ struct CreateProject: View {
                             Text("⚠️ Es obligatorio añadir un título")
                                 .font(.caption)
                                 .foregroundColor(.red)
+                                .padding(.horizontal, 20)
                         }
 
                         Divider().padding(.horizontal, 20)
 
                         // ——— Fecha límite ———
-                        VStack(alignment: .leading, spacing: 8) {
+                        VStack(alignment: .leading, spacing: 12) {
                             Text("Fecha fin")
                                 .font(.headline)
                                 .foregroundColor(.primary)
 
-                            DatePicker(
-                                "Selecciona una fecha",
-                                selection: Binding(
-                                    get: { viewModel.newProject.endDate ?? Date() },
-                                    set: { viewModel.newProject.endDate = $0 }
-                                ),
-                                in: Date()...,
-                                displayedComponents: [.date]
-                            )
-                            .datePickerStyle(.compact)
+                            VStack(alignment: .leading, spacing: 12) {
+                                DatePicker(
+                                    "Selecciona una fecha",
+                                    selection: Binding(
+                                        get: { viewModel.newProject.endDate ?? Date() },
+                                        set: { viewModel.newProject.endDate = $0 }
+                                    ),
+                                    in: Date()...,
+                                    displayedComponents: [.date]
+                                )
+                                .datePickerStyle(.compact)
 
-                            if viewModel.newProject.endDate != nil {
-                                Button("Eliminar fecha") {
-                                    viewModel.clearDate()
+                                if viewModel.newProject.endDate != nil {
+                                    Button("Eliminar fecha") {
+                                        viewModel.clearDate()
+                                    }
+                                    .font(.caption)
+                                    .foregroundColor(.red)
                                 }
-                                .font(.caption)
-                                .foregroundColor(.red)
                             }
+                            .padding(.horizontal, 10)
                         }
                         .padding(12)
-                        .background(RoundedRectangle(cornerRadius: 12).fill(fieldBG))
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(fieldBG)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                )
+                        )
                         .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
                         .padding(.horizontal, 20)
 
@@ -94,9 +113,18 @@ struct CreateProject: View {
                                     set: { viewModel.newProject.descriptionProject = $0 }
                                 )
                             )
-                            .frame(minHeight: 120)
+                            .font(.body)
+                            .scrollContentBackground(.hidden)
+                            .frame(minHeight: 100)
                             .padding(12)
-                            .background(RoundedRectangle(cornerRadius: 12).fill(fieldBG))
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(fieldBG)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                    )
+                            )
                             .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
                         }
                         .padding(.horizontal, 20)
@@ -134,18 +162,9 @@ struct CreateProject: View {
                     .padding(.vertical, 28)
                     .padding(.horizontal, 22)
                     .frame(maxWidth: 800)
-                    .background(
-                        RoundedRectangle(cornerRadius: 36)
-                            .fill(Color.white)
-                            .shadow(color: .black.opacity(0.1), radius: 12, x: 0, y: 6)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 36)
-                            .stroke(cardStroke, lineWidth: 1)
-                    )
-                    .padding(.horizontal, 12)
                     .padding(.top, 16)
                 }
+                .backgroundStyle(Color(red: 0.97, green: 0.96, blue: 1.0))
             }
         }
         .onAppear {

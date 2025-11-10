@@ -20,7 +20,23 @@ struct ProjectDetall: View {
     var body: some View {
         ZStack {
             BackgroundColorTemplate()
-            
+                .toolbar {
+                    ToolbarItemGroup(placement: .topBarTrailing) {
+                        
+                        Button(action: { viewModel.isEditing ? viewModel.saveProject() : viewModel.isEditing.toggle()
+                        }) {
+                            viewModel.isEditing ? Image(systemName: "square.and.arrow.down")
+  : Image(systemName: "pencil")
+                        }
+                        Button(action: {
+                            viewModel.markAsCompleted()
+                            utilFunctions.dismissViewFunc()
+                        }) {
+                            Image(systemName: "trash")
+                        }
+                    }
+                }
+
             ScrollView {
                 VStack(spacing: 0) {
                     
@@ -64,33 +80,57 @@ struct ProjectDetall: View {
 
     // Título del proyecto + botones superiores
     private var headerSection: some View {
-        HStack(alignment: .center, spacing: 14) {
+       
             
-            Image(systemName: "folder.fill")
-                .font(.system(size: sizeClass == .regular ? 28 : 22, weight: .semibold))
-                .foregroundColor(purpleAccent)
 
-            Text(viewModel.editableProject.title)
-                .font(.system(size: sizeClass == .regular ? 24 : 20, weight: .bold))
-                .foregroundColor(purpleAccent)
-                .lineLimit(1)
+           VStack {
+                if viewModel.isEditing {
+                    Text("Título")
+                        .font(.headline)
+                        .foregroundColor(.primary)
 
-            Spacer()
-
-            HStack(spacing: 18) {
-                Button(action: { viewModel.toggleEditing() }) {
-                    Image(systemName: "pencil")
-                        .font(.system(size: 20))
-                        .foregroundColor(.secondary)
+                    TextEditor(text: Binding(
+                        get: { viewModel.editableProject.title ?? "" },
+                        set: { viewModel.editableProject.title = $0 }
+                    ))
+             
+                    .font(.body)
+                    .scrollContentBackground(.hidden)
+                    .frame(minHeight: 120)
+                    .padding(12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.fieldBG)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                            )
+                    )
+                    .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
+                    
+                    }else {
+                        HStack(alignment: .center, spacing: 14) {
+                            
+                            Image(systemName: "folder.fill")
+                                .font(.system(size: sizeClass == .regular ? 28 : 22, weight: .semibold))
+                                .foregroundColor(Color.projectPurpel)
+                            
+                            Text(viewModel.editableProject.title)
+                                .font(.system(size: sizeClass == .regular ? 24 : 20, weight: .bold))
+                                .foregroundColor(Color.projectPurpel)
+                         .lineLimit(1)
+                            
+                         
+                        }
                 }
 
-                Button(action: { viewModel.markAsCompleted() }) {
-                    Image(systemName: "trash")
-                        .font(.system(size: 20))
-                        .foregroundColor(.secondary)
-                }
+                
             }
-        }
+            
+            
+           
+
+        
     }
 
     // Sección de estadísticas
@@ -122,7 +162,7 @@ struct ProjectDetall: View {
                 .sheet(isPresented: $viewModel.showAddTaskView) {
                     CreateTask(project: viewModel.editableProject)
                 }
-                .buttonStyle(RoundedButtonStyle(backgroundColor: .taskButtonColor))
+                .buttonStyle(SoftButtonStyle(color: .taskButtonColor))
 
                 Button(action: { viewModel.showAddEventView = true }) {
                     Label("Nuevo Evento", systemImage: "calendar.badge.plus")
@@ -130,13 +170,14 @@ struct ProjectDetall: View {
                 .sheet(isPresented: $viewModel.showAddEventView) {
                     CreateEvent(project: viewModel.editableProject)
                 }
-                .buttonStyle(RoundedButtonStyle(backgroundColor: .eventButtonColor))
+                .buttonStyle(SoftButtonStyle(color: .eventButtonColor))
             }
 
             NavigationLink(destination: NoteDetailView(project: viewModel.editableProject)) {
                 Label("Nueva nota", systemImage: "plus")
             }
-            .buttonStyle(RoundedButtonStyle(backgroundColor: Color.noteBlue))
+            .buttonStyle(SoftButtonStyle(color: .noteBlue
+                                        ))
         }
     }
 
@@ -145,16 +186,34 @@ struct ProjectDetall: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Descripción")
                 .font(.headline)
-                .foregroundStyle(purpleAccent)
+                .foregroundStyle(Color.projectPurpel)
 
             if viewModel.isEditing {
                 TextEditor(text: Binding(
                     get: { viewModel.editableProject.descriptionProject ?? "" },
                     set: { viewModel.editableProject.descriptionProject = $0 }
                 ))
-                .frame(minHeight: 110)
+                .font(.body)
+                .scrollContentBackground(.hidden)
+                .frame(minHeight: 120)
                 .padding(12)
-                .background(RoundedRectangle(cornerRadius: 14).fill(textFieldBackground))
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.fieldBG)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                        )
+                )
+                .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
+                
+                Button(action: {viewModel.saveProject()}) {
+                    Label("Guardar proyecto", systemImage: "square.and.arrow.down")
+                }
+                
+                .buttonStyle(SoftButtonStyle(color: .taskButtonColor))
+            
+                
             } else {
                 Text(viewModel.editableProject.descriptionProject?.isEmpty ?? true ? "No hay descripción." : viewModel.editableProject.descriptionProject!)
                     .padding()
@@ -178,6 +237,7 @@ struct ProjectDetall: View {
 
     private func statRow(title: String, value: String, color: Color) -> some View {
         HStack {
+            
             Text("\(title):")
                 .font(.system(size: 17, weight: .semibold))
                 .foregroundColor(.primary)

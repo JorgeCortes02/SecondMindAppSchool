@@ -12,10 +12,10 @@ protocol BaseTaskViewModel: ObservableObject {
     var selectedData: Date { get set }
     var showCal: Bool { get set }
     var showAddTaskView: Bool { get set }
-    var listTaskCalendarIpad: [TaskItem] { get set }
+
     // MARK: - Context management
   
-    var sizeClass: enumSizeClass.UserInterfaceType { get set }
+
     // MARK: - Load and state logic
     func loadTasks()
     func markAsCompleted(_ task: TaskItem)

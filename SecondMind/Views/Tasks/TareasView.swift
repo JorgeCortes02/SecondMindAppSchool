@@ -16,12 +16,16 @@ struct TaskView: View {
                 
                 BackgroundColorTemplate()
                 VStack(alignment: .leading, spacing: 0) {
+                    
+                    if hSizeClass == .compact {
+                        Header()
+                            .frame(height: 40)
+                            .padding(.horizontal)
+                            .padding(.top, 10)    // 📌 Mismo padding top que en EventsView
+                            .padding(.bottom, 5)
+                    }
                     // ——— Header externo (idéntico en ambas pantallas) ———
-                    Header()
-                        .frame(height: 40)
-                        .padding(.horizontal)
-                        .padding(.top, 10)    // 📌 Mismo padding top que en EventsView
-                        .padding(.bottom, 5)
+                    
                         TaskMark()
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                           

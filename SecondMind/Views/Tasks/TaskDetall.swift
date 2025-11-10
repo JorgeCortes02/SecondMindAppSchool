@@ -8,10 +8,10 @@ struct TaskDetall: View {
     @Environment(\.horizontalSizeClass) private var sizeClass
     @StateObject private var modelView: TaskDetailViewModel
 
-    // 🎨 Mismos acentos visuales que en CreateTask
+    // 🎨 Estilo coherente con EventDetall
     private let purpleAccent = Color(red: 176/255, green: 133/255, blue: 231/255)
     private let cardStroke   = Color(red: 176/255, green: 133/255, blue: 231/255).opacity(0.2)
-    private let fieldBG      = Color(red: 248/255, green: 248/255, blue: 250/255)
+    private let fieldBG      = Color.fieldBG
 
     init(editableTask: TaskItem) {
         _modelView = StateObject(wrappedValue: TaskDetailViewModel(task: editableTask, context: editableTask.modelContext!))
@@ -23,98 +23,103 @@ struct TaskDetall: View {
                 .ignoresSafeArea()
                 .toolbar {
                     ToolbarItemGroup(placement: .topBarTrailing) {
-                        Button(action: { modelView.toggleEdit() }) {
-                            Image(systemName: "pencil")
+                        Button(action: { modelView.isEditing ? modelView.saveChanges() : modelView.toggleEdit()
+                        }) {
+                            modelView.isEditing ? Image(systemName: "square.and.arrow.down")
+  : Image(systemName: "pencil")
                         }
-                        Button(action: { modelView.deleteTask(dismiss: dismiss) }) {
+                        Button(action: {
+                            modelView.deleteTask(dismiss: dismiss) }) {
                             Image(systemName: "trash")
                         }
                     }
                 }
 
             ScrollView {
-                VStack(spacing: 0) {
+                VStack(spacing: 32) {
 
-                    // 🧾 Tarjeta principal (idéntica estructura que CreateTask)
-                    VStack(spacing: 26) {
+                    // 🧾 Tarjeta principal
+                    VStack(spacing: 20) {
 
-                        // Encabezado (equivalente a headerCard en CreateTask)
+                        // Encabezado
                         headerCard
 
-                        Divider().padding(.horizontal, 20)
-
-                        // ——— Título (misma lógica) ———
-                        Group {
+                        // ——— Título ———
+                        VStack(alignment: .center, spacing: 12) {
                             if modelView.isEditing {
-                                VStack(alignment: .leading, spacing: 8) {
-                                    Text("Título")
-                                        .font(.headline)
-                                        .foregroundColor(.primary)
+                                Text("Título")
+                                    .font(.headline)
+                                    .foregroundColor(.primary)
 
-                                    TextEditor(text: $modelView.editableTask.title)
-                                        .font(.body)
-                                        .scrollContentBackground(.hidden)
-                                        .padding(12)
-                                        .frame(minHeight: 100)
-                                        .background(RoundedRectangle(cornerRadius: 12).fill(fieldBG))
-                                        .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
-                                        .onChange(of: modelView.editableTask.title) { newValue in
-                                            if newValue.contains("\n") {
-                                                modelView.editableTask.title = newValue.replacingOccurrences(of: "\n", with: " ")
-                                            }
+                                TextField("Escribe el título", text: $modelView.editableTask.title)
+                                    .padding(12)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(fieldBG)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 12)
+                                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                            )
+                                    )
+                                    .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
+                                    .onChange(of: modelView.editableTask.title) { newValue in
+                                        if newValue.contains("\n") {
+                                            modelView.editableTask.title = newValue.replacingOccurrences(of: "\n", with: " ")
                                         }
-                                }
-                                .padding(.horizontal, 20)
+                                    }
                             } else {
-                                VStack(alignment: .leading, spacing: 8) {
-                                    Text("Título")
-                                        .font(.headline)
-                                        .foregroundColor(.primary)
-
-                                    Text(modelView.editableTask.title)
-                                        .font(.system(size: 24, weight: .semibold))
-                                        .foregroundColor(.primary)
-                                }
-                                .padding(.horizontal, 20)
-                            }
-                        }
-
-                        Divider().padding(.horizontal, 20)
-
-                        // ——— Descripción (misma lógica) ———
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Descripción")
-                                .font(.headline)
-                                .foregroundColor(.primary)
-
-                            if modelView.isEditing {
-                                TextEditor(text: Binding(
-                                    get: { modelView.editableTask.descriptionTask ?? "" },
-                                    set: { modelView.editableTask.descriptionTask = $0 }
-                                ))
-                                .font(.body)
-                                .scrollContentBackground(.hidden)
-                                .padding(12)
-                                .frame(minHeight: 100)
-                                .background(RoundedRectangle(cornerRadius: 12).fill(fieldBG))
-                                .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
-                            } else {
-                                Text((modelView.editableTask.descriptionTask?.isEmpty ?? true)
-                                     ? "No hay descripción disponible."
-                                     : modelView.editableTask.descriptionTask!)
-                                .font(.body)
-                                .padding(12)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .background(fieldBG)
-                                .cornerRadius(12)
+                                Text(modelView.editableTask.title)
+                                    .font(.title2)
+                                    .foregroundColor(.primary)
                             }
                         }
                         .padding(.horizontal, 20)
 
                         Divider().padding(.horizontal, 20)
 
-                        // ——— Proyecto y Evento (mismo layout vertical que CreateTask) ———
-                        VStack(spacing: 16) {
+                        // ——— Descripción y Proyecto/Evento ———
+                        VStack(alignment: .leading, spacing: 24) {
+                            // Descripción
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Descripción")
+                                    .font(.headline)
+                                    .foregroundColor(.primary)
+
+                                if modelView.isEditing {
+                                    TextEditor(text: Binding(
+                                        get: { modelView.editableTask.descriptionTask ?? "" },
+                                        set: { modelView.editableTask.descriptionTask = $0 }
+                                    ))
+                                    .font(.body)
+                                    .scrollContentBackground(.hidden)
+                                    .frame(minHeight: 100)
+                                    .padding(12)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(fieldBG)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 12)
+                                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                            )
+                                    )
+                                    .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
+                                } else {
+                                    Text((modelView.editableTask.descriptionTask?.isEmpty ?? true)
+                                         ? "No hay descripción disponible."
+                                         : modelView.editableTask.descriptionTask!)
+                                    .padding(12)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(fieldBG)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 12)
+                                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                            )
+                                    )
+                                    .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
+                                }
+                            }
 
                             // Proyecto
                             VStack(alignment: .leading, spacing: 8) {
@@ -130,20 +135,32 @@ struct TaskDetall: View {
                                         }
                                     }
                                     .pickerStyle(.menu)
-                                    .padding(12)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .background(RoundedRectangle(cornerRadius: 12).fill(fieldBG))
+                                    .disabled(modelView.lockProject)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(fieldBG)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 12)
+                                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                            )
+                                    )
                                     .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
                                     .onChange(of: modelView.editableTask.project) { newProject in
-                                        // ✅ Respetamos tu flujo: el ViewModel decide cómo filtrar/forzar evento
                                         modelView.updateProjectSelection(newProject)
                                     }
                                 } else {
                                     Text(modelView.editableTask.project?.title ?? "Sin proyecto asignado")
                                         .padding(12)
                                         .frame(maxWidth: .infinity, alignment: .leading)
-                                        .background(fieldBG)
-                                        .cornerRadius(12)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .fill(fieldBG)
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 12)
+                                                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                                )
+                                        )
+                                        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
                                 }
                             }
 
@@ -161,20 +178,31 @@ struct TaskDetall: View {
                                         }
                                     }
                                     .pickerStyle(.menu)
-                                    .padding(12)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .background(RoundedRectangle(cornerRadius: 12).fill(fieldBG))
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(fieldBG)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 12)
+                                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                            )
+                                    )
                                     .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
                                     .onChange(of: modelView.editableTask.event) { newEvent in
-                                        // ✅ Respetamos tu flujo: si el evento tiene proyecto, el VM lo asigna
                                         modelView.updateEventSelection(newEvent)
                                     }
                                 } else {
                                     Text(modelView.editableTask.event?.title ?? "Sin evento asignado")
                                         .padding(12)
                                         .frame(maxWidth: .infinity, alignment: .leading)
-                                        .background(fieldBG)
-                                        .cornerRadius(12)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .fill(fieldBG)
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 12)
+                                                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                                )
+                                        )
+                                        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
                                 }
                             }
                         }
@@ -182,23 +210,30 @@ struct TaskDetall: View {
 
                         Divider().padding(.horizontal, 20)
 
-                        // ——— Fecha (misma lógica que tenías, estilo CreateTask) ———
-                        VStack(alignment: .leading, spacing: 8) {
+                        // ——— Fecha ———
+                        VStack(alignment: .leading, spacing: 12) {
                             Text("Fecha de vencimiento")
                                 .font(.headline)
                                 .foregroundColor(.primary)
 
                             if let event = modelView.editableTask.event {
-                                // Si está asociada a evento: muestra fecha del evento + nota
+                                // Si está asociada a evento
                                 VStack(alignment: .leading, spacing: 6) {
                                     HStack {
                                         Image(systemName: "calendar")
-                                            .foregroundColor(.orange)
                                         Text(utilFunctions.formattedDateAndHour(event.endDate))
                                         Spacer()
                                     }
                                     .padding(12)
-                                    .background(RoundedRectangle(cornerRadius: 12).fill(fieldBG))
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(fieldBG)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 12)
+                                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                            )
+                                    )
+                                    .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
 
                                     Text("Esta tarea está vinculada a un evento")
                                         .font(.caption)
@@ -220,7 +255,15 @@ struct TaskDetall: View {
                                                 Spacer()
                                             }
                                             .padding(12)
-                                            .background(RoundedRectangle(cornerRadius: 12).fill(fieldBG))
+                                            .background(
+                                                RoundedRectangle(cornerRadius: 12)
+                                                    .fill(fieldBG)
+                                                    .overlay(
+                                                        RoundedRectangle(cornerRadius: 12)
+                                                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                                    )
+                                            )
+                                            .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
                                         }
                                     } else {
                                         VStack(alignment: .leading, spacing: 10) {
@@ -246,7 +289,6 @@ struct TaskDetall: View {
                                 } else {
                                     HStack {
                                         Image(systemName: "calendar")
-                                            .foregroundColor(.orange)
                                         if let date = modelView.editableTask.endDate {
                                             Text(utilFunctions.formattedDateAndHour(date))
                                         } else {
@@ -256,7 +298,15 @@ struct TaskDetall: View {
                                         Spacer()
                                     }
                                     .padding(12)
-                                    .background(RoundedRectangle(cornerRadius: 12).fill(fieldBG))
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(fieldBG)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 12)
+                                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                            )
+                                    )
+                                    .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
                                 }
                             }
                         }
@@ -264,7 +314,7 @@ struct TaskDetall: View {
 
                         Divider().padding(.horizontal, 20)
 
-                        // ——— Botones (los tuyos, mismo estilo de CreateTask para coherencia) ———
+                        // ——— Botones ———
                         VStack(spacing: 14) {
                             Button {
                                 modelView.markAsCompleted(dismiss: dismiss)
@@ -275,11 +325,10 @@ struct TaskDetall: View {
                                     .frame(maxWidth: .infinity)
                                     .padding()
                                     .background(
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .fill(modelView.editableTask.status == .on ? Color.taskButtonColor : Color.gray.opacity(0.5))
+                                        modelView.editableTask.status == .on ? Color.taskButtonColor : Color.gray.opacity(0.5)
                                     )
+                                    .cornerRadius(12)
                             }
-                            .buttonStyle(ScaleButtonStyle())
 
                             if modelView.isEditing {
                                 Button {
@@ -290,18 +339,30 @@ struct TaskDetall: View {
                                         .foregroundColor(.white)
                                         .frame(maxWidth: .infinity)
                                         .padding()
-                                        .background(
-                                            LinearGradient(colors: [Color.taskButtonColor, purpleAccent],
-                                                           startPoint: .leading,
-                                                           endPoint: .trailing)
-                                            .cornerRadius(12)
-                                        )
+                                        .background(Color.taskButtonColor)
+                                        .cornerRadius(12)
                                 }
-                                .buttonStyle(ScaleButtonStyle())
+                            }
+                            
+                            Button(action: { modelView.deleteTask(dismiss: dismiss) }) {
+                                Text("Eliminar Tarea")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .background(
+                                        LinearGradient(
+                                            colors: [Color(red: 0.0, green: 0.45, blue: 0.75),
+                                                     Color(red: 0.0, green: 0.35, blue: 0.65)],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                    .cornerRadius(12)
                             }
                         }
                         .padding(.horizontal, 20)
-                        .padding(.bottom, 30)
+                        .padding(.bottom, 24)
                     }
                     .padding(.vertical, 28)
                     .padding(.horizontal, 22)
@@ -322,7 +383,7 @@ struct TaskDetall: View {
         }
     }
 
-    // Encabezado (equivalente al de CreateTask)
+    // Encabezado
     private var headerCard: some View {
         HStack {
             Image(systemName: "checkmark.circle.fill")
@@ -334,15 +395,5 @@ struct TaskDetall: View {
             Spacer()
         }
         .padding(.horizontal, 20)
-        .padding(.top, 6)
-    }
-}
-
-// 🎛️ Igual que en tu versión
-struct ScaleButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
-            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: configuration.isPressed)
     }
 }

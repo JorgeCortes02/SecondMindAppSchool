@@ -12,19 +12,27 @@ struct CreateTask: View {
     private let cardStroke = Color(red: 176/255, green: 133/255, blue: 231/255).opacity(0.2)
     private let fieldBG = Color(red: 248/255, green: 248/255, blue: 250/255)
 
-    init(project: Project? = nil) {
+    // Dos inits diferentes
+    init(project: Project) {
         _modelView = StateObject(wrappedValue: CreateTaskViewModel(project: project))
+    }
+    
+    init(event: Event) {
+        _modelView = StateObject(wrappedValue: CreateTaskViewModel(event: event))
+    }
+    
+    init() {
+        _modelView = StateObject(wrappedValue: CreateTaskViewModel())
     }
 
     var body: some View {
         ZStack {
-            BackgroundColorTemplate()
+            Color(red: 0.97, green: 0.96, blue: 1.0)
                 .ignoresSafeArea()
 
             ScrollView {
                 VStack(spacing: 0) {
                  
-
                     // 🧾 Tarjeta principal
                     VStack(spacing: 26) {
                         // Encabezado
@@ -32,7 +40,7 @@ struct CreateTask: View {
 
                         Divider().padding(.horizontal, 20)
 
-                        // ——— Campo título (MISMA LÓGICA) ———
+                        // ——— Campo título ———
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Título")
                                 .font(.headline)
@@ -40,7 +48,14 @@ struct CreateTask: View {
 
                             TextField("Escribe el título", text: $modelView.newTask.title)
                                 .padding(12)
-                                .background(RoundedRectangle(cornerRadius: 12).fill(fieldBG))
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(fieldBG)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                        )
+                                )
                                 .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
                                 .onChange(of: modelView.newTask.title) { newValue in
                                     modelView.newTask.title = newValue.replacingOccurrences(of: "\n", with: " ")
@@ -57,7 +72,7 @@ struct CreateTask: View {
 
                         Divider().padding(.horizontal, 20)
 
-                        // ——— Campo descripción (MISMA LÓGICA) ———
+                        // ——— Campo descripción ———
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Descripción")
                                 .font(.headline)
@@ -67,19 +82,28 @@ struct CreateTask: View {
                                 get: { modelView.newTask.descriptionTask ?? "" },
                                 set: { modelView.newTask.descriptionTask = $0 }
                             ))
-                            .frame(minHeight: 120)
+                            .font(.body)
+                            .scrollContentBackground(.hidden)
+                            .frame(minHeight: 100)
                             .padding(12)
-                            .background(RoundedRectangle(cornerRadius: 12).fill(fieldBG))
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(fieldBG)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                    )
+                            )
                             .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
                         }
                         .padding(.horizontal, 20)
 
                         Divider().padding(.horizontal, 20)
 
-                        // ——— Pickers Proyecto y Evento (MISMA LÓGICA) ———
+                        // ——— Pickers Proyecto y Evento ———
                         VStack(spacing: 16) {
                             // Proyecto
-                            VStack(alignment: .leading, spacing: 8) {
+                            VStack(alignment: .center, spacing: 8) {
                                 Text("Proyecto")
                                     .font(.headline)
                                     .foregroundColor(.primary)
@@ -92,9 +116,14 @@ struct CreateTask: View {
                                 }
                                 .pickerStyle(.menu)
                                 .disabled(modelView.lockProject)
-                                .padding(12)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .background(RoundedRectangle(cornerRadius: 12).fill(fieldBG))
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(fieldBG)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                        )
+                                )
                                 .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
                                 .onChange(of: modelView.newTask.project) { newProject in
                                     modelView.updateProjectSelection(newProject)
@@ -102,7 +131,7 @@ struct CreateTask: View {
                             }
 
                             // Evento
-                            VStack(alignment: .leading, spacing: 8) {
+                            VStack(alignment: .center, spacing: 8) {
                                 Text("Evento")
                                     .font(.headline)
                                     .foregroundColor(.primary)
@@ -114,9 +143,15 @@ struct CreateTask: View {
                                     }
                                 }
                                 .pickerStyle(.menu)
-                                .padding(12)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .background(RoundedRectangle(cornerRadius: 12).fill(fieldBG))
+                                .disabled(modelView.lockEvent)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(fieldBG)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                        )
+                                )
                                 .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
                                 .onChange(of: modelView.newTask.event) { newEvent in
                                     modelView.updateEventSelection(newEvent)
@@ -127,7 +162,7 @@ struct CreateTask: View {
 
                         Divider().padding(.horizontal, 20)
 
-                        // ——— Fecha (MISMA LÓGICA) ———
+                        // ——— Fecha ———
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Fecha de vencimiento")
                                 .font(.headline)
@@ -145,7 +180,15 @@ struct CreateTask: View {
                                             Spacer()
                                         }
                                         .padding(12)
-                                        .background(RoundedRectangle(cornerRadius: 12).fill(fieldBG))
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .fill(fieldBG)
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 12)
+                                                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                                )
+                                        )
+                                        .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
                                     }
                                 } else {
                                     VStack(alignment: .leading, spacing: 8) {
@@ -159,6 +202,16 @@ struct CreateTask: View {
                                             displayedComponents: [.date]
                                         )
                                         .datePickerStyle(.compact)
+                                        .padding(12)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .fill(fieldBG)
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 12)
+                                                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                                )
+                                        )
+                                        .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
 
                                         Button("Eliminar fecha") {
                                             modelView.newTask.endDate = nil
@@ -179,14 +232,22 @@ struct CreateTask: View {
                                     Spacer()
                                 }
                                 .padding(12)
-                                .background(RoundedRectangle(cornerRadius: 12).fill(fieldBG))
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(fieldBG)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                        )
+                                )
+                                .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
                             }
                         }
                         .padding(.horizontal, 20)
 
                         Divider().padding(.horizontal, 20)
 
-                        // ——— Botones (MISMA LÓGICA) con estética TaskDetall ———
+                        // ——— Botones ———
                         VStack(spacing: 14) {
                             Button {
                                 modelView.saveTask(dismiss: dismiss)
@@ -222,18 +283,9 @@ struct CreateTask: View {
                     .padding(.vertical, 28)
                     .padding(.horizontal, 22)
                     .frame(maxWidth: 800)
-                    .background(
-                        RoundedRectangle(cornerRadius: 36)
-                            .fill(Color.white)
-                            .shadow(color: .black.opacity(0.1), radius: 12, x: 0, y: 6)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 36)
-                            .stroke(cardStroke, lineWidth: 1)
-                    )
-                    .padding(.horizontal, 12)
                     .padding(.top, 16)
                 }
+                .backgroundStyle(Color(red: 0.97, green: 0.96, blue: 1.0))
             }
         }
         .onAppear {
@@ -241,7 +293,7 @@ struct CreateTask: View {
         }
     }
 
-    // Encabezado estilizado (mantiene tu título)
+    // Encabezado estilizado
     private var headerCard: some View {
         HStack {
             Image(systemName: "plus.circle.fill")

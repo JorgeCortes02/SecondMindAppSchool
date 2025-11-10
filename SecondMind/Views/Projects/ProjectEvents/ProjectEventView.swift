@@ -20,11 +20,13 @@ struct ProjectEventsView: View {
 
                 VStack(alignment: .leading, spacing: 0) {
                     // ——— Header externo (idéntico en ambas pantallas) ———
-                    Header()
-                        .frame(height: 40)
-                        .padding(.horizontal)
-                        .padding(.top, 10)    // 📌 Igual que en EventsView
-                        .padding(.bottom, 5)
+                    if hSizeClass == .compact{
+                        Header()
+                            .frame(height: 40)
+                            .padding(.horizontal)
+                            .padding(.top, 10)    // 📌 Igual que en EventsView
+                            .padding(.bottom, 5)
+                    }
 
                
                         // ——— Cuerpo: ProjectEventMark ocupa todo el espacio ———

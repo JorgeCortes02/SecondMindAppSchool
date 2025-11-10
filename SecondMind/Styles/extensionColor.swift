@@ -15,4 +15,5 @@ extension Color {
     static let secondaryText     = Color(red: 0.627, green: 0.659, blue: 0.714) // #A0A8B6
     static let noteBlue = Color.blue
     static let projectPurpel = Color.purple
+    static let fieldBG      = Color.white
 }

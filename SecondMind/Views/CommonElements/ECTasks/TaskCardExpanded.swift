@@ -28,7 +28,7 @@ struct TaskCardExpanded: View {
                         
                         Text(task.title)
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.primary)
+                            .foregroundColor(.taskButtonColor)
                             .lineLimit(2)
                             .truncationMode(.tail)
                     }
@@ -75,7 +75,7 @@ struct TaskCardExpanded: View {
                 } else {
                     Label("Sin proyecto", systemImage: "folder")
                         .font(.caption)
-                        .foregroundColor(.secondary.opacity(0.8))
+                        .foregroundColor(.projectPurpel.opacity(0.8))
                 }
                 
                 // 📅 Evento

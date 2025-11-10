@@ -1,58 +1,70 @@
+//
+//  EventTaskMark.swift
+//  SecondMind
+//
+//  Created by Jorge Cortés on 10/11/25.
+//
+
 import SwiftUI
 import SwiftData
+import Foundation
 
-struct TaskMark: View {
+struct EventTaskMark: View {
     
+    @StateObject var modelView = TaskMarkEventDetallModelView()
     @EnvironmentObject var utilFunctions: generalFunctions
     @Environment(\.modelContext) private var context
     @Environment(\.horizontalSizeClass) private var sizeClass
     
-    @StateObject private var modelView: TaskViewModel
-    
-    @State private var refreshID = UUID()
+    @Bindable var event: Event  // ← Cambio principal
+    @State private var selectedData: Date = Date()
+    @State private var showCal: Bool = false
+    @State private var showAddTaskView: Bool = false
     @State private var isSyncing = false
+    @State private var refreshID = UUID()
     
     private let accentColor = Color.taskButtonColor
-    private let cardStroke = Color(red: 176/255, green: 133/255, blue: 231/255).opacity(0.15)
     private let fieldBG = Color(red: 248/255, green: 248/255, blue: 250/255)
-    
-    init() {
-        _modelView = StateObject(wrappedValue: TaskViewModel())
-    }
     
     var body: some View {
         GeometryReader { geo in
             ZStack {
                 VStack(spacing: 0) {
-                    VStack(spacing: 0) {
+                    VStack(spacing: 26) {
                         
                         // Cabecera visual coherente
                         headerCard(title: "Tareas", accentColor: accentColor, sizeClass: sizeClass)
-                            .padding(.top, 8).padding(.bottom, 26)
+                            .padding(.top, 8)
                         
-                    
-                            PickerBar(options: ["Sin fecha", "Agendadas", "Finalizadas"], selectedTab: $modelView.selectedTab)
+                        
+                            PickerBar(options: ["Agendadas", "Finalizadas"], selectedTab: $modelView.selectedTab)
                         
                         
                         // Contenido principal de las tareas
                         VStack(spacing: 18) {
                             if sizeClass == .regular {
                                 // iPad → grid de secciones
-                                TasksSectionsiPadView(modelView: modelView, accentColor: accentColor)
+                                TasksSectionsiPadView(
+                                    modelView: modelView,
+                                    accentColor: accentColor
+                                )
                             } else {
                                 // iPhone → lista compacta o calendario
-                                if modelView.selectedTab == 1 && modelView.showCal {
+                                if modelView.selectedTab == 0 && showCal {
                                     calendarCard(selectedDate: $modelView.selectedData)
                                     Spacer()
                                 } else {
-                                    TasksElementsListView(modelView: modelView)
+                                    TasksElementsListViewEvents(
+                                        modelView: modelView,
+                                        accentColor: accentColor
+                                    )
                                 }
                             }
                         }
                         .frame(maxHeight: .infinity)
                         .padding(.top, 10)
                     }
-                    .padding(.top, 26)
+                    .padding(.vertical, 26)
                     .padding(.horizontal, 5)
                     .frame(maxWidth: 1200)
                     .background(
@@ -67,25 +79,27 @@ struct TaskMark: View {
                 .padding(.bottom, sizeClass == .regular ?  geo.safeAreaInsets.bottom + 20 : geo.safeAreaInsets.bottom + 100)
                 .id(refreshID)
                 .refreshable {
-                    await refreshTasksFromServer()
+                    await syncAndReload()
                 }
                 .ignoresSafeArea(edges: .bottom)
-                .onAppear {
-                    modelView.setParameters(context)
+                .onChange(of: modelView.selectedTab) {
                     modelView.loadTasks()
                 }
-                .onChange(of: modelView.selectedTab) { _ in
-                    modelView.loadTasks()
-                }
-                .onChange(of: modelView.selectedData) { _ in
-                    if modelView.selectedTab == 1 {
+                .onChange(of: modelView.selectedData) {
+                    if modelView.selectedTab == 0 {
                         modelView.loadTasks()
                     }
                 }
-                .sheet(isPresented: $modelView.showAddTaskView, onDismiss: {
+                .onAppear {
+                   
+                        modelView.setParameters(context: context, event: event)
+                    
+                    modelView.loadTasks()
+                }
+                .sheet(isPresented: $showAddTaskView, onDismiss: {
                     modelView.loadTasks()
                 }) {
-                    CreateTask()
+                    CreateTask(event: event)  // ← Cambio aquí
                 }
                 
                 // Botón flotante sobre el contenido
@@ -100,16 +114,12 @@ struct TaskMark: View {
             }
         }
     }
+ 
     
-  
-    
-    
-    
-    
-    // MARK: – Calendar Card (iPhone, tab = Agendadas)
+    // MARK: – Calendar Card
     private func calendarCard(selectedDate: Binding<Date>) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Selecciona fecha")
+            Text("Filtrar por fecha")
                 .font(.headline)
                 .foregroundColor(.primary)
                 .padding(.horizontal, 20)
@@ -122,12 +132,10 @@ struct TaskMark: View {
             )
             .datePickerStyle(.compact)
             .padding(.horizontal, 20)
-            .onChange(of: modelView.selectedData) { _ in
+            .onChange(of: modelView.selectedData) {
                 withAnimation(.easeInOut(duration: 0.3)) {
-                    modelView.showCal = false
-                    if modelView.selectedTab == 1 {
-                        modelView.loadTasks()
-                    }
+                    showCal = false
+                    modelView.loadTasks()
                 }
             }
         }
@@ -138,14 +146,14 @@ struct TaskMark: View {
         .padding(.horizontal, 16)
         .transition(.move(edge: .top).combined(with: .opacity))
     }
-
+    
     // MARK: – Botonera inferior
     private var buttonControlMark: some View {
         glassButtonBar(
-            funcAddButton: { modelView.showAddTaskView = true },
-            funcSyncButton: { Task { await refreshTasksFromServer() } },
+            funcAddButton: { showAddTaskView = true },
+            funcSyncButton: { Task { await syncAndReload() } },
             funcCalendarButton: {
-                withAnimation(.easeInOut) { modelView.showCal.toggle() }
+                withAnimation { showCal.toggle() }
             },
             color: accentColor,
             selectedTab: $modelView.selectedTab,
@@ -153,12 +161,12 @@ struct TaskMark: View {
         )
     }
     
-    // MARK: – Utilidad: refetch y refresh
-    private func refreshTasksFromServer() async {
+    // MARK: – Sincronización
+    private func syncAndReload() async {
         isSyncing = true
         await SyncManagerDownload.shared.syncAll(context: context)
         modelView.loadTasks()
-        withAnimation(.easeOut(duration: 0.3)) {
+        withAnimation {
             refreshID = UUID()
             isSyncing = false
         }

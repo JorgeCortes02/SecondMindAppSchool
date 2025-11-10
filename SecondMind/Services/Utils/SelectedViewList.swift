@@ -10,4 +10,5 @@ import SwiftUI
 class SelectedViewList : ObservableObject {
     @Published var selectedTab : Int  = 0
     @Published var selectedView : Int = 0
+    @Published var showSidebar: Bool = false
 }

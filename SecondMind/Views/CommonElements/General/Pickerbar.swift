@@ -81,8 +81,8 @@ struct SegmentButton: View {
                }
            }
            .padding(15)
-           .background(Color.cardBG)
-           .cornerRadius(40)
+           .padding(.bottom, 0)
+           .modifier(GlassContainerProfile())
            .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
            .padding(.horizontal, 16)
        }

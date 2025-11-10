@@ -1,5 +1,12 @@
+//
+//  TaskCardEvents.swift
+//  SecondMind
+//
+//  Created by Jorge Cortés on 10/11/25.
+//
+
 import SwiftUI
-struct TasksElementsListView<ViewModel: BaseTaskViewModel>: View {
+struct TasksElementsListViewEvents<ViewModel: BaseTaskViewModel>: View {
     @ObservedObject var modelView: ViewModel
     @Environment(\.modelContext) var context
     @EnvironmentObject var utilFunctions: generalFunctions
@@ -11,14 +18,10 @@ struct TasksElementsListView<ViewModel: BaseTaskViewModel>: View {
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
                         if modelView.selectedTab == 0 {
-                            Text("Sin fecha")
-                                .foregroundColor(.taskButtonColor)
-                                .font(.title2.weight(.bold))
-                        } else if modelView.selectedTab == 1 {
                             Text(utilFunctions.formattedDate(modelView.selectedData))
                                 .foregroundColor(.taskButtonColor)
                                 .font(.title2.weight(.bold))
-                        } else {
+                        }  else {
                             Text("Tareas finalizadas")
                                 .foregroundColor(.taskButtonColor)
                                 .font(.title2.weight(.bold))
@@ -41,7 +44,7 @@ struct TasksElementsListView<ViewModel: BaseTaskViewModel>: View {
                             .frame(maxHeight: .infinity)
                     } else if modelView.readyToShowTasks {
                         VStack(alignment: .leading, spacing: 0) {
-                            if modelView.selectedTab == 2 {
+                            if modelView.selectedTab == 1 {
                                 EndTaskList(viewModel: modelView)
                             } else {
                                 TaskListToDoView(modelView: modelView)

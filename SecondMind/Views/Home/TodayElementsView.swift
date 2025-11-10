@@ -64,15 +64,15 @@ struct TodayElementsView: View {
         }
         .padding(22)
         .background(
-            RoundedRectangle(cornerRadius: 32)
-                .fill(Color.cardBG)
-                .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 32)
-                .stroke(Color.primary.opacity(0.06), lineWidth: 1)
-        )
-        .padding(.horizontal, 16).frame(maxWidth: 800)
+                   RoundedRectangle(cornerRadius: 32)
+                       .fill(Color.cardBG)
+                       .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
+               )
+               .overlay(
+                   RoundedRectangle(cornerRadius: 32)
+                       .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+               )
+        .padding(.horizontal, 12).frame(maxWidth: 800)
     }
     
     // 🛠️ Contador compacto visual

@@ -11,13 +11,15 @@ struct EndTaskList<ViewModel: BaseTaskViewModel>: View {
                     // Encabezado de la fecha
                     Text(utilFunctions.formattedDate(group.date))
                         .font(.title3.weight(.bold))
-                        .foregroundColor(.white)
+                        .foregroundColor(.primary)
                         .padding(.vertical, 6)
                         .padding(.horizontal, 18)
                         .background(
                             RoundedRectangle(cornerRadius: 14)
-                                .fill(
-                                    Color.taskButtonColor.opacity(0.8)
+                                .fill(.ultraThinMaterial)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .stroke(Color.taskButtonColor.opacity(0.3), lineWidth: 1)
                                 )
                         )
                         .frame(maxWidth: .infinity, alignment: .center)
@@ -26,6 +28,7 @@ struct EndTaskList<ViewModel: BaseTaskViewModel>: View {
                     VStack{
                         ForEach(group.tasks, id: \.id) { task in
                             taskRow(task)
+                            Divider()
                         }
                     }.padding(.top, 10)
                 }
@@ -74,12 +77,13 @@ struct EndTaskList<ViewModel: BaseTaskViewModel>: View {
                     .font(.system(size: 18))
                     .foregroundColor(.red)
             }
+            
         }
         .padding(12)
-        .background(Color(.systemGray6))
-        .cornerRadius(12)
+        
         .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
-        .padding(.horizontal, 16)
+        .padding(.horizontal, 20)
         .transition(.move(edge: .bottom).combined(with: .opacity))
+   
     }
 }

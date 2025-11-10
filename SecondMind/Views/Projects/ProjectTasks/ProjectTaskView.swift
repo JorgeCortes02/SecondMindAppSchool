@@ -24,13 +24,13 @@ struct ProjectTaskView: View {
                 BackgroundColorTemplate()
                 
                 VStack(alignment: .leading, spacing: 0) {
-                    // ——— Header externo (idéntico en ambas pantallas) ———
-                    Header()
-                        .frame(height: 40)
-                        .padding(.horizontal)
-                        .padding(.top, 10)    // 📌 Mismo padding top que en EventsView
-                        .padding(.bottom, 5)
-
+                    if hSizeClass == .compact{
+                        Header()
+                            .frame(height: 40)
+                            .padding(.horizontal)
+                            .padding(.top, 10)    // 📌 Igual que en EventsView
+                            .padding(.bottom, 5)
+                    }
                 
                         // ——— Cuerpo: TaskMark ocupa todo el espacio que queda ———
                     ProjectTaskMark<TaskMarkProjectDetallModelView>(project : project)

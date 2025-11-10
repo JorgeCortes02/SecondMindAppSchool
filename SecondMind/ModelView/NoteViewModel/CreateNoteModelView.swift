@@ -21,7 +21,9 @@ final class NoteDetailViewModel: ObservableObject {
     
     // Drafts temporales (UI)
     @Published var draftTitle: String
-    @Published var draftContent: String
+    @Published var draftContent: String {
+        didSet { handleSmartList(oldValue: oldValue, newValue: draftContent) }
+    }
     @Published var draftProject: Project? {
         didSet { handleProjectChange() }
     }
@@ -94,16 +96,21 @@ final class NoteDetailViewModel: ObservableObject {
     }
     
     func insertListMarker() {
+        // Toggle del modo lista
         isListMode.toggle()
-        guard isListMode else { return }
         
-        var text = draftContent
-        if text.isEmpty || text.hasSuffix("\n") {
-            text += "• "
-        } else if !text.hasSuffix("• ") {
-            text += "\n• "
+        // Si acabamos de ACTIVAR el modo lista, añadir "• "
+        if isListMode {
+            var text = draftContent
+            if text.isEmpty || text.hasSuffix("\n") {
+                text += "• "
+            } else if !text.hasSuffix("• ") {
+                text += "\n• "
+            }
+            draftContent = text
         }
-        draftContent = text
+        // Si acabamos de DESACTIVAR el modo lista, no hacer nada especial
+        // (simplemente deja de añadir bullets automáticamente)
     }
     
     func insertHeading(_ prefix: String) {
@@ -114,6 +121,41 @@ final class NoteDetailViewModel: ObservableObject {
         if let context {
             events = HomeApi.downdloadEventsFrom(context: context)
             projects = HomeApi.downdloadProjectsFrom(context: context)
+        }
+    }
+    
+    // MARK: - Smart List Handling
+    private func handleSmartList(oldValue: String, newValue: String) {
+        // Evitar procesamiento recursivo
+        guard oldValue != newValue else { return }
+        
+        let oldLines = oldValue.components(separatedBy: "\n")
+        let newLines = newValue.components(separatedBy: "\n")
+        
+        // Solo procesar si se añadió una nueva línea
+        guard newLines.count > oldLines.count else { return }
+        
+        // ✅ VERIFICAR SI ESTAMOS EN MODO LISTA
+        guard isListMode else { return }
+        
+        let lastLine = newLines.last ?? ""
+        let previousLine = newLines.count > 1 ? newLines[newLines.count - 2] : ""
+        
+        // Si la línea anterior empieza con "• " y la actual está vacía
+        if previousLine.hasPrefix("• ") && lastLine.isEmpty {
+            // Añadir automáticamente "• " en la nueva línea
+            var updatedLines = newLines
+            updatedLines[updatedLines.count - 1] = "• "
+            draftContent = updatedLines.joined(separator: "\n")
+        }
+        // Si la línea anterior es solo "• " (bullet sin texto) y se presiona Enter
+        else if previousLine.trimmingCharacters(in: .whitespaces) == "•" && lastLine.isEmpty {
+            // Eliminar el bullet vacío y la línea actual
+            var updatedLines = newLines
+            updatedLines.removeLast() // Elimina línea vacía actual
+            updatedLines.removeLast() // Elimina "• " anterior
+            draftContent = updatedLines.joined(separator: "\n")
+            // NO desactivamos isListMode aquí, solo con el botón
         }
     }
     

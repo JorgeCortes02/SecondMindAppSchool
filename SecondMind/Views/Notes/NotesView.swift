@@ -16,11 +16,13 @@ struct NotesView: View {
 
                 VStack(alignment: .leading, spacing: 0) {
                     // ——— Header externo (igual que en EventsView, ProjectsView, etc) ———
-                    Header()
-                        .frame(height: 40)
-                        .padding(.horizontal)
-                        .padding(.top, 10)
-                        .padding(.bottom, 5)
+                    if hSizeClass == .compact{
+                        Header()
+                            .frame(height: 40)
+                            .padding(.horizontal)
+                            .padding(.top, 10)
+                            .padding(.bottom, 5)
+                    }
 
                         // ——— Aquí pasamos el contexto (proyecto/evento) a NoteMark ———
                         NoteMark(project: project, event: event)

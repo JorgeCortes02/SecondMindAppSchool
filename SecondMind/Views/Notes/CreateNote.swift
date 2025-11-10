@@ -130,6 +130,7 @@ struct NoteDetailView: View {
                         Text(viewModel.draftTitle.isEmpty ? "Sin título" : viewModel.draftTitle)
                             .font(.system(size: 28, weight: .bold))
                             .foregroundColor(.primary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal)
                             .onTapGesture { viewModel.isEditing = true }
                     }
@@ -148,10 +149,12 @@ struct NoteDetailView: View {
                                 Text(viewModel.draftContent)
                                     .font(.body)
                                     .foregroundColor(.primary)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
                                     .padding(.horizontal)
                             } else {
                                 Text("Escribe algo...")
                                     .foregroundColor(.gray)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
                                     .padding(.horizontal)
                             }
                         }

@@ -6,22 +6,28 @@
 //
 import SwiftUI
 
-// MARK: – Header “Tareas” + Segmented Control + Toggle Calendario
- func headerCard(title:String) -> some View {
-    
-   
-    VStack(spacing: 10) {
-        ZStack {
-            Text("\(title)")
-                .font(.system(size: 32, weight: .bold))
-                .foregroundColor(Color.taskButtonColor)
+// MARK: – Cabecera visual con ícono y título
+ func headerCard(title: String, accentColor: Color, sizeClass: UserInterfaceSizeClass?) -> some View {
+     
+    ZStack {
+        // Título a la izquierda
+        HStack {
+            Image(systemName: "folder.fill")
+                .font(.system(size: 28, weight: .semibold))
+                .foregroundColor(accentColor)
+            Text(title)
+                .font(.system(size: 26, weight: .bold))
+                .foregroundColor(accentColor)
+            Spacer()
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
-        // Fondo semitransparente con degradado suave
         
-        
-        .cornerRadius(20)
+        // Header centrado absolutamente
+        if sizeClass == .regular {
+            Header()
+                .frame(height: 40)
+        }
     }
-    .padding(.horizontal, 16)
+    .padding(.horizontal, 20)
+    .padding(.top, sizeClass == .regular ? 10 : 0)
+    .padding(.bottom, sizeClass == .regular ? 5 : 0)
 }

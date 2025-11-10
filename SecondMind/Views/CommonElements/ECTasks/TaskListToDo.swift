@@ -1,17 +1,10 @@
-//
-//  TaskListToDo.swift
-//  SecondMind
-//
-//  Created by Jorge Cortés on 2/11/25.
-//
-
 import SwiftUI
 
 struct TaskListToDoView<ViewModel: BaseTaskViewModel>: View {
     @ObservedObject var modelView: ViewModel
     @Environment(\.modelContext) var context
     @EnvironmentObject var utilFunctions: generalFunctions
-     var accentColor = Color.taskButtonColor
+    var accentColor = Color.taskButtonColor
     
     var body: some View {
         LazyVStack(spacing: 12) {
@@ -53,15 +46,12 @@ struct TaskListToDoView<ViewModel: BaseTaskViewModel>: View {
                         }
                     }
                     .padding(12)
-                    .background(Color.white)
-                    .cornerRadius(12)
                     .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
                     .padding(.horizontal, 20)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
-        }.padding(.bottom, 20)
-       
-       
+        }
+        .padding(.top, 8)
     }
 }

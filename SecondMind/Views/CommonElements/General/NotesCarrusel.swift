@@ -84,35 +84,36 @@ struct NotesCarrousel: View {
                                             .lineLimit(2)
                                             .multilineTextAlignment(.leading)
                                         
-                                        // 🔹 Proyecto / Evento
-                                        if let project = note.project {
-                                            HStack(spacing: 6) {
-                                                Image(systemName: "folder.fill")
-                                                    .font(.system(size: 12))
-                                                    .foregroundColor(.orange)
-                                                Text(project.title)
-                                                    .font(.system(size: 13, weight: .medium))
-                                                    .foregroundColor(.orange)
-                                                    .lineLimit(1)
+                                        HStack{
+                                            // 🔹 Proyecto / Evento
+                                            if let project = note.project {
+                                                HStack(spacing: 6) {
+                                                    Image(systemName: "folder.fill")
+                                                        .font(.system(size: 12))
+                                                        .foregroundColor(.orange)
+                                                    Text(project.title)
+                                                        .font(.system(size: 13, weight: .medium))
+                                                        .foregroundColor(.orange)
+                                                        .lineLimit(1)
+                                                }
+                                            }
+                                            
+                                            if let event = note.event {
+                                                HStack(spacing: 6) {
+                                                    Image(systemName: "calendar")
+                                                        .font(.system(size: 12))
+                                                        .foregroundColor(.purple)
+                                                    Text(event.title)
+                                                        .font(.system(size: 13, weight: .medium))
+                                                        .foregroundColor(.purple)
+                                                        .lineLimit(1)
+                                                }
                                             }
                                         }
                                         
-                                        if let event = note.event {
-                                            HStack(spacing: 6) {
-                                                Image(systemName: "calendar")
-                                                    .font(.system(size: 12))
-                                                    .foregroundColor(.purple)
-                                                Text(event.title)
-                                                    .font(.system(size: 13, weight: .medium))
-                                                    .foregroundColor(.purple)
-                                                    .lineLimit(1)
-                                            }
-                                        }
+                                    
                                         
-                                        Spacer()
-                                        
-                                        // 🔹 Fechas
-                                        HStack {
+                                       
                                             HStack(spacing: 4) {
                                                 Image(systemName: "clock.badge")
                                                     .font(.system(size: 11))
@@ -122,7 +123,7 @@ struct NotesCarrousel: View {
                                                     .foregroundColor(.gray)
                                             }
                                             
-                                            Spacer()
+                                          
                                             
                                             HStack(spacing: 4) {
                                                 Image(systemName: "pencil")
@@ -131,7 +132,7 @@ struct NotesCarrousel: View {
                                                 Text(utilFunctions.formattedDateAndHour(note.updatedAt))
                                                     .font(.system(size: 12))
                                                     .foregroundColor(Color.noteBlue.opacity(0.7))
-                                            }
+                                            
                                         }
                                     }
                                     .padding(16)

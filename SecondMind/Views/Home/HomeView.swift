@@ -54,11 +54,17 @@ struct HomeView: View {
                 BackgroundColorTemplate()
                 
                 VStack(alignment: .leading, spacing: 0) {
-                    Header()
-                        .frame(height: 40)
-                        .padding(.horizontal)
-                        .padding(.top, 10)
-                        .padding(.bottom, 5)
+                    
+                    if hSizeClass == .compact {
+                        Header()
+                            .frame(height: 40)
+                            .padding(.horizontal)
+                            .padding(.top, 10)
+                            .padding(.bottom, 5)
+                    }
+                    
+                    
+                  
                     
                     HomeMark() // ✅ Tu nuevo contenedor con scroll y botonera
                         .frame(maxWidth: .infinity, maxHeight: .infinity)

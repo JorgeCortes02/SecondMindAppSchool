@@ -15,11 +15,24 @@ class CreateTaskViewModel: ObservableObject {
     @Published var lockEvent: Bool = false
 
     private var context: ModelContext?
-    private var project: Project?
+    private var initialProject: Project?
+    private var initialEvent: Event?
     
-    init(project: Project? = nil) {
-        
-        self.project = project
+    // Init sin parámetros
+    init() {
+        self.newTask = TaskItem(
+            title: "",
+            endDate: nil,
+            project: nil,
+            event: nil,
+            status: .on,
+            descriptionTask: ""
+        )
+    }
+    
+    // Init con Project
+    init(project: Project) {
+        self.initialProject = project
         
         self.newTask = TaskItem(
             title: "",
@@ -30,11 +43,24 @@ class CreateTaskViewModel: ObservableObject {
             descriptionTask: ""
         )
 
-        if let project {
-            self.newTask.project = project
-            self.lockProject = true
-            
-        }
+        self.lockProject = true
+    }
+    
+    // Init con Event
+    init(event: Event) {
+        self.initialEvent = event
+        
+        self.newTask = TaskItem(
+            title: "",
+            endDate: event.endDate,
+            project: event.project,
+            event: event,
+            status: .on,
+            descriptionTask: ""
+        )
+
+        self.lockEvent = true
+        self.lockProject = true  // Si hay evento, también bloqueamos proyecto
     }
 
     func configure(context: ModelContext) {
@@ -45,15 +71,23 @@ class CreateTaskViewModel: ObservableObject {
     func loadData() {
         guard let context else { return }
         
-        if let project {
+        if let project = initialProject {
+            // Modo Project
             projects = HomeApi.downdloadProjectsFrom(context: context)
             events = HomeApi.downdloadEventsFromProject(project: project, context: context)
-        }else{
+        } else if let event = initialEvent {
+            // Modo Event
+            events = HomeApi.downdloadEventsFrom(context: context)
+            if let eventProject = event.project {
+                projects = HomeApi.downdloadProjectsFrom(context: context)
+            } else {
+                projects = []
+            }
+        } else {
+            // Modo libre
             events = HomeApi.downdloadEventsFrom(context: context)
             projects = HomeApi.downdloadProjectsFrom(context: context)
         }
-        
-       
     }
 
     // MARK: - 🔹 Proyecto seleccionado
@@ -80,6 +114,8 @@ class CreateTaskViewModel: ObservableObject {
 
     // MARK: - 🔹 Evento seleccionado
     func updateEventSelection(_ newEvent: Event?) {
+        guard !lockEvent else { return } // Evita cambios si está bloqueado
+        
         guard let event = newEvent else {
             // Si se quita el evento, desbloqueamos el proyecto
             newTask.event = nil
@@ -113,6 +149,10 @@ class CreateTaskViewModel: ObservableObject {
 
         if let project = newTask.project {
             project.tasks.append(newTask)
+        }
+        
+        if let event = newTask.event {
+            event.tasks.append(newTask)
         }
 
         do {

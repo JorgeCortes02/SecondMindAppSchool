@@ -48,14 +48,28 @@ struct EventDetall: View {
                         Button(action: { showReminderModal = true }) {
                             Image(systemName: "tray.and.arrow.up")
                         }
+                        
+                        
+                        
                         Button(action: {
-                            isEditing = true
-                            viewModelLocation.queryFragment = editableEvent.address ?? ""
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                                locationFieldFocused = true
+                            
+                            if !isEditing{
+                                
+                                isEditing = true
+                                viewModelLocation.queryFragment = editableEvent.address ?? ""
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                                    locationFieldFocused = true
+                                }
+                            }else{
+                                
+                                viewModel.saveEvent(event: editableEvent)
+                                isEditing = false
+                                dismiss()
                             }
+                            
+                           
                         }) {
-                            Image(systemName: "pencil")
+                            isEditing ? Image(systemName: "square.and.arrow.down") : Image(systemName: "pencil")
                         }
                         Button(action: {
                             viewModel.deleteEvent(event: editableEvent)
@@ -79,6 +93,8 @@ struct EventDetall: View {
                         dateSection
                         Divider().padding(.horizontal, 20)
                         locationSection
+                        Divider().padding(.horizontal, 20)
+                        EventTaskList(event : editableEvent)
                         Divider().padding(.horizontal, 20)
                         notesSection
                         Divider().padding(.horizontal, 20)
@@ -130,16 +146,20 @@ struct EventDetall: View {
     // MARK: - TITLE SECTION
     private var titleSection: some View {
         VStack(alignment: .center, spacing: 12) {
-            Text("Título")
-                .font(.headline)
-                .foregroundColor(.primary)
-
+            
             if isEditing {
+                Text("Título")
+                    .font(.headline)
+                    .foregroundColor(.primary)
+
                 TextField("Escribe el título", text: $editableEvent.title)
                     .padding(12)
-                    .background(RoundedRectangle(cornerRadius: 12).fill(fieldBackground))
-                    .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
-                    .onChange(of: editableEvent.title) { newValue in
+                    .frame(minHeight: 100)
+                    .background(RoundedRectangle(cornerRadius: 12).fill(Color.fieldBG).overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                    ))
+                    .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)                    .onChange(of: editableEvent.title) { newValue in
                         if newValue.contains("\n") {
                             editableEvent.title = newValue.replacingOccurrences(of: "\n", with: " ")
                         }
@@ -153,7 +173,7 @@ struct EventDetall: View {
             } else {
                 Text(editableEvent.title)
                     .font(.title2)
-                    .foregroundColor(.primary)
+                    
             }
         }
         .padding(.horizontal, 20)
@@ -173,18 +193,26 @@ struct EventDetall: View {
                         get: { editableEvent.descriptionEvent ?? "" },
                         set: { editableEvent.descriptionEvent = $0 }
                     ))
-                    .frame(minHeight: 100)
+                    .font(.body)
+                    .scrollContentBackground(.hidden)
                     .padding(12)
-                    .background(RoundedRectangle(cornerRadius: 12).fill(fieldBackground))
-                    .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
+                    .frame(minHeight: 100)
+                    .background(RoundedRectangle(cornerRadius: 12).fill(Color.fieldBG).overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                    ))
+                    .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
                 } else {
                     Text((editableEvent.descriptionEvent?.isEmpty ?? true)
                          ? "No hay descripción disponible."
                          : editableEvent.descriptionEvent!)
                     .padding(12)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(fieldBackground)
-                    .cornerRadius(12)
+                    .background(RoundedRectangle(cornerRadius: 12).fill(Color.fieldBG).overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                    ))
+                  
                     .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
                 }
             }
@@ -202,17 +230,19 @@ struct EventDetall: View {
                             Text(project.title).tag(project as Project?)
                         }
                     }
-                    .pickerStyle(.menu)
-                    .padding(12)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(RoundedRectangle(cornerRadius: 12).fill(fieldBackground))
-                    .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
+                    .background(RoundedRectangle(cornerRadius: 12).fill(Color.fieldBG).overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                    ))
+                    .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
                 } else {
                     Text(editableEvent.project?.title ?? "No hay proyecto asignado.")
                         .padding(12)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(fieldBackground)
-                        .cornerRadius(12)
+                        .background(RoundedRectangle(cornerRadius: 12).fill(Color.fieldBG).overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                        ))
                         .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
                 }
             }
@@ -256,8 +286,12 @@ struct EventDetall: View {
                 .cornerRadius(12)
                 .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
             }
-        }
-        .padding(.horizontal, 20)
+        }.padding(12)
+            .background(RoundedRectangle(cornerRadius: 12).fill(Color.fieldBG).overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+            ))
+            .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)        .padding(.horizontal, 20)
     }
 
     // MARK: - LOCATION SECTION
@@ -271,9 +305,12 @@ struct EventDetall: View {
                 VStack(spacing: 10) {
                     TextField("Buscar dirección", text: $viewModelLocation.queryFragment)
                         .padding(12)
-                        .background(fieldBackground)
-                        .cornerRadius(12)
-                        .shadow(color: .black.opacity(0.03), radius: 4, x: 0, y: 2)
+                        .frame(minHeight: 100)
+                        .background(RoundedRectangle(cornerRadius: 12).fill(Color.fieldBG).overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                        ))
+                        .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
                         .focused($locationFieldFocused)
 
                     if !viewModelLocation.searchResults.isEmpty {
@@ -296,11 +333,11 @@ struct EventDetall: View {
                                 Divider()
                             }
                         }
-                        .background(
+                        .background(RoundedRectangle(cornerRadius: 12).fill(Color.fieldBG).overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .fill(Color.white)
-                                .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 3)
-                        )
+                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                        ))
+                        .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
                     }
 
                     mapView
@@ -314,9 +351,21 @@ struct EventDetall: View {
                             .background(fieldBackground)
                             .cornerRadius(12)
                             .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
+                        mapView
+                    }else{
+                        
+                        Text("No hay ubicación disponible")
+                        .padding(12)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(RoundedRectangle(cornerRadius: 12).fill(Color.fieldBG).overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                        ))
+                        .cornerRadius(12)
+                        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
                     }
 
-                    mapView
+                   
                 }
             }
         }

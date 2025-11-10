@@ -7,23 +7,22 @@ class TaskViewModel: ObservableObject {
     
    
     @Published var listTask: [TaskItem] = []
-    @Published var listTaskCalendarIpad: [TaskItem] = []
     @Published var readyToShowTasks: Bool = false
     @Published var selectedDate: Date = Date()
     @Published var selectedTab: Int = 0
     @Published var selectedData: Date = Date()
     @Published var showCal: Bool = false
     @Published var showAddTaskView: Bool = false
-    @Published var sizeClass: enumSizeClass.UserInterfaceType = .compact
+    
 
     private var context: ModelContext?
     func setContext(context: ModelContext) {
         self.context = context
     }
-    func setParameters(_ context: ModelContext, _ sizeClass: enumSizeClass.UserInterfaceType) {
+    func setParameters(_ context: ModelContext) {
         self.context = context
   
-        self.sizeClass = sizeClass
+        
     }
 
     func loadTasks() {
@@ -33,8 +32,6 @@ class TaskViewModel: ObservableObject {
                
                readyToShowTasks = false
            
-
-        if sizeClass == .compact{
             switch selectedTab {
                 
                 
@@ -49,24 +46,8 @@ class TaskViewModel: ObservableObject {
             default:
                 listTask = []
                 break
-            }
-        }else{
             
-            switch selectedTab {
-                
-                
-            case 0:
-                listTask = HomeApi.fetchNoDateTasks(context: context)
-                listTaskCalendarIpad = HomeApi.fetchDateTasks(date: selectedData, context: context)
-                break;
-            case 1:
-            
-                listTask = HomeApi.loadTasksEnd(context: context)
-                break;
-            default:
-                listTask = []
-                break
-            }
+        
         }
 
         

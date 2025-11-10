@@ -56,10 +56,20 @@ final class ProjectDetallViewModel: ObservableObject {
         guard let context else { return }
         editableProject.endDate = Date()
         editableProject.status = .off
+        
+        for event in editableProject.events {
+            event.status = .off
+        }
+        
+        
+        
         do {
             try context.save()
             Task {
                 await SyncManagerUpload.shared.uploadProject(project: editableProject)
+                for event in editableProject.events {
+                    await SyncManagerUpload.shared.uploadEvent(event: event)
+                }
             }
             dismiss?()
         } catch {

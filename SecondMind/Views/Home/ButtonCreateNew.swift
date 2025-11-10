@@ -31,7 +31,7 @@ struct ButtonCreateNew: View {
                         )
                     }
                     .padding(.trailing, 30)
-                    .padding(.bottom, sizeClass == .regular ? 90 : 150)
+                    .padding(.bottom, sizeClass == .regular ? 90 : 120)
                   }
     }
     

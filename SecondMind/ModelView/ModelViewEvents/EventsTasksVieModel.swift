@@ -1,19 +1,16 @@
 //
-//  EventMarkProjectDetallModelView.swift
+//  EventsTasksVieModel.swift
 //  SecondMind
 //
-//  Created by Jorge Cortés on 19/9/25.
+//  Created by Jorge Cortés on 10/11/25.
 //
+
 
 import Foundation
 import SwiftData
 import SwiftUI
 
-
-
-public class TaskMarkProjectDetallModelView: ObservableObject {
-    
-    
+public class TaskMarkEventDetallModelView: ObservableObject {
     
     @Published var taskList: [TaskItem] = []
     @Published var listTaskCalendarIpad: [TaskItem] = []
@@ -22,25 +19,25 @@ public class TaskMarkProjectDetallModelView: ObservableObject {
     @Published var selectedData: Date = Date()
     @Published var showCal: Bool = false
     @Published var showAddTaskView: Bool = false
-  
-    private var project: Project?
+
+    private var event: Event?
     private var context: ModelContext?
     
-    init(context: ModelContext? = nil, project: Project? = nil,) {
+    init(context: ModelContext? = nil, event: Event? = nil,) {
         self.context = context
-        self.project = project
-      
+        self.event = event
+   
     }
     
-    func setParameters(context: ModelContext, project: Project) {
+    func setParameters(context: ModelContext, event: Event, ) {
         self.context = context
-        self.project = project
-      
+        self.event = event
+        
     }
     
     func extractDayTasks(date: Date) -> [TaskItem] {
-        guard let project else { return [] }
-        return project.tasks.filter { task in
+        guard let event else { return [] }
+        return event.tasks.filter { task in
             if let endDate = task.endDate {
                 return Calendar.current.isDate(endDate, inSameDayAs: date) && task.status == .on
             }
@@ -49,40 +46,31 @@ public class TaskMarkProjectDetallModelView: ObservableObject {
     }
     
     func extractNoDateTasks() -> [TaskItem] {
-        guard let project else { return []}
-        
-        return project.tasks.filter { $0.endDate == nil && $0.status == .on }
+        guard let event else { return [] }
+        return event.tasks.filter { $0.endDate == nil && $0.status == .on }
     }
     
     func extractOffTasks() -> [TaskItem] {
-        guard let project else { return [] }
-        return project.tasks.filter { $0.status == .off }
+        guard let event else { return [] }
+        return event.tasks.filter { $0.status == .off }
     }
     
     func loadEvents() {
        
-    
+       
             switch selectedTab {
-                
-                
+           
             case 0:
-                taskList = extractNoDateTasks()
-                break;
-            case 1:
-                
                 taskList = extractDayTasks(date: selectedData)
-                break;
-            case 2:
-                
+                break
+            case 1:
                 taskList = extractOffTasks()
-                break;
+                break
             default:
                 break
             }
-       
         
-            
-            
+        
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             withAnimation(.easeOut(duration: 0.3)) {
@@ -92,18 +80,18 @@ public class TaskMarkProjectDetallModelView: ObservableObject {
     }
 }
 
-extension TaskMarkProjectDetallModelView: BaseTaskViewModel {
+extension TaskMarkEventDetallModelView: BaseTaskViewModel {
 
     var listTask: [TaskItem] {
         get { taskList }
         set { taskList = newValue }
     }
 
-     func setContext(context: ModelContext) {
+    func setContext(context: ModelContext) {
         self.context = context
     }
+    
     func loadTasks() {
-       
         loadEvents()
     }
 

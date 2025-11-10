@@ -34,8 +34,9 @@ struct CreateEvent: View {
     
     var body: some View {
         ZStack {
-            BackgroundColorTemplate().ignoresSafeArea()
             
+            Color(red: 0.97, green: 0.96, blue: 1.0)
+                .ignoresSafeArea()
             ScrollView {
                 VStack(spacing: 0) {
                     
@@ -54,7 +55,11 @@ struct CreateEvent: View {
                             
                             TextField("Escribe el título", text: $newEvent.title)
                                 .padding(12)
-                                .background(RoundedRectangle(cornerRadius: 12).fill(fieldBG))
+                                .frame(minHeight: 100)
+                                .background(RoundedRectangle(cornerRadius: 12).fill(fieldBG).overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                ))
                                 .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
                                 .onChange(of: newEvent.title) { newValue in
                                     newEvent.title = newValue.replacingOccurrences(of: "\n", with: " ")
@@ -81,9 +86,14 @@ struct CreateEvent: View {
                                 get: { newEvent.descriptionEvent ?? "" },
                                 set: { newEvent.descriptionEvent = $0 }
                             ))
-                            .frame(minHeight: 120)
+                            .font(.body)
+                            .scrollContentBackground(.hidden)
                             .padding(12)
-                            .background(RoundedRectangle(cornerRadius: 12).fill(fieldBG))
+                            .frame(minHeight: 100)
+                            .background(RoundedRectangle(cornerRadius: 12).fill(fieldBG).overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                            ))
                             .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
                         }
                         .padding(.horizontal, 20)
@@ -91,7 +101,7 @@ struct CreateEvent: View {
                         Divider().padding(.horizontal, 20)
                         
                         // ——— Picker Proyecto ———
-                        VStack(alignment: .leading, spacing: 8) {
+                        VStack(alignment: .center, spacing: 8) {
                             Text("Proyecto")
                                 .font(.headline)
                                 .foregroundColor(.primary)
@@ -103,10 +113,13 @@ struct CreateEvent: View {
                                 }
                             }
                             .pickerStyle(.menu)
-                            .padding(12)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(RoundedRectangle(cornerRadius: 12).fill(fieldBG))
+                          
+                            .background(RoundedRectangle(cornerRadius: 12).fill(fieldBG).overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                            ))
                             .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
+                         
                         }
                         .padding(.horizontal, 20)
                         
@@ -143,7 +156,10 @@ struct CreateEvent: View {
                             .padding(.horizontal, 10)
                         }
                         .padding(12)
-                        .background(RoundedRectangle(cornerRadius: 12).fill(fieldBG))
+                        .background(RoundedRectangle(cornerRadius: 12).fill(fieldBG).overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                        ))
                         .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
                         .padding(.horizontal, 20)
                         
@@ -205,7 +221,10 @@ struct CreateEvent: View {
                                 }
                             }
                             .padding(12)
-                            .background(RoundedRectangle(cornerRadius: 12).fill(fieldBG))
+                            .background(RoundedRectangle(cornerRadius: 12).fill(fieldBG).overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                            ))
                             .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 4)
                         }
                         .padding(.horizontal, 20)
@@ -246,18 +265,10 @@ struct CreateEvent: View {
                     .padding(.vertical, 28)
                     .padding(.horizontal, 22)
                     .frame(maxWidth: 800)
-                    .background(
-                        RoundedRectangle(cornerRadius: 36)
-                            .fill(Color.white)
-                            .shadow(color: .black.opacity(0.1), radius: 12, x: 0, y: 6)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 36)
-                            .stroke(cardStroke, lineWidth: 1)
-                    )
-                    .padding(.horizontal, 12)
+                   
+               
                     .padding(.top, 16)
-                }
+                }.backgroundStyle(Color(red: 0.97, green: 0.96, blue: 1.0))
             }
         }
         .onAppear {

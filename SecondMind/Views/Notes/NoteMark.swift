@@ -9,6 +9,7 @@ struct NoteMark: View {
 
     @StateObject var modelView: NoteViewModel
     @State private var showDeleteAlertForNote: [PersistentIdentifier: Bool] = [:]
+    
     // Contexto de entrada
     private var project: Project?
     private var event: Event?
@@ -25,75 +26,78 @@ struct NoteMark: View {
     @State private var refreshID = UUID()
 
     private let accentColor = Color.noteBlue
+    private let fieldBG = Color(red: 248/255, green: 248/255, blue: 250/255)
 
     var body: some View {
-        NavigationStack {
-            ZStack(alignment: .bottomTrailing) {
-                VStack(spacing: 20) {
-                    headerCard(title: project?.title ?? event?.title ?? "Notas")
-                        .padding(.top, 16)
-
-                    PickerBar(options: ["Todas", "Favoritas", "Archivadas"], selectedTab: $modelView.selectedTab)
-
-                    searchBar
-
-                    ScrollView {
-                        // 🔁 Mantengo tu animación y transiciones
-                        VStack(spacing: 16) {
-                            if modelView.noteList.isEmpty {
-                                emptyNoteList
-                                    .padding(.top, 12)
-                            } else {
-                                if sizeClass == .regular {
-                                    // 💻 iPad: tarjeta contenedora centrada (maxWidth 800) + grid 2 columnas
-                                    VStack(alignment: .leading, spacing: 12) {
-                                        HStack {
-                                            Text("Notas")
-                                                .font(.title2.weight(.bold))
-                                                .foregroundColor(.primary)
-                                            Spacer()
-                                            Text("\(modelView.noteList.count)")
-                                                .font(.subheadline.weight(.medium))
-                                                .foregroundColor(.secondary)
-                                        }
-                                        .padding(.horizontal, 20)
-                                        .padding(.top, 16)
-
-                                        Rectangle()
-                                            .fill(Color.primary.opacity(0.1))
-                                            .frame(height: 1)
-
-                                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())],
-                                                  spacing: 16) {
-                                            ForEach(modelView.noteList, id: \.id) { note in
-                                                noteCardExpanded(note: note) // 👉 clicable a detalle
-                                            }
-                                        }
-                                        .padding(.horizontal, 20)
-                                        .padding(.bottom, 10)
-                                    }
-                                    .frame(maxWidth: 800)
-                                    .background(Color.cardBG)
-                                    .cornerRadius(20)
-                                    .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
-                                    .padding(.horizontal)
+        GeometryReader { geo in
+            NavigationStack {
+                ZStack {
+                    VStack(spacing: 0) {
+                        VStack(spacing: 26) {
+                            
+                            // Cabecera visual coherente
+                        
+                            headerCard(title: project?.title ?? event?.title ?? "Notas", accentColor: accentColor, sizeClass: sizeClass)
+                                .padding(.top, 8)
+                            
+                            // Selector superior
+                            PickerBar(options: ["Todas", "Favoritas", "Archivadas"], selectedTab: $modelView.selectedTab)
+                            
+                            // Barra de búsqueda
+                            searchBar
+                            
+                            // Contenido principal
+                            VStack(spacing: 18) {
+                                if modelView.noteList.isEmpty {
+                                    emptyNoteList
+                                        .frame(maxHeight: .infinity)
                                 } else {
-                                    // 📱 iPhone: tu lista original con transiciones
-                                    LazyVStack(spacing: 12) {
-                                        ForEach(modelView.noteList, id: \.id) { note in
-                                            noteRow(note: note)
-                                                .transition(.asymmetric(
-                                                    insertion: .opacity.combined(with: .move(edge: .bottom)),
-                                                    removal: .opacity.combined(with: .move(edge: .trailing))
-                                                ))
-                                        }
+                                    GeometryReader { scrollGeo in
+                                        ScrollView {
+                                            VStack(alignment: .leading, spacing: 0) {
+                                                if sizeClass == .regular {
+                                                    // iPad: grid 2 columnas
+                                                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                                                        ForEach(modelView.noteList, id: \.id) { note in
+                                                            noteCardExpanded(note: note)
+                                                        }
+                                                    }
+                                                    .padding(.horizontal, 20)
+                                                } else {
+                                                    // iPhone: lista vertical
+                                                    LazyVStack(spacing: 12) {
+                                                        ForEach(modelView.noteList, id: \.id) { note in
+                                                            noteRow(note: note)
+                                                        }
+                                                    }
+                                                    .padding(.horizontal, 16)
+                                                }
+                                                
+                                                Spacer(minLength: 0)
+                                            }
+                                            .frame(minHeight: scrollGeo.size.height, alignment: .top)
+                                            .padding(.bottom, 80)
+                                        }.clipShape(RoundedRectangle(cornerRadius: 36))
+                                        .animation(.easeInOut, value: modelView.noteList)
                                     }
-                                    .padding(.vertical, 16)
                                 }
                             }
+                            .frame(maxHeight: .infinity)
+                            .padding(.top, 10)
                         }
-                        .animation(.easeInOut, value: modelView.noteList)
+                        .padding(.top, 26)
+                        .padding(.horizontal, 5)
+                        .frame(maxWidth: 1200)
+                        .background(
+                            RoundedRectangle(cornerRadius: 36)
+                                .fill(Color(red: 0.97, green: 0.96, blue: 1.0))
+                                .shadow(color: .black.opacity(0.10), radius: 12, x: 0, y: 6)
+                        )
+                        .padding(.horizontal, 10)
+                        .padding(.top, 20)
                     }
+                    .frame(maxHeight: .infinity)
+                    .padding(.bottom, sizeClass == .regular ?  geo.safeAreaInsets.bottom + 20 : geo.safeAreaInsets.bottom + 100)
                     .id(refreshID)
                     .refreshable {
                         Task {
@@ -103,36 +107,38 @@ struct NoteMark: View {
                             isSyncing = false
                         }
                     }
-                }
-                // ✅ Mantengo tu safeAreaInset con trailing 16 como tenías
-                .safeAreaInset(edge: .bottom) {
-                    HStack {
-                        Spacer()
-                        buttonControlMark
+                    .ignoresSafeArea(edges: .bottom)
+                    .onAppear {
+                        modelView.setContext(context)
+                        modelView.setScope(project: project, event: event)
+                        modelView.loadNotes()
                     }
-                   
+                    .onChange(of: modelView.selectedTab) { _ in
+                        withAnimation { modelView.loadNotes() }
+                    }
+                    
+                    // Botón flotante sobre el contenido
+                    VStack {
+                        Spacer()
+                        HStack {
+                            Spacer()
+                            buttonControlMark
+                        }
+                    }
+                    .ignoresSafeArea()
+                    
+                    // NavigationLink programático
+                    NavigationLink(
+                        destination: destinationView,
+                        isActive: $navigateToNewNote
+                    ) { EmptyView() }
                 }
-                .ignoresSafeArea(.keyboard)
-
-                // ✅ Mantengo tu NavigationLink programático
-                NavigationLink(
-                    destination: destinationView,
-                    isActive: $navigateToNewNote
-                ) { EmptyView() }
-            }
-            .onAppear {
-                modelView.setContext(context)
-                modelView.setScope(project: project, event: event)
-                modelView.loadNotes()
-            }
-            .onChange(of: modelView.selectedTab) { _ in
-                withAnimation { modelView.loadNotes() }
             }
         }
     }
 
    
-
+    // MARK: – Barra de búsqueda
     private var searchBar: some View {
         HStack {
             Image(systemName: "magnifyingglass")
@@ -157,47 +163,45 @@ struct NoteMark: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
-        .frame(maxWidth: 500) // 👈 LIMITA el ancho máximo (ajústalo a gusto)
-        .background(Color.cardBG)
+        .frame(maxWidth: 500)
+        .background(fieldBG)
         .overlay(
             RoundedRectangle(cornerRadius: 25)
                 .stroke(Color.black.opacity(0.6), lineWidth: 1.2)
         )
         .cornerRadius(25)
-        .padding(.horizontal)
-        .frame(maxWidth: .infinity, alignment: .center) // 👈 la centra
+        .padding(.horizontal, 20)
     }
-    // MARK: – Botonera inferior (iPad: 🔄 + ➕ | iPhone: ➕)
+    
+    // MARK: – Botonera inferior
     private var buttonControlMark: some View {
-        
-            
-            
-    glassButtonBar(funcAddButton: {navigateToNewNote = true},
-                   funcSyncButton: {
-                                    Task {
-                                            isSyncing = true
-                                            await SyncManagerDownload.shared.syncAll(context: context)
-                                            modelView.loadNotes()
-                                            withAnimation { refreshID = UUID() }
-                                            isSyncing = false
-                                        }},
-                   funcCalendarButton: {},
-                   color: accentColor,
-                   selectedTab: $modelView.selectedTab,
-                   isSyncing: $isSyncing)
-            
+        glassButtonBar(
+            funcAddButton: { navigateToNewNote = true },
+            funcSyncButton: {
+                Task {
+                    isSyncing = true
+                    await SyncManagerDownload.shared.syncAll(context: context)
+                    modelView.loadNotes()
+                    withAnimation { refreshID = UUID() }
+                    isSyncing = false
+                }
+            },
+            funcCalendarButton: {},
+            color: accentColor,
+            selectedTab: $modelView.selectedTab,
+            isSyncing: $isSyncing
+        )
     }
-    // MARK: – Empty List (igual)
+    
+    // MARK: – Empty List
     private var emptyNoteList: some View {
-   
-            EmptyList(color: accentColor, textIcon: "note.text")
-            
+        EmptyList(color: accentColor, textIcon: "note.text")
     }
 
     // MARK: – Fila de Nota (versión móvil)
     private func noteRow(note: NoteItem) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            // 🔹 Fechas
+            // Fechas
             HStack(spacing: 8) {
                 HStack(spacing: 4) {
                     Image(systemName: "calendar.badge.plus")
@@ -216,7 +220,7 @@ struct NoteMark: View {
                 .foregroundColor(Color.noteBlue)
             }
 
-            // 🔹 Proyecto y evento (ambos si existen)
+            // Proyecto y evento
             HStack(spacing: 12) {
                 if let project = note.project {
                     Label(project.title, systemImage: "folder.fill")
@@ -233,13 +237,13 @@ struct NoteMark: View {
                 }
             }
 
-            // 🔹 Título
+            // Título
             Text(note.title.isEmpty ? "Sin título" : note.title)
                 .font(.title3.weight(.semibold))
                 .foregroundColor(.primary)
                 .lineLimit(1)
 
-            // 🔹 Contenido
+            // Contenido
             if let content = note.content, !content.isEmpty {
                 Text(content)
                     .font(.body)
@@ -248,7 +252,7 @@ struct NoteMark: View {
                     .truncationMode(.tail)
             }
 
-            // 🔹 Nueva botonera reutilizable
+            // Botonera
             noteActionBar(note: note)
         }
         .frame(maxWidth: .infinity, alignment: .topLeading)
@@ -258,12 +262,16 @@ struct NoteMark: View {
                 .fill(Color.white)
                 .shadow(color: .black.opacity(0.08), radius: 6, x: 0, y: 3)
         )
-        .padding(.horizontal)
+        .transition(.asymmetric(
+            insertion: .opacity.combined(with: .move(edge: .bottom)),
+            removal: .opacity.combined(with: .move(edge: .trailing))
+        ))
     }
+    
     // MARK: – Tarjeta expandida (versión iPad)
     private func noteCardExpanded(note: NoteItem) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            // 🔹 Fechas (creación + edición)
+            // Fechas
             HStack {
                 HStack(spacing: 4) {
                     Image(systemName: "calendar.badge.plus")
@@ -282,7 +290,7 @@ struct NoteMark: View {
                 .foregroundColor(Color.noteBlue)
             }
 
-            // 🔹 Proyecto / Evento
+            // Proyecto / Evento
             HStack(spacing: 12) {
                 if let project = note.project {
                     Label(project.title, systemImage: "folder.fill")
@@ -299,13 +307,13 @@ struct NoteMark: View {
                 }
             }
 
-            // 🔹 Título
+            // Título
             Text(note.title.isEmpty ? "Sin título" : note.title)
                 .font(.headline)
                 .foregroundColor(.primary)
                 .lineLimit(2)
 
-            // 🔹 Contenido
+            // Contenido
             if let content = note.content, !content.isEmpty {
                 Text(content)
                     .font(.body)
@@ -314,7 +322,7 @@ struct NoteMark: View {
                     .truncationMode(.tail)
             }
 
-            // 🔹 Botonera reutilizable (idéntica a la de móvil)
+            // Botonera
             noteActionBar(note: note)
         }
         .padding()
@@ -328,7 +336,7 @@ struct NoteMark: View {
         )
     }
     
-    // MARK: – Botonera reutilizable (con confirmación y sincronización de una sola nota)
+    // MARK: – Botonera reutilizable
     private func noteActionBar(note: NoteItem) -> some View {
         let noteID = note.persistentModelID
         let isShowingAlert = Binding(
@@ -337,7 +345,7 @@ struct NoteMark: View {
         )
 
         return HStack(spacing: 20) {
-            // ✏️ Editar
+            // Editar
             NavigationLink(destination: NoteDetailView(note: note)) {
                 Image(systemName: "square.and.pencil")
                     .font(.system(size: 18, weight: .semibold))
@@ -346,7 +354,7 @@ struct NoteMark: View {
                     .background(Circle().fill(Color.orange))
             }
 
-            // 🗑️ Eliminar (con confirmación + sync individual)
+            // Eliminar
             Button {
                 isShowingAlert.wrappedValue = true
             } label: {
@@ -360,19 +368,13 @@ struct NoteMark: View {
                 Button("Cancelar", role: .cancel) { }
                 Button("Eliminar", role: .destructive) {
                     Task {
-                        // 🔸 Elimina localmente
                         withAnimation(.easeInOut) {
                             modelView.delete(note)
                         }
-
-                        // 🔸 Sincroniza solo esa nota
                         await SyncManagerUpload.shared.deleteNote(note: note)
-
-                        // 🔸 Recarga notas
                         withAnimation(.easeInOut) {
                             modelView.loadNotes()
                         }
-
                         showDeleteAlertForNote[noteID] = false
                     }
                 }
@@ -380,17 +382,13 @@ struct NoteMark: View {
                 Text("¿Seguro que deseas eliminar esta nota? Se eliminará también del servidor.")
             }
 
-            // 📦 Archivar (toggle + sync individual)
+            // Archivar
             Button {
                 Task {
                     withAnimation(.easeInOut) {
                         modelView.toggleArchived(note)
                     }
-
-                    // 🔸 Sincroniza esa nota
                     await SyncManagerUpload.shared.uploadNote(note: note)
-
-                    // 🔸 Refresca lista local
                     withAnimation(.easeInOut) {
                         modelView.loadNotes()
                     }
@@ -403,17 +401,13 @@ struct NoteMark: View {
                     .background(Circle().fill(Color.noteBlue))
             }
 
-            // ⭐️ Favorito (toggle + sync individual)
+            // Favorito
             Button {
                 Task {
                     withAnimation(.easeInOut) {
                         modelView.toggleFavorite(note)
                     }
-
-                    // 🔸 Sincroniza esa nota
                     await SyncManagerUpload.shared.uploadNote(note: note)
-
-                    // 🔸 Refresca lista local
                     withAnimation(.easeInOut) {
                         modelView.loadNotes()
                     }
@@ -439,7 +433,8 @@ struct NoteMark: View {
         )
         .padding(.top, 6)
     }
-    // MARK: – Destino de nueva nota (mantengo tu lógica)
+    
+    // MARK: – Destino de nueva nota
     @ViewBuilder
     private var destinationView: some View {
         if let project {

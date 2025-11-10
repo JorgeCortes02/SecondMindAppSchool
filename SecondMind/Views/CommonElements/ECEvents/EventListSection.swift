@@ -1,11 +1,9 @@
-//
+
 //  EventListSection.swift
 //  SecondMind
 //
 //  Created by Jorge Cortés on 3/11/25.
 //
-
-
 
 import SwiftUI
 
@@ -21,55 +19,64 @@ struct EventListSection<VM: BaseEventViewModel>: View {
     @EnvironmentObject var utilFunctions: generalFunctions
 
     var body: some View {
-        VStack(spacing: 24) {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    Text(title)
-                        .foregroundColor(.primary)
-                        .font(.title2.weight(.bold))
-                    Spacer()
-                    Text("\(modelView.events.count)")
-                        .font(.subheadline.weight(.medium))
-                        .foregroundColor(.secondary)
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 16)
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        
+                        Text(utilFunctions.formattedDate(modelView.selectedData))
+                            .foregroundColor(.eventButtonColor)
+                            .font(.title2.weight(.bold))
+                        Spacer()
+                        Text("\(modelView.events.count)")
+                            .font(.subheadline.weight(.medium))
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 16)
 
-                Rectangle()
-                    .fill(Color.primary.opacity(0.1))
-                    .frame(height: 1)
-                
-                if isDateFilterEnabled, let selectedDate {
-                    datePickerSection(selectedDate: selectedDate)
-                }
+                    Rectangle()
+                        .fill(Color.primary.opacity(0.1))
+                        .frame(height: 1)
+                    
+                    if isDateFilterEnabled, let selectedDate {
+                        datePickerSection(selectedDate: selectedDate)
+                    }
 
-                if modelView.events.isEmpty {
-                    emptyEventsList()
-                } else {
-                    if isIpad {
-                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-                            ForEach(modelView.events, id: \.id) { event in
-                                EventCardExpanded(event: event, accentColor: accentColor)
-                            }
-                        }.padding(.bottom, 20)
-                        .padding(.horizontal, 20)
+                    if modelView.events.isEmpty {
+                        emptyEventsList()
+                            .frame(maxHeight: .infinity)
                     } else {
-                        LazyVStack(spacing: 12) {
-                            ForEach(modelView.events, id: \.id) { event in
-                                NavigationLink(destination: EventDetall(editableEvent: event)) {
-                                    EventListItem(event: event, accentColor: accentColor)
+                        VStack(alignment: .leading, spacing: 0) {
+                            if isIpad {
+                                LazyVGrid(columns: isPortrait ? [GridItem(.flexible()), GridItem(.flexible())] : [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                                    ForEach(modelView.events, id: \.id) { event in
+                                        EventCardExpanded(event: event, accentColor: accentColor)
+                                    }
                                 }
+                                .padding(.horizontal, 20)
+                            } else {
+                                LazyVStack(spacing: 12) {
+                                    ForEach(modelView.events, id: \.id) { event in
+                                        NavigationLink(destination: EventDetall(editableEvent: event)) {
+                                            EventListItem(event: event, accentColor: accentColor)
+                                        }
+                                    }
+                                }
+                                
                             }
-                        }.padding(.bottom, 20)
-                        .padding(.horizontal, 16)
+                            
+                            Spacer(minLength: 0)
+                        }
+                        .padding(.bottom, 80)
                     }
                 }
-            }
-            .frame(maxWidth: isIpad ? 800 : .infinity)
-            .background(Color.cardBG)
-            .cornerRadius(20)
-            .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
-            .padding(.horizontal)
+                
+                .frame(minHeight: geometry.size.height, alignment: .top)
+              
+                .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
+                .padding(.horizontal, 16)
+            }.clipShape(RoundedRectangle(cornerRadius: 36))
         }
     }
     
@@ -86,7 +93,7 @@ struct EventListSection<VM: BaseEventViewModel>: View {
             .labelsHidden()
             .datePickerStyle(.compact)
             .padding(.vertical, 10)
-            .padding(.horizontal, 16)
+            .padding(.horizontal, 10)
             .background(
                 RoundedRectangle(cornerRadius: 16)
                     .fill(Color.white.opacity(0.9))
@@ -104,7 +111,9 @@ struct EventListSection<VM: BaseEventViewModel>: View {
             modelView.loadEvents()
         }
     }
-
+    private var isPortrait: Bool {
+        UIDevice.current.orientation.isPortrait
+    }
     @ViewBuilder
     private func emptyEventsList() -> some View {
         EmptyList(color: accentColor, textIcon: "calendar.badge.exclamationmark")
