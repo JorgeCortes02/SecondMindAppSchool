@@ -94,6 +94,14 @@ class generalFunctions : ObservableObject {
         return formatter.string(from: date)
     }
     
-  
+    func deletePastEventsContentView(context : ModelContext){
+        
+        
+        var events = HomeApi.downdloadAllEvents(context: context)
+        
+        pastEvent(eventList: &events, context: context)
+        
+        
+    }
     
 }

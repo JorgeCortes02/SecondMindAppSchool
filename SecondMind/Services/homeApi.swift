@@ -394,4 +394,15 @@ struct HomeApi {
             return nil
         }
     }
+    
+    static func downdloadAllEvents(context: ModelContext) -> [Event] {
+        let descriptor = FetchDescriptor<Event>()
+        
+        do {
+            return try context.fetch(descriptor)
+        } catch {
+            print("❌ Error al obtener Events: \(error)")
+            return []
+        }
+    }
 }

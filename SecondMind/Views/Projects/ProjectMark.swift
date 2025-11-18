@@ -198,7 +198,7 @@ struct ProjectMark: View {
                         Text("\(project.events.filter { $0.status == .on }.count) eventos activos")
                     }
                 }
-                .font(.system(size: 15))
+                .font(sizeClass == .compact ? .system(size: 15) :.system(size: 17))
             }
             .padding(18)
             
@@ -219,7 +219,7 @@ struct ProjectMark: View {
             .padding(.horizontal, 18)
             .padding(.bottom, 14)
         }
-        .frame(maxWidth: .infinity, minHeight: 260, alignment: .top)
+        .frame(maxWidth: .infinity, minHeight: 260,  maxHeight: sizeClass == .compact ? 290 : 300, alignment: .top)
         .background(
             RoundedRectangle(cornerRadius: 18)
                 .fill(Color(.systemBackground))

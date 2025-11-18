@@ -30,8 +30,8 @@ struct EventDetall: View {
 
     // Estilo
     private let fieldBackground = Color(red: 248/255, green: 248/255, blue: 250/255)
-    private let borderColor = Color.purple.opacity(0.2)
-    private let accentColor = Color.purple
+    private let borderColor = Color.eventButtonColor.opacity(0.2)
+    private let accentColor = Color.eventButtonColor
 
     // Estado UI
     @State var isEditing = false

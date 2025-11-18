@@ -97,6 +97,9 @@ struct HomeMark: View {
                 if !didInitialLoad {
                     didInitialLoad = true
                     Task { await homeVM.refreshAll() }
+                    utilFunctions.deletePastEventsContentView(context: context)
+                }else{
+                    utilFunctions.deletePastEventsContentView(context: context)
                 }
             }
             

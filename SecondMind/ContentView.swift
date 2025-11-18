@@ -74,11 +74,14 @@ struct ContentView: View {
                     if navModel.showSidebar {
                         VStack(alignment: .leading, spacing: 10) {
                             HStack(alignment: .center){
-                                Text("SecondMind")
-                                    .font(.largeTitle.bold())
+                                Spacer()
+                                Text("Second")
+                                    .font(.system(size: 35, weight: .semibold))
                                     .foregroundColor(.taskButtonColor)
-                                    .padding()
-                                    .padding(.top, 10)
+
+                                Text("Mind")
+                                    .font(.system(size: 32, weight: .semibold))
+                                    .foregroundColor(Color(red: 47 / 255, green: 129 / 255, blue: 198 / 255))
                                 Button(action: {
                                     withAnimation {
                                         navModel.showSidebar.toggle()
@@ -91,6 +94,7 @@ struct ContentView: View {
                                        
                                     
                                 }
+                                Spacer()
                             }
                             Divider()
                             
@@ -185,7 +189,7 @@ struct ContentView: View {
         .onAppear {
             DispatchQueue.main.async {
                 if let lastUpdate = HomeApi.loadLastDeleteTaskDate(context: context) {
-                    print(lastUpdate)
+                 
                     if let lastUpdateDate = lastUpdate.date {
                         deletedTaskToday = todayDiferentLastUpdate(lastUpdateDate: lastUpdateDate)
                         print(deletedTaskToday)
@@ -197,6 +201,7 @@ struct ContentView: View {
                         context.insert(LastDeleteTask(date: Date()))
                     }
                 }
+                
             }
         }
     }

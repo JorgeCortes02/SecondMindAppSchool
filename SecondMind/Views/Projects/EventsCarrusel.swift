@@ -4,7 +4,7 @@ struct EventCarrousel: View {
     @Bindable var editableProject: Project
     @EnvironmentObject var utilFunctions: generalFunctions
     @StateObject private var viewModel = EventCarrouselViewModel()
-    
+    @Environment(\.horizontalSizeClass) private var sizeClass
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             // Título de la sección con contador y enlace
@@ -55,8 +55,8 @@ struct EventCarrousel: View {
                 .padding(20)
             } else {
                 GeometryReader { geometry in
-                    let cardWidth = geometry.size.width * 0.85
-                    let sideInset = (geometry.size.width - cardWidth) / 2
+                    let cardWidth = sizeClass == .compact ?  geometry.size.width * 0.85 : (geometry.size.width * 0.85)/2
+                    let sideInset = sizeClass == .compact ? (geometry.size.width - cardWidth) / 2 : 0
                     
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 16) {
@@ -102,12 +102,12 @@ struct EventCarrousel: View {
                     
                     if let description = event.descriptionEvent, !description.isEmpty {
                         Text(description)
-                            .font(.system(size: 14))
+                            .font(sizeClass == .compact ? .system(size: 15) :.system(size: 17))
                             .foregroundColor(.secondary)
                             .lineLimit(2)
                     } else {
                         Text("No hay descripción")
-                            .font(.system(size: 14))
+                            .font(.system(size: 15))
                             .foregroundColor(.secondary)
                             .lineLimit(2)
                     }
@@ -115,10 +115,10 @@ struct EventCarrousel: View {
                     if let project = event.project?.title, !project.isEmpty {
                         HStack(spacing: 6) {
                             Image(systemName: "folder")
-                                .font(.system(size: 13))
+                                .font(sizeClass == .compact ? .system(size: 13) :.system(size: 16))
                                 .foregroundColor(.secondary)
                             Text(project)
-                                .font(.system(size: 14))
+                                .font(sizeClass == .compact ? .system(size: 13) :.system(size: 16))
                                 .foregroundColor(.secondary)
                                 .lineLimit(1)
                         }
@@ -129,7 +129,7 @@ struct EventCarrousel: View {
                     } icon: {
                         Image(systemName: "calendar")
                     }
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(sizeClass == .compact ? .system(size: 13) :.system(size: 16))
                     .foregroundColor(Color.eventButtonColor)
                     .padding(.vertical, 2)
                     .padding(.horizontal, 8)

@@ -6,6 +6,7 @@ struct NotesCarrousel: View {
 
     @EnvironmentObject var utilFunctions: generalFunctions
     @StateObject private var modelView = NotesCarrouselModelView()
+    @Environment(\.horizontalSizeClass) private var sizeClass
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -68,8 +69,9 @@ struct NotesCarrousel: View {
                 .padding(20)
             } else {
                 GeometryReader { geometry in
-                    let cardWidth = geometry.size.width * 0.85
-                    let sideInset = (geometry.size.width - cardWidth) / 2
+                    let cardWidth = sizeClass == .compact ?  geometry.size.width * 0.85 : (geometry.size.width * 0.85)/2
+                    let sideInset = sizeClass == .compact ? (geometry.size.width - cardWidth) / 2 : 0
+                    
 
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 16) {
@@ -89,10 +91,10 @@ struct NotesCarrousel: View {
                                             if let project = note.project {
                                                 HStack(spacing: 6) {
                                                     Image(systemName: "folder.fill")
-                                                        .font(.system(size: 12))
+                                                        .font(sizeClass == .compact ? .system(size: 12) :.system(size: 16))
                                                         .foregroundColor(.orange)
                                                     Text(project.title)
-                                                        .font(.system(size: 13, weight: .medium))
+                                                        .font(sizeClass == .compact ? .system(size: 12) :.system(size: 16))
                                                         .foregroundColor(.orange)
                                                         .lineLimit(1)
                                                 }
@@ -101,10 +103,10 @@ struct NotesCarrousel: View {
                                             if let event = note.event {
                                                 HStack(spacing: 6) {
                                                     Image(systemName: "calendar")
-                                                        .font(.system(size: 12))
+                                                        .font(sizeClass == .compact ? .system(size: 12) :.system(size: 16))
                                                         .foregroundColor(.purple)
                                                     Text(event.title)
-                                                        .font(.system(size: 13, weight: .medium))
+                                                        .font(sizeClass == .compact ? .system(size: 13, weight: .medium) :.system(size: 16, weight: .medium))
                                                         .foregroundColor(.purple)
                                                         .lineLimit(1)
                                                 }
@@ -116,10 +118,10 @@ struct NotesCarrousel: View {
                                        
                                             HStack(spacing: 4) {
                                                 Image(systemName: "clock.badge")
-                                                    .font(.system(size: 11))
+                                                    .font(sizeClass == .compact ? .system(size: 12) :.system(size: 14))
                                                     .foregroundColor(.gray)
                                                 Text(utilFunctions.formattedDateAndHour(note.createdAt))
-                                                    .font(.system(size: 12))
+                                                    .font(sizeClass == .compact ? .system(size: 12) :.system(size: 14))
                                                     .foregroundColor(.gray)
                                             }
                                             
@@ -127,16 +129,16 @@ struct NotesCarrousel: View {
                                             
                                             HStack(spacing: 4) {
                                                 Image(systemName: "pencil")
-                                                    .font(.system(size: 11))
+                                                    .font(sizeClass == .compact ? .system(size: 12) :.system(size: 14))
                                                     .foregroundColor(Color.noteBlue.opacity(0.7))
                                                 Text(utilFunctions.formattedDateAndHour(note.updatedAt))
-                                                    .font(.system(size: 12))
+                                                    .font(sizeClass == .compact ? .system(size: 12) :.system(size: 14))
                                                     .foregroundColor(Color.noteBlue.opacity(0.7))
                                             
                                         }
                                     }
                                     .padding(16)
-                                    .frame(width: cardWidth, height: 120, alignment: .topLeading)
+                                    .frame(width: cardWidth, height: 130, alignment: .topLeading)
                                     .background(Color.white)
                                     .cornerRadius(16)
                                     .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 3)

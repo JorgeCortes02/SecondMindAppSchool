@@ -31,9 +31,10 @@ struct FinalizedEventListSection<VM: BaseEventViewModel>: View {
                     
                     // ---- Cuerpo de eventos agrupados por fecha ----
                     if modelView.events.isEmpty {
-                        EmptyList(color: accentColor, textIcon: "calendar.slash")
+                        EmptyList(color: accentColor, textIcon: "calendar.badge.exclamationmark")
                             .frame(maxHeight: .infinity)
                             .padding(.top, 12)
+                            
                     } else {
                         let grouped = Dictionary(grouping: modelView.events) {
                             Calendar.current.startOfDay(for: $0.endDate)
